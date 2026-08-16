@@ -1,0 +1,314 @@
+/* 字体 @import 必须位于所有规则之前（CSS 规范要求），故置于 tailwind import 之上 */
+@import url('https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   EchoVerse · 设计系统 theme.css
+   抽自设计稿 <style id="theme-vars"> —— 单一真相源
+   ============================================================ */
+
+:root {
+  /* 深色宇宙基底 */
+  --evo-bg: #0a0a0f;
+  --evo-bg-elevated: #11111a;
+  --evo-surface: rgba(255, 255, 255, 0.04);
+  --evo-surface-2: rgba(255, 255, 255, 0.08);
+  --evo-surface-glass: rgba(255, 255, 255, 0.06);
+
+  /* 主品牌：星云紫 */
+  --evo-purple-50: #f5f3ff;
+  --evo-purple-100: #ede9fe;
+  --evo-purple-200: #ddd6fe;
+  --evo-purple-300: #c4b5fd;
+  --evo-purple-400: #a78bfa;
+  --evo-purple-500: #8b5cf6;
+  --evo-purple-600: #7c3aed;
+  --evo-purple-700: #6d28d9;
+  --evo-purple-800: #5b21b6;
+  --evo-purple-900: #4c1d95;
+
+  /* 霓虹光晕 */
+  --evo-cyan: #22d3ee;
+  --evo-pink: #f472b6;
+  --evo-violet: #a78bfa;
+
+  /* 语义色彩 */
+  --evo-ink: #f8fafc;
+  --evo-ink-2: #94a3b8;
+  --evo-ink-3: #64748b;
+  --evo-line: rgba(255, 255, 255, 0.08);
+  --evo-border: rgba(255, 255, 255, 0.1);
+
+  /* 状态色 */
+  --evo-state-success: #34d399;
+  --evo-state-warning: #fbbf24;
+  --evo-state-error: #f87171;
+  --evo-state-info: #38bdf8;
+
+  /* 半径 */
+  --evo-radius-sm: 4px;
+  --evo-radius-md: 8px;
+  --evo-radius-lg: 12px;
+  --evo-radius-xl: 16px;
+  --evo-radius-full: 9999px;
+
+  /* 静态阴影 */
+  --evo-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --evo-shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.05);
+  --evo-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.05);
+
+  /* 悬浮层阴影 */
+  --evo-float-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.35);
+
+  /* 霓虹光晕 */
+  --evo-glow-purple: 0 0 40px rgba(139, 92, 246, 0.35);
+  --evo-glow-cyan: 0 0 30px rgba(34, 211, 238, 0.3);
+  --evo-glow-pink: 0 0 30px rgba(244, 114, 182, 0.3);
+
+  /* 字体 */
+  --evo-font-display: 'Tektur', 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --evo-font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --evo-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Tailwind 语义桥接 */
+  --evo-background: var(--evo-bg);
+  --evo-foreground: var(--evo-ink);
+  --evo-card: var(--evo-surface);
+  --evo-card-foreground: var(--evo-ink);
+  --evo-popover: var(--evo-bg-elevated);
+  --evo-popover-foreground: var(--evo-ink);
+  --evo-primary: var(--evo-purple-500);
+  --evo-primary-foreground: #ffffff;
+  --evo-muted: var(--evo-surface);
+  --evo-muted-foreground: var(--evo-ink-2);
+  --evo-input: var(--evo-surface-2);
+  --evo-ring: var(--evo-purple-400);
+}
+
+/* Tailwind v4 token 映射 —— 让 bg-primary / text-muted-foreground 等语义类生效 */
+@theme inline {
+  --color-background: var(--evo-background);
+  --color-foreground: var(--evo-foreground);
+  --color-card: var(--evo-card);
+  --color-card-foreground: var(--evo-card-foreground);
+  --color-popover: var(--evo-popover);
+  --color-popover-foreground: var(--evo-popover-foreground);
+  --color-primary: var(--evo-primary);
+  --color-primary-foreground: var(--evo-primary-foreground);
+  --color-muted: var(--evo-muted);
+  --color-muted-foreground: var(--evo-muted-foreground);
+  --color-border: var(--evo-border);
+  --color-input: var(--evo-input);
+  --color-ring: var(--evo-ring);
+  --radius-sm: var(--evo-radius-sm);
+  --radius-md: var(--evo-radius-md);
+  --radius-lg: var(--evo-radius-lg);
+  --radius-xl: var(--evo-radius-xl);
+  --font-display: var(--evo-font-display);
+  --font-body: var(--evo-font-body);
+  --font-mono: var(--evo-font-mono);
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--evo-background);
+    color: var(--evo-foreground);
+    font-family: var(--evo-font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection { background: var(--evo-purple-500); color: #fff; }
+  /* 自定义滚动条 */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--evo-surface-2);
+    border-radius: var(--evo-radius-full);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--evo-purple-500); }
+  td, th { word-break: break-word; }
+  th { white-space: nowrap; }
+}
+
+/* ============================================================
+   排版工具类
+   ============================================================ */
+.evo-display {
+  font-family: var(--evo-font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.evo-title {
+  font-family: var(--evo-font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+.evo-body {
+  font-family: var(--evo-font-body);
+  line-height: 1.65;
+}
+.evo-mono {
+  font-family: var(--evo-font-mono);
+}
+
+/* ============================================================
+   玻璃态
+   ============================================================ */
+.evo-glass {
+  background: var(--evo-surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--evo-border);
+}
+.evo-glass-strong {
+  background: rgba(17, 17, 26, 0.72);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--evo-border);
+}
+
+/* ============================================================
+   霓虹渐变 / 光晕
+   ============================================================ */
+.evo-gradient-text {
+  background: linear-gradient(135deg, var(--evo-cyan) 0%, var(--evo-violet) 50%, var(--evo-pink) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.evo-gradient-border {
+  position: relative;
+}
+.evo-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--evo-cyan), var(--evo-violet), var(--evo-pink));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.evo-glow-purple { box-shadow: var(--evo-glow-purple); }
+.evo-glow-cyan { box-shadow: var(--evo-glow-cyan); }
+.evo-glow-pink { box-shadow: var(--evo-glow-pink); }
+
+/* ============================================================
+   动画
+   ============================================================ */
+@keyframes evo-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes evo-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes evo-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes evo-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+@keyframes evo-reveal {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes evo-typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+@keyframes evo-slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes evo-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.evo-animate-orbit { animation: evo-orbit 30s linear infinite; }
+.evo-animate-float { animation: evo-float 6s ease-in-out infinite; }
+.evo-animate-pulse { animation: evo-pulse 3s ease-in-out infinite; }
+.evo-animate-twinkle { animation: evo-twinkle 4s ease-in-out infinite; }
+.evo-animate-slide-in { animation: evo-slide-in-right 0.3s ease-out; }
+.evo-animate-fade-in { animation: evo-fade-in 0.4s ease-out; }
+
+/* 滚动揭示：默认隐藏，进入视口后 .is-visible 触发动画 */
+.evo-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  will-change: opacity, transform;
+}
+.evo-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Echo 打字指示器（3 个跳动小点） */
+.evo-typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--evo-ink-2);
+  margin: 0 2px;
+  animation: evo-typing 1.2s ease-in-out infinite;
+}
+.evo-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.evo-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* 工具：隐藏滚动条 */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* 图标占位（兼容设计稿中的 data-icon 写法） */
+[data-icon] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-color: currentColor;
+}
+
+/* 移动端抽屉遮罩 */
+.evo-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+.evo-drawer-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* prefers-reduced-motion 适配 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .evo-reveal { opacity: 1; transform: none; }
+}

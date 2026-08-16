@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="文章 — 阴之体道关于设计、技术、生活与思考的长期记录。" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>文章 · EchoVerse</title>
+</head>
+<body class="min-h-screen antialiased">
+  <div id="evo-header"></div>
+
+  <main class="pt-16">
+    <section class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
+      <div class="text-center mb-10 sm:mb-12 evo-reveal">
+        <h1 class="evo-display text-3xl sm:text-4xl md:text-5xl mb-4">文章</h1>
+        <p class="text-[var(--evo-ink-2)]">设计、技术、生活与思考的长期记录</p>
+      </div>
+
+      <!-- 分类筛选 -->
+      <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-10 evo-reveal" data-reveal-delay="100" id="evo-articles-filters">
+        <!-- 由 articles.js 渲染 -->
+      </div>
+
+      <!-- 文章列表 -->
+      <div class="space-y-5 sm:space-y-6" id="evo-articles-list">
+        <!-- 由 articles.js 渲染 -->
+      </div>
+
+      <div id="evo-articles-empty" class="hidden text-center py-16 text-[var(--evo-ink-3)]">
+        <p class="text-lg mb-2">📭</p>
+        <p>这个分类下还没有文章。</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="evo-footer"></div>
+
+  <script type="module" src="/src/scripts/main.js"></script>
+  <script type="module" src="/src/scripts/pages/articles.js"></script>
+</body>
+</html>

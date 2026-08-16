@@ -1,0 +1,20 @@
+{
+  "name": "echoverse",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EchoVerse · 个人数字化空间站 — 飞书多维表格驱动，未配置时自动回退到内置 mock 数据",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "lucide": "^1.8.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "tailwindcss": "^4.3.1",
+    "vite": "^5.4.0"
+  }
+}

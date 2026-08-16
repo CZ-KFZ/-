@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="数字花园 — 可缩放拖拽的知识网络，500+ 笔记节点编织成的探索图谱。" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>数字花园 · EchoVerse</title>
+</head>
+<body class="min-h-screen antialiased">
+  <div id="evo-header"></div>
+
+  <main class="pt-16">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div class="grid lg:grid-cols-[1fr_360px] gap-6 min-h-[calc(100vh-180px)]">
+        <!-- 知识图谱 -->
+        <div class="evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 relative overflow-hidden min-h-[480px] sm:min-h-[500px] evo-reveal">
+          <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-10 pointer-events-none">
+            <h1 class="evo-display text-xl sm:text-2xl mb-1">数字花园</h1>
+            <p class="text-sm text-[var(--evo-ink-3)]">可缩放拖拽的知识网络</p>
+          </div>
+
+          <!-- SVG 图谱容器 -->
+          <div id="evo-graph-canvas" class="absolute inset-0 cursor-grab active:cursor-grabbing" data-dom-id="graph-canvas">
+            <!-- 由 garden.js 渲染 SVG -->
+          </div>
+
+          <!-- 缩放控件 -->
+          <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 flex flex-col gap-1.5">
+            <button id="evo-zoom-in" aria-label="放大" class="w-9 h-9 rounded-[var(--evo-radius-md)] evo-glass flex items-center justify-center text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] transition-colors">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <button id="evo-zoom-out" aria-label="缩小" class="w-9 h-9 rounded-[var(--evo-radius-md)] evo-glass flex items-center justify-center text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] transition-colors">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg>
+            </button>
+            <button id="evo-zoom-reset" aria-label="重置视图" class="w-9 h-9 rounded-[var(--evo-radius-md)] evo-glass flex items-center justify-center text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] transition-colors" title="重置">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+          </div>
+
+          <!-- 图例 -->
+          <div class="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 flex flex-wrap gap-2 z-10 pointer-events-none">
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)] text-xs">核心主题</span>
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs">一级领域</span>
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-pink)]/20 text-[var(--evo-pink)] text-xs">二级话题</span>
+          </div>
+
+          <!-- 缩放比例提示 -->
+          <div id="evo-zoom-label" class="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 text-xs text-[var(--evo-ink-3)] evo-mono z-10 pointer-events-none">100%</div>
+        </div>
+
+        <!-- 最近笔记 -->
+        <aside class="space-y-4">
+          <div class="flex items-center justify-between evo-reveal" data-reveal-delay="100">
+            <h2 class="evo-title text-lg">最近笔记</h2>
+            <span class="text-xs text-[var(--evo-ink-3)]">500+ 节点</span>
+          </div>
+          <div id="evo-notes-list" class="space-y-4">
+            <!-- 由 garden.js 渲染 -->
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="evo-footer"></div>
+
+  <script type="module" src="/src/scripts/main.js"></script>
+  <script type="module" src="/src/scripts/pages/garden.js"></script>
+</body>
+</html>

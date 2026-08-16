@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="和 Echo 对话 — 阴之体道的数字分身，基于她的知识库回答关于作品、经历、思考的问题。" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>对话 · EchoVerse</title>
+</head>
+<body class="min-h-screen antialiased">
+  <div id="evo-header"></div>
+
+  <main class="pt-16">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div class="grid lg:grid-cols-[280px_1fr] gap-6 min-h-[calc(100vh-180px)]">
+        <!-- 左侧：对话历史 + 知识库 -->
+        <aside id="evo-chat-aside" class="hidden lg:block evo-glass rounded-[var(--evo-radius-lg)] p-4 h-fit">
+          <!-- 由 chat.js 渲染 -->
+        </aside>
+
+        <!-- 右侧：对话主区 -->
+        <div class="flex flex-col evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden min-h-[600px]">
+          <!-- 对话头部 -->
+          <div class="p-4 border-b border-[var(--evo-border)] flex items-center gap-3">
+            <button id="evo-chat-history-btn" class="lg:hidden w-9 h-9 rounded-[var(--evo-radius-md)] evo-glass flex items-center justify-center text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" aria-label="历史对话">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            </button>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] to-[var(--evo-pink)] flex items-center justify-center text-white text-sm font-bold">E</div>
+            <div class="flex-1 min-w-0">
+              <div class="evo-title truncate">Echo · 数字分身</div>
+              <div class="text-xs text-[var(--evo-state-success)] flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[var(--evo-state-success)] evo-animate-pulse"></span>
+                <span id="evo-chat-status">在线 · 基于我的知识库</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 消息列表 -->
+          <div id="evo-chat-messages" class="flex-1 p-4 sm:p-6 space-y-6 overflow-y-auto">
+            <!-- 由 chat.js 渲染 -->
+          </div>
+
+          <!-- 输入区 -->
+          <div class="p-4 border-t border-[var(--evo-border)]">
+            <div class="flex flex-wrap gap-2 mb-3" id="evo-quick-prompts">
+              <!-- 由 chat.js 渲染 -->
+            </div>
+            <form id="evo-chat-form" class="flex gap-3">
+              <input
+                id="evo-chat-input"
+                type="text"
+                placeholder="向 Echo 提问..."
+                autocomplete="off"
+                class="flex-1 bg-[var(--evo-surface-2)] border border-[var(--evo-border)] rounded-[var(--evo-radius-md)] px-4 py-3 text-sm text-[var(--evo-ink)] placeholder:text-[var(--evo-ink-3)] focus:outline-none focus:ring-2 focus:ring-[var(--evo-ring)]"
+              />
+              <button type="submit" class="px-4 sm:px-5 py-3 rounded-[var(--evo-radius-md)] bg-[var(--evo-primary)] text-white text-sm font-medium hover:bg-[var(--evo-purple-400)] transition-colors flex items-center gap-2">
+                <span>发送</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 移动端历史抽屉遮罩 -->
+  <div id="evo-chat-overlay" class="evo-drawer-overlay lg:hidden"></div>
+
+  <div id="evo-footer"></div>
+
+  <script type="module" src="/src/scripts/main.js"></script>
+  <script type="module" src="/src/scripts/pages/chat.js"></script>
+</body>
+</html>
