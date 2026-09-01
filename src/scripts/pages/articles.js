@@ -11,10 +11,11 @@ let currentFilter = 'all'
 let articles = []
 
 const CAT_TONE = {
-  design: 'bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)]',
-  tech: 'bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)]',
-  life: 'bg-[var(--evo-pink)]/20 text-[var(--evo-pink)]',
-  thought: 'bg-[var(--evo-violet)]/30 text-[var(--evo-violet)]'
+  '道': 'bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)]',
+  '法': 'bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)]',
+  '术': 'bg-[var(--evo-pink)]/20 text-[var(--evo-pink)]',
+  '器': 'bg-[var(--evo-violet)]/30 text-[var(--evo-violet)]',
+  '势': 'bg-[var(--evo-purple-700)]/20 text-[var(--evo-purple-400)]'
 }
 
 function renderFilters() {
