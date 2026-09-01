@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="EchoVerse · 个人数字化空间站 — 阴之体道的数字分身 Echo，作品、文章、思考被编织成一张可探索的知识网络。" />
+  <meta name="description" content="EchoVerse · 个人数字化空间站" />
   <meta name="theme-color" content="#0a0a0f" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>首页 · EchoVerse</title>
@@ -23,25 +23,24 @@
         <div class="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-[var(--evo-cyan)] opacity-10 blur-[100px]"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-[var(--evo-border)] opacity-30"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full border border-[var(--evo-border)] opacity-40"></div>
-        <!-- 星空由 home.js 动态生成插入此处 -->
       </div>
 
       <div class="relative z-10 text-center max-w-4xl mx-auto">
         <div class="evo-animate-float mb-10 evo-reveal" data-reveal-delay="0">
           <div class="w-48 h-48 mx-auto rounded-full evo-gradient-border evo-glass flex items-center justify-center evo-glow-purple">
             <div class="w-36 h-36 rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] via-[var(--evo-violet)] to-[var(--evo-pink)] flex items-center justify-center">
-              <span class="evo-display text-5xl text-white">Echo</span>
+              <span id="evo-home-avatar-char" class="evo-display text-5xl text-white">Echo</span>
             </div>
           </div>
         </div>
         <h1 class="evo-display text-4xl sm:text-5xl md:text-7xl mb-6 evo-reveal" data-reveal-delay="100">
-          你好，我是 <span class="evo-gradient-text">Echo</span>
+          你好，我是 <span id="evo-home-doppelganger-name" class="evo-gradient-text">Echo</span>
         </h1>
-        <p class="evo-body text-base sm:text-lg md:text-xl text-[var(--evo-ink-2)] mb-10 max-w-2xl mx-auto evo-reveal" data-reveal-delay="200">
+        <p id="evo-home-hero-desc" class="evo-body text-base sm:text-lg md:text-xl text-[var(--evo-ink-2)] mb-10 max-w-2xl mx-auto evo-reveal" data-reveal-delay="200">
           她是我的数字分身，可以回答关于我的一切。在这里，作品、文章、思考被编织成一张可探索的知识网络。
         </p>
         <a href="chat.html" data-dom-id="cta-chat" class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-[var(--evo-radius-lg)] bg-[var(--evo-primary)] text-white font-medium text-base sm:text-lg hover:bg-[var(--evo-purple-400)] transition-all hover:-translate-y-0.5 evo-glow-purple evo-reveal" data-reveal-delay="300">
-          和 Echo 聊聊 <span aria-hidden="true">→</span>
+          和 <span id="evo-home-doppelganger-name-2">Echo</span> 聊聊 <span aria-hidden="true">→</span>
         </a>
       </div>
 
@@ -51,23 +50,58 @@
           <a href="portfolio.html" data-dom-id="orbit-portfolio" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-reveal" data-reveal-delay="400">
             <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-purple-500)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-purple transition-all">🎨</div>
             <h3 class="evo-title text-base sm:text-lg mb-1">作品集</h3>
-            <p class="text-xs sm:text-sm text-[var(--evo-ink-3)]">36 个项目</p>
+            <p id="evo-home-count-projects" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">— 个项目</p>
           </a>
           <a href="articles.html" data-dom-id="orbit-articles" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-reveal" data-reveal-delay="500">
             <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-cyan)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-cyan transition-all">✍️</div>
             <h3 class="evo-title text-base sm:text-lg mb-1">文章</h3>
-            <p class="text-xs sm:text-sm text-[var(--evo-ink-3)]">128 篇长文</p>
+            <p id="evo-home-count-articles" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">— 篇长文</p>
           </a>
           <a href="garden.html" data-dom-id="orbit-garden" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-reveal" data-reveal-delay="600">
             <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-pink)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-pink transition-all">🌱</div>
             <h3 class="evo-title text-base sm:text-lg mb-1">数字花园</h3>
-            <p class="text-xs sm:text-sm text-[var(--evo-ink-3)]">500+ 笔记节点</p>
+            <p id="evo-home-count-notes" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">— 条笔记</p>
           </a>
           <a href="about.html" data-dom-id="orbit-about" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-reveal" data-reveal-delay="700">
             <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-violet)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-purple transition-all">👤</div>
             <h3 class="evo-title text-base sm:text-lg mb-1">关于我</h3>
-            <p class="text-xs sm:text-sm text-[var(--evo-ink-3)]">阴之体道</p>
+            <p id="evo-home-count-owner" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">—</p>
           </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================
+         精选内容区块
+         =================================================== -->
+    <section class="relative px-6 py-20 sm:py-28">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-end justify-between mb-10 evo-reveal">
+          <div>
+            <p class="text-sm text-[var(--evo-purple-300)] mb-2 tracking-widest">— FEATURED</p>
+            <h2 class="evo-display text-3xl sm:text-4xl">精选作品</h2>
+          </div>
+          <a href="portfolio.html" class="hidden sm:inline-flex items-center gap-1 text-sm text-[var(--evo-ink-3)] hover:text-[var(--evo-purple-300)] transition-colors">查看全部 →</a>
+        </div>
+        <div id="evo-home-featured" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <!-- 由 home.js 渲染 -->
+          <div class="col-span-full text-center py-12 text-[var(--evo-ink-3)]">加载中…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="relative px-6 py-16 sm:py-24 bg-gradient-to-b from-transparent via-[var(--evo-surface-1)]/40 to-transparent">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-end justify-between mb-10 evo-reveal">
+          <div>
+            <p class="text-sm text-[var(--evo-cyan)] mb-2 tracking-widest">— RECENT</p>
+            <h2 class="evo-display text-3xl sm:text-4xl">最近文章</h2>
+          </div>
+          <a href="articles.html" class="hidden sm:inline-flex items-center gap-1 text-sm text-[var(--evo-ink-3)] hover:text-[var(--evo-cyan)] transition-colors">查看全部 →</a>
+        </div>
+        <div id="evo-home-recent" class="space-y-4">
+          <!-- 由 home.js 渲染 -->
+          <div class="text-center py-12 text-[var(--evo-ink-3)]">加载中…</div>
         </div>
       </div>
     </section>
