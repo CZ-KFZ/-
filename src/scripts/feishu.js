@@ -29,6 +29,23 @@ async function fetchFromFeishu(type) {
 }
 
 // ------------------------------------------------------------
+// 解析单选字段：飞书单选返回 { text: "选项名" }，多选返回 [{ text }]
+// 这里统一提取出选项名字符串
+// ------------------------------------------------------------
+function extractOption(fieldValue, fallback = '') {
+  if (!fieldValue) return fallback
+  if (typeof fieldValue === 'string') return fieldValue
+  if (typeof fieldValue === 'object') {
+    if (Array.isArray(fieldValue)) {
+      const first = fieldValue[0]
+      return first ? (first.text || first.value || first.name || fallback) : fallback
+    }
+    return fieldValue.text || fieldValue.value || fieldValue.name || fallback
+  }
+  return fallback
+}
+
+// ------------------------------------------------------------
 // 解析附件字段：飞书附件返回 [{ file_token, name, type, url, ... }]
 // url 是临时的（带 session），前端不能直接用。
 // 要用公开可访问的 URL，需要：
@@ -57,11 +74,12 @@ function normalizeArticle(record) {
   return {
     id: record.record_id,
     title: f['标题'] || '',
-    category: f['分类'] || 'design',
-    categoryLabel: f['分类显示名'] || f['分类'] || '',
+    category: extractOption(f['分类'], 'design'),
+    categoryLabel: f['分类显示名'] || extractOption(f['分类'], ''),
     date: formatDate(f['日期']),
     readTime: f['阅读时长'] || '',
     excerpt: f['摘要'] || '',
+    content: f['正文'] || '',
     coverImage: cover ? cover.url : null,
     featured: f['推荐'] || false
   }
@@ -78,11 +96,11 @@ function normalizeProject(record) {
   return {
     id: record.record_id,
     title: f['标题'] || '',
-    category: f['分类'] || 'design',
-    categoryLabel: f['分类显示名'] || f['分类'] || '',
+    category: extractOption(f['分类'], 'design'),
+    categoryLabel: f['分类显示名'] || extractOption(f['分类'], ''),
     year: String(f['年份'] || ''),
     desc: f['简介'] || '',
-    accent: f['主题色'] || 'purple',
+    accent: extractOption(f['主题色'], 'purple'),
     coverImage: cover ? cover.url : null,
     video: video ? video.url : null,
     demoUrl: f['Demo链接'] || null
@@ -125,7 +143,7 @@ function normalizeTimeline(record) {
     period: f['时间段'] || '',
     title: f['标题'] || '',
     desc: f['描述'] || '',
-    dot: f['圆点配色'] || 'primary'
+    dot: extractOption(f['圆点配色'], 'primary')
   }
 }
 
