@@ -103,7 +103,7 @@ function normalizeProject(record) {
     accent: extractOption(f['主题色'], 'purple'),
     coverImage: cover ? cover.url : null,
     video: video ? video.url : null,
-    demoUrl: f['Demo链接'] || null
+    demoUrl: f['Demo链接'] || f['访问链接'] || f['链接'] || null
   }
 }
 
