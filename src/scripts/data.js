@@ -90,8 +90,7 @@ export const ARTICLES = [
   {
     id: 'design-system',
     title: '当我们谈论设计系统时，我们在谈论什么',
-    category: 'design',
-    categoryLabel: '设计思考',
+    category: '道',
     date: '2025年6月15日',
     readTime: '8 分钟阅读',
     excerpt: '设计系统这个词被滥用了。很多人以为做一套组件库就是设计系统，但真正的设计系统远不止于此。它是关于决策的框架，是关于如何在团队中共享设计语言的机制，是组织文化在视觉层面的投射...'
@@ -99,8 +98,7 @@ export const ARTICLES = [
   {
     id: 'digital-twin',
     title: '我用自己的所有文章训练了一个数字分身，这是我的体验',
-    category: 'tech',
-    categoryLabel: '技术探索',
+    category: '术',
     date: '2025年5月28日',
     readTime: '12 分钟阅读',
     excerpt: '把过去五年写的 128 篇文章、36 个项目文档、甚至是读书笔记都喂给了一个大模型，然后让它以"我"的身份和别人对话。结果让我既惊讶又不安...'
@@ -108,8 +106,7 @@ export const ARTICLES = [
   {
     id: 'nomad-settle',
     title: '数字游民三年后，我为什么决定安定下来',
-    category: 'life',
-    categoryLabel: '生活方式',
+    category: '势',
     date: '2025年4月10日',
     readTime: '6 分钟阅读',
     excerpt: '从清迈到巴厘岛，从里斯本到墨西哥城，三年的数字游民生活教会了我很多。但最终我意识到，自由不是永远在路上，而是能够选择停留在哪里...'
@@ -117,8 +114,7 @@ export const ARTICLES = [
   {
     id: 'creator-compound',
     title: '创作者的"复利效应"：为什么你应该坚持输出',
-    category: 'thought',
-    categoryLabel: '创意方法',
+    category: '术',
     date: '2025年3月22日',
     readTime: '10 分钟阅读',
     excerpt: '创作不是一场短跑，而是一场无限游戏。你写的每一篇文章、做的每一个项目，都在为你的下一个作品积累势能。这就是创作者的复利...'
@@ -126,8 +122,7 @@ export const ARTICLES = [
   {
     id: 'attention',
     title: '关于注意力的思考',
-    category: 'thought',
-    categoryLabel: '哲学思考',
+    category: '道',
     date: '2025年2月18日',
     readTime: '7 分钟阅读',
     excerpt: '注意力是我们最稀缺的资源，如何分配它决定了我们成为什么样的人。在信息爆炸的时代，专注本身已经成为一种超能力...'
@@ -135,8 +130,7 @@ export const ARTICLES = [
   {
     id: 'slow-creation',
     title: '慢创作宣言',
-    category: 'design',
-    categoryLabel: '创作方法',
+    category: '道',
     date: '2025年1月5日',
     readTime: '9 分钟阅读',
     excerpt: '在追求速度的时代，慢下来反而成了一种竞争优势。慢创作不是拖延，而是给思考留出空间，让作品自然生长出它该有的样子...'
@@ -145,10 +139,11 @@ export const ARTICLES = [
 
 export const ARTICLE_FILTERS = [
   { key: 'all', label: '全部' },
-  { key: 'design', label: '设计' },
-  { key: 'tech', label: '技术' },
-  { key: 'life', label: '生活' },
-  { key: 'thought', label: '思考' }
+  { key: '道', label: '道' },
+  { key: '法', label: '法' },
+  { key: '术', label: '术' },
+  { key: '器', label: '器' },
+  { key: '势', label: '势' }
 ]
 
 // 数字花园：知识图谱节点（用于交互式图谱渲染）
