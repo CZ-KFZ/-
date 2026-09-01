@@ -94,11 +94,30 @@ function openProjectModal(project) {
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/)
     return match ? match[1] : null
   }
+  // 提取西瓜视频 ID：支持 ixigua.com/7xxxxx / ixigua.com/video/7xxxxx / toutiao.com/video/7xxxxx / m.toutiao.com/video/7xxxxx
+  function extractXiguaId(url) {
+    if (!url) return null
+    // 优先匹配带路径的
+    let match = url.match(/(?:ixigua|toutiao|m\.toutiao)\.com\/(?:video|embed)?\/?(\d{16,})/)
+    if (match) return match[1]
+    // 短路径：ixigua.com/7xxxxx
+    match = url.match(/ixigua\.com\/(\d{16,})/)
+    if (match) return match[1]
+    // 分享短链接的 item_id 参数
+    match = url.match(/item_id=(\d{16,})/)
+    return match ? match[1] : null
+  }
   const ytId = extractYouTubeId(project.demoUrl)
+  const xiguaId = extractXiguaId(project.demoUrl)
 
-  // 视频内容：优先 YouTube 嵌入 → 其次飞书附件视频 → 否则不显示
+  // 视频内容：西瓜嵌入 → YouTube 嵌入 → 飞书附件视频
   let mediaHtml = ''
-  if (ytId) {
+  if (xiguaId) {
+    mediaHtml = `
+      <div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden aspect-video bg-black">
+        <iframe width="100%" height="100%" src="https://www.ixigua.com/iframe/${xiguaId}?autoplay=0" title="${project.title} 视频" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="unsafe-url"></iframe>
+      </div>`
+  } else if (ytId) {
     mediaHtml = `
       <div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden aspect-video bg-black">
         <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1" title="${project.title} 视频" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -110,10 +129,18 @@ function openProjectModal(project) {
       </div>`
   }
 
-  // 底部按钮：有 YouTube 嵌入就不显示跳转按钮了（视频直接在弹窗里看）；普通链接显示跳转按钮
+  // 底部按钮：有视频嵌入的情况显示"在 xx 打开"；普通链接显示跳转按钮
   let actionHtml = ''
   if (project.demoUrl) {
-    if (ytId) {
+    if (xiguaId) {
+      actionHtml = `
+        <div class="flex flex-wrap gap-3 mt-6">
+          <a href="${project.demoUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:text-white hover:border-[var(--evo-purple-400)] transition-all text-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            在西瓜视频打开
+          </a>
+        </div>`
+    } else if (ytId) {
       actionHtml = `
         <div class="flex flex-wrap gap-3 mt-6">
           <a href="${project.demoUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:text-white hover:border-[var(--evo-purple-400)] transition-all text-sm">
