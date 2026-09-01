@@ -87,15 +87,50 @@ function openProjectModal(project) {
     ? `<div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden aspect-[16/9]"><img src="${project.coverImage}" alt="${project.title}" class="w-full h-full object-cover" /></div>`
     : `<div class="mb-6 rounded-[var(--evo-radius-md)] h-48 sm:h-64 bg-gradient-to-br ${gradient} flex items-center justify-center p-4"><span class="evo-title text-2xl sm:text-3xl text-white/90 text-center">${project.title}</span></div>`
   const toneCls = TAG_TONE[project.accent] || TAG_TONE.purple
-  const videoHtml = project.video
-    ? `<div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden"><video src="${project.video}" controls class="w-full"></video></div>`
-    : ''
-  const linkHtml = project.demoUrl
-    ? `<a href="${project.demoUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-purple-600)] to-[var(--evo-violet)] text-white hover:brightness-110 transition-all shadow-lg shadow-[var(--evo-purple-600)]/20">
-         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-         访问项目
-       </a>`
-    : `<p class="text-[var(--evo-ink-3)] italic text-sm">（还没填访问链接，去飞书作品集表的「访问链接」字段里填）</p>`
+
+  // 提取 YouTube 视频 ID（支持 watch?v= / youtu.be / /embed/ / /shorts/ 多种格式）
+  function extractYouTubeId(url) {
+    if (!url) return null
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/)
+    return match ? match[1] : null
+  }
+  const ytId = extractYouTubeId(project.demoUrl)
+
+  // 视频内容：优先 YouTube 嵌入 → 其次飞书附件视频 → 否则不显示
+  let mediaHtml = ''
+  if (ytId) {
+    mediaHtml = `
+      <div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden aspect-video bg-black">
+        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1" title="${project.title} 视频" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>`
+  } else if (project.video) {
+    mediaHtml = `
+      <div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden">
+        <video src="${project.video}" controls class="w-full"></video>
+      </div>`
+  }
+
+  // 底部按钮：有 YouTube 嵌入就不显示跳转按钮了（视频直接在弹窗里看）；普通链接显示跳转按钮
+  let actionHtml = ''
+  if (project.demoUrl) {
+    if (ytId) {
+      actionHtml = `
+        <div class="flex flex-wrap gap-3 mt-6">
+          <a href="${project.demoUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:text-white hover:border-[var(--evo-purple-400)] transition-all text-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            在 YouTube 打开
+          </a>
+        </div>`
+    } else {
+      actionHtml = `
+        <a href="${project.demoUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-purple-600)] to-[var(--evo-violet)] text-white hover:brightness-110 transition-all shadow-lg shadow-[var(--evo-purple-600)]/20 mt-6">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          访问项目
+        </a>`
+    }
+  } else {
+    actionHtml = `<p class="text-[var(--evo-ink-3)] italic text-sm mt-6">（还没填访问链接，去飞书作品集表的「访问链接」字段里填）</p>`
+  }
 
   const modal = document.createElement('div')
   modal.id = 'evo-project-modal'
@@ -112,10 +147,8 @@ function openProjectModal(project) {
       </div>
       <h1 class="evo-title text-2xl sm:text-3xl mb-6">${project.title}</h1>
       <div class="text-[var(--evo-ink-2)] leading-loose mb-6 whitespace-pre-line">${project.desc || '暂无介绍'}</div>
-      ${videoHtml}
-      <div class="mt-6">
-        ${linkHtml}
-      </div>
+      ${mediaHtml}
+      ${actionHtml}
     </div>
   `
   modal.addEventListener('click', () => modal.remove())
