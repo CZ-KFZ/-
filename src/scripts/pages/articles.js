@@ -45,7 +45,7 @@ function articleCard(a, index) {
     ? `<div class="mb-4 rounded-[var(--evo-radius-md)] overflow-hidden aspect-[16/9]"><img src="${a.coverImage}" alt="${a.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
     : ''
   return `
-    <article class="evo-glass rounded-[var(--evo-radius-lg)] p-6 md:p-8 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal group" data-reveal-delay="${Math.min(index * 80, 400)}">
+    <article class="evo-glass rounded-[var(--evo-radius-lg)] p-6 md:p-8 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal group" data-reveal-delay="${Math.min(index * 80, 400)}" data-article-id="${a.id}">
       ${coverHtml}
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${a.categoryLabel}</span>
@@ -56,6 +56,57 @@ function articleCard(a, index) {
       <p class="text-[var(--evo-ink-2)] leading-relaxed">${a.excerpt}</p>
       <div class="mt-4 flex items-center gap-1 text-sm text-[var(--evo-purple-300)] opacity-0 group-hover:opacity-100 transition-opacity">阅读全文 →</div>
     </article>`
+}
+
+// 文章详情弹窗
+function openArticleModal(article) {
+  // 移除已有弹窗
+  const existing = document.getElementById('evo-article-modal')
+  if (existing) existing.remove()
+
+  const coverHtml = article.coverImage
+    ? `<div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden aspect-[16/9]"><img src="${article.coverImage}" alt="${article.title}" class="w-full h-full object-cover" /></div>`
+    : ''
+  const toneCls = CAT_TONE[article.category] || CAT_TONE.design
+  // 把正文里的换行转成 <br>，把空行转成段落
+  const contentHtml = article.content
+    ? `<div class="prose-content text-[var(--evo-ink-2)] leading-loose space-y-4">${article.content
+        .split(/\n\n+/)
+        .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+        .join('')}</div>`
+    : `<p class="text-[var(--evo-ink-3)] italic">这篇文章暂无正文内容，请在飞书「文章」表的「正文」字段里填写。</p>`
+
+  const modal = document.createElement('div')
+  modal.id = 'evo-article-modal'
+  modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm'
+  modal.innerHTML = `
+    <div class="evo-glass max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-[var(--evo-radius-lg)] p-6 md:p-10 relative" onclick="event.stopPropagation()">
+      <button class="absolute top-4 right-4 w-9 h-9 rounded-full bg-[var(--evo-surface-2)] hover:bg-[var(--evo-purple-500)]/30 text-[var(--evo-ink-2)] hover:text-white transition-all flex items-center justify-center" id="evo-article-close" aria-label="关闭">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      ${coverHtml}
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${article.categoryLabel}</span>
+        <span class="text-xs text-[var(--evo-ink-3)]">${article.date}</span>
+        <span class="text-xs text-[var(--evo-ink-3)]">${article.readTime}</span>
+      </div>
+      <h1 class="evo-title text-2xl sm:text-3xl mb-6">${article.title}</h1>
+      ${contentHtml}
+    </div>
+  `
+  // 点遮罩关闭
+  modal.addEventListener('click', () => modal.remove())
+  // 点关闭按钮
+  modal.querySelector('#evo-article-close').addEventListener('click', () => modal.remove())
+  // ESC 关闭
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove()
+      document.removeEventListener('keydown', escHandler)
+    }
+  }
+  document.addEventListener('keydown', escHandler)
+  document.body.appendChild(modal)
 }
 
 function renderList() {
@@ -73,6 +124,14 @@ function renderList() {
   list.classList.remove('hidden')
   empty.classList.add('hidden')
   list.innerHTML = items.map((a, i) => articleCard(a, i)).join('')
+  // 绑定点击事件：打开文章详情弹窗
+  list.querySelectorAll('[data-article-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.articleId
+      const article = articles.find((a) => a.id === id)
+      if (article) openArticleModal(article)
+    })
+  })
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
