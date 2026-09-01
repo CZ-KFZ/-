@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="数字花园 — 可缩放拖拽的知识网络，500+ 笔记节点编织成的探索图谱。" />
+  <meta name="description" content="数字花园 — 可缩放拖拽的知识网络，笔记节点编织成的探索图谱。" />
   <meta name="theme-color" content="#0a0a0f" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>数字花园 · EchoVerse</title>
@@ -18,7 +18,7 @@
         <div class="evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 relative overflow-hidden min-h-[480px] sm:min-h-[500px] evo-reveal">
           <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-10 pointer-events-none">
             <h1 class="evo-display text-xl sm:text-2xl mb-1">数字花园</h1>
-            <p class="text-sm text-[var(--evo-ink-3)]">可缩放拖拽的知识网络</p>
+            <p id="evo-garden-subtitle" class="text-sm text-[var(--evo-ink-3)]">可缩放拖拽的知识网络</p>
           </div>
 
           <!-- SVG 图谱容器 -->
@@ -39,8 +39,8 @@
             </button>
           </div>
 
-          <!-- 图例 -->
-          <div class="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 flex flex-wrap gap-2 z-10 pointer-events-none">
+          <!-- 图例（动态，由 garden.js 更新） -->
+          <div id="evo-graph-legend" class="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 flex flex-wrap gap-2 z-10 pointer-events-none">
             <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)] text-xs">核心主题</span>
             <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs">一级领域</span>
             <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-pink)]/20 text-[var(--evo-pink)] text-xs">二级话题</span>
@@ -54,10 +54,11 @@
         <aside class="space-y-4">
           <div class="flex items-center justify-between evo-reveal" data-reveal-delay="100">
             <h2 class="evo-title text-lg">最近笔记</h2>
-            <span class="text-xs text-[var(--evo-ink-3)]">500+ 节点</span>
+            <span id="evo-notes-count" class="text-xs text-[var(--evo-ink-3)]">— 节点</span>
           </div>
           <div id="evo-notes-list" class="space-y-4">
             <!-- 由 garden.js 渲染 -->
+            <div class="text-center py-8 text-[var(--evo-ink-3)] text-sm">加载中…</div>
           </div>
         </aside>
       </div>

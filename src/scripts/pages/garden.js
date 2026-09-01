@@ -1,19 +1,25 @@
 // ============================================================
-// 数字花园 garden.js（CMS 版）
-// 笔记数据：优先飞书多维表格；图谱节点结构沿用 data.js（拓扑固定）
-// 节点↔笔记联动：通过 note.graphNode 字段匹配
+// 数字花园 garden.js（实时版）
+// 数据来源：飞书多维表格「笔记」
+// - 网络图：用笔记的「分类」作为一级/二级节点，按分类数量多寡决定层级；
+//           如果笔记条数太少，fallback 到基于分类名的固定布局；
+//           每条笔记挂在它所属分类下。
+// - 最近笔记：按原顺序取前 12 条。
+// - 计数：真实显示笔记条数 + 分类数。
 // ============================================================
 
-import { fetchNotes } from '../feishu.js'
-import { GARDEN_NODES, GARDEN_LINKS, GARDEN_NOTES as MOCK_NOTES } from '../data.js'
+import { fetchNotes, fetchSiteSettings } from '../feishu.js'
+import { GARDEN_NOTES as MOCK_NOTES } from '../data.js'
 
 let notes = []
 
-// 笔记 → 图谱节点 映射（基于 note.graphNode 字段动态构建）
+// 笔记 -> 图谱节点 映射：每条笔记映射到它的分类节点 id
 function buildNoteToNodeMap() {
   const map = {}
   notes.forEach((n) => {
-    if (n.graphNode) map[n.id] = n.graphNode
+    const cat = (n.category || n.categoryLabel || '未分类').toString()
+    const nodeId = nodeIdFromCat(cat)
+    if (nodeId) map[n.id] = nodeId
   })
   return map
 }
@@ -23,10 +29,129 @@ const MIN_SCALE = 0.5
 const MAX_SCALE = 2.5
 let selectedNodeId = null
 
+// 当前动态生成的图
+let GRAPH_NODES = []
+let GRAPH_LINKS = []
+let ADJACENCY = {}
+
+function nodeIdFromCat(name) {
+  if (!name) return null
+  return 'n_' + name.replace(/[\s_/\\-]+/g, '_').replace(/[^0-9a-zA-Z_\u4e00-\u9fa5]/g, '')
+}
+
+// ------------------------------------------------------------
+// 根据笔记动态生成图谱
+// 结构：
+//   核心节点(level0)：「知识网络」1 个
+//   一级领域(level1)：分类名（最多 8 个）
+//   二级话题(level2)：如果笔记多，再拆二级（暂时按 标题/标签 生成）
+// ------------------------------------------------------------
+function buildGraphFromNotes(allNotes) {
+  const NODES = []
+  const LINKS = []
+
+  // 分类统计
+  const catCount = {}
+  allNotes.forEach((n) => {
+    const c = (n.category || n.categoryLabel || '未分类').toString()
+    catCount[c] = (catCount[c] || 0) + 1
+  })
+  const cats = Object.keys(catCount).sort((a, b) => catCount[b] - catCount[a]).slice(0, 8)
+
+  // 核心节点：居中（level 0）
+  const centerLabel = pickCenterLabel(allNotes)
+  const centerId = 'n_root'
+  NODES.push({
+    id: centerId,
+    label: centerLabel,
+    level: 0,
+    color: 'var(--evo-violet)',
+    r: 46,
+    x: 400,
+    y: 250,
+    glow: 'purple'
+  })
+
+  // 一级领域节点：环形分布
+  const n1 = cats.length || 1
+  const radius = cats.length <= 3 ? 130 : cats.length <= 5 ? 150 : 170
+  const palette = ['var(--evo-cyan)', 'var(--evo-pink)', 'var(--evo-purple-500)', 'var(--evo-violet)', 'var(--evo-purple-300)', 'var(--evo-purple-400)', '#67e8f9', '#c084fc']
+  cats.forEach((cat, i) => {
+    const angle = (-Math.PI / 2) + (2 * Math.PI * i) / n1
+    const x = 400 + Math.cos(angle) * radius
+    const y = 250 + Math.sin(angle) * radius
+    const id = nodeIdFromCat(cat)
+    NODES.push({
+      id,
+      label: cat,
+      level: 1,
+      color: palette[i % palette.length],
+      r: 28,
+      x, y
+    })
+    LINKS.push([centerId, id])
+  })
+
+  // 二级话题：从每条笔记里抽「标签」或「标题前 4 个字」作为外围节点
+  // 限制最多 18 个，不然密密麻麻
+  const MAX_L2 = 18
+  let l2Added = 0
+  const seenL2 = new Set()
+  allNotes.forEach((n) => {
+    if (l2Added >= MAX_L2) return
+    const parentId = nodeIdFromCat((n.category || n.categoryLabel || '未分类').toString())
+    const parent = NODES.find((nd) => nd.id === parentId)
+    if (!parent) return
+    const labels = []
+    if (n.tags && n.tags.length) {
+      n.tags.forEach((t) => {
+        const lbl = (typeof t === 'string' ? t : t.label || t.text || '').toString().trim()
+        if (lbl) labels.push(lbl)
+      })
+    } else if (n.title) {
+      labels.push(n.title.toString().slice(0, 6))
+    }
+    labels.forEach((lbl) => {
+      if (l2Added >= MAX_L2) return
+      const lid = nodeIdFromCat(parentId + '__' + lbl)
+      if (seenL2.has(lid)) return
+      seenL2.add(lid)
+      // 分布：父节点方向向外偏移
+      const dx = parent.x - 400
+      const dy = parent.y - 250
+      const dist = Math.hypot(dx, dy) || 1
+      const spread = 85
+      const jitter = (l2Added % 5) * 18 - 36
+      const normJitterX = (-dy / dist) * jitter
+      const normJitterY = (dx / dist) * jitter
+      const x = parent.x + (dx / dist) * spread + normJitterX
+      const y = parent.y + (dy / dist) * spread + normJitterY
+      NODES.push({
+        id: lid,
+        label: lbl,
+        level: 2,
+        color: parent.color,
+        r: 20,
+        x, y
+      })
+      LINKS.push([parentId, lid])
+      l2Added++
+    })
+  })
+
+  return { NODES, LINKS }
+}
+
+function pickCenterLabel(allNotes) {
+  // 尝试从站点设置取身份描述里的核心词
+  return allNotes.length ? '知识网络' : '数字花园'
+}
+
 function buildAdjacency() {
   const adj = {}
-  GARDEN_NODES.forEach((n) => (adj[n.id] = { links: [], neighbors: [] }))
-  GARDEN_LINKS.forEach(([a, b], i) => {
+  GRAPH_NODES.forEach((n) => (adj[n.id] = { links: [], neighbors: [] }))
+  GRAPH_LINKS.forEach(([a, b], i) => {
+    if (!adj[a] || !adj[b]) return
     adj[a].links.push(i)
     adj[b].links.push(i)
     adj[a].neighbors.push(b)
@@ -34,20 +159,20 @@ function buildAdjacency() {
   })
   return adj
 }
-const adjacency = buildAdjacency()
 
 function renderGraph() {
   const container = document.getElementById('evo-graph-canvas')
   if (!container) return
 
-  const linksHtml = GARDEN_LINKS.map(([a, b], i) => {
-    const na = GARDEN_NODES.find((n) => n.id === a)
-    const nb = GARDEN_NODES.find((n) => n.id === b)
+  const linksHtml = GRAPH_LINKS.map(([a, b], i) => {
+    const na = GRAPH_NODES.find((n) => n.id === a)
+    const nb = GRAPH_NODES.find((n) => n.id === b)
+    if (!na || !nb) return ''
     const w = na.level === 0 || nb.level === 0 ? 1.5 : 1
     return `<line data-link="${i}" data-from="${a}" data-to="${b}" x1="${na.x}" y1="${na.y}" x2="${nb.x}" y2="${nb.y}" stroke="url(#evoLinkGrad)" stroke-width="${w}" class="evo-graph-link transition-all duration-200"/>`
   }).join('')
 
-  const nodesHtml = GARDEN_NODES.map((n) => {
+  const nodesHtml = GRAPH_NODES.map((n) => {
     const glowClass = n.glow === 'purple' ? 'evo-glow-purple' : ''
     const stroke = n.level === 2 ? 'stroke="var(--evo-border)"' : ''
     const fontSize = n.level === 0 ? 11 : n.level === 1 ? 10 : 8
@@ -203,7 +328,7 @@ function attachNodeEvents() {
 }
 
 function highlightNode(id) {
-  const adj = adjacency[id]
+  const adj = ADJACENCY[id]
   if (!adj) return
   const neighborSet = new Set(adj.neighbors)
   neighborSet.add(id)
@@ -234,7 +359,7 @@ function clearHighlight() {
 function selectNode(id) {
   selectedNodeId = id
   highlightNode(id)
-  // 联动：找关联到此节点的笔记
+  // 找关联到此节点的笔记
   const noteToNode = buildNoteToNodeMap()
   const noteId = Object.keys(noteToNode).find((k) => noteToNode[k] === id)
   highlightNote(noteId)
@@ -256,19 +381,35 @@ function renderNotes() {
   const box = document.getElementById('evo-notes-list')
   if (!box) return
   if (!notes.length) {
-    box.innerHTML = '<div class="text-center py-8 text-[var(--evo-ink-3)] text-sm">暂无笔记</div>'
+    box.innerHTML = '<div class="text-center py-8 text-[var(--evo-ink-3)] text-sm">暂无笔记，飞书「笔记」表添加一条记录后这里会实时显示。</div>'
     return
   }
-  box.innerHTML = notes
+  // 取前 12 条
+  const list = notes.slice(0, 12)
+  box.innerHTML = list
     .map(
-      (n, i) => `
+      (n, i) => {
+        const tags = n.tags && n.tags.length ? n.tags : []
+        const cat = n.category || n.categoryLabel
+        const catChip = cat
+          ? `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-violet)]/30 text-[var(--evo-violet)] text-xs">${cat}</span>`
+          : ''
+        const tagsHtml = tags.map((t) => {
+          const tone = (typeof t === 'string') ? 'purple' : (t.tone || 'purple')
+          const label = (typeof t === 'string') ? t : (t.label || t.text || '')
+          return `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${NOTE_TONE[tone] || NOTE_TONE.purple} text-xs">${label}</span>`
+        }).join('')
+        return `
       <article data-note="${n.id}" class="evo-glass rounded-[var(--evo-radius-lg)] p-5 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal" data-reveal-delay="${Math.min(150 + i * 80, 500)}">
         <div class="flex flex-wrap gap-2 mb-3">
-          ${(n.tags || []).map((t) => `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${NOTE_TONE[t.tone] || NOTE_TONE.purple} text-xs">${t.label}</span>`).join('')}
+          ${catChip}
+          ${tagsHtml}
         </div>
-        <h3 class="evo-title text-lg mb-2">${n.title}</h3>
-        <p class="text-sm text-[var(--evo-ink-2)] line-clamp-2">${n.excerpt}</p>
+        <h3 class="evo-title text-lg mb-2">${n.title || '未命名笔记'}</h3>
+        <p class="text-sm text-[var(--evo-ink-2)] line-clamp-2">${n.excerpt || '暂无摘要'}</p>
+        ${n.publishedAt ? `<div class="mt-3 text-[11px] text-[var(--evo-ink-3)] evo-mono">${n.publishedAt}</div>` : ''}
       </article>`
+      }
     )
     .join('')
 
@@ -304,33 +445,101 @@ function highlightNote(noteId) {
 }
 
 function panToNode(id) {
-  const node = GARDEN_NODES.find((n) => n.id === id)
+  const node = GRAPH_NODES.find((n) => n.id === id)
   if (!node) return
   view.tx = 400 - node.x * view.scale
   view.ty = 250 - node.y * view.scale
   applyTransform()
 }
 
+// ------------------------------------------------------------
+// 数据加载
+// ------------------------------------------------------------
 async function loadData() {
-  const raw = await fetchNotes()
-  if (raw && raw.length) {
-    notes = raw
-    return
+  const [rawNotes, rawSettings] = await Promise.all([
+    fetchNotes().catch(() => null),
+    fetchSiteSettings().catch(() => null)
+  ])
+
+  if (rawNotes && rawNotes.length) {
+    notes = rawNotes
+  } else {
+    // fallback：老 mock，加分类信息
+    notes = MOCK_NOTES.map((n) => ({
+      id: n.id,
+      title: n.title,
+      excerpt: n.excerpt,
+      tags: n.tags || [],
+      graphNode: '',
+      category: (n.tags && n.tags[0] && (typeof n.tags[0] === 'string' ? n.tags[0] : n.tags[0].label)) || '未分类',
+      categoryLabel: '',
+      publishedAt: ''
+    }))
   }
-  notes = MOCK_NOTES.map((n) => ({ ...n }))
+  return { notes, settings: rawSettings || null }
+}
+
+function applyStats({ notes, settings }) {
+  const nNotes = notes.length
+  // 分类数量
+  const set = new Set()
+  notes.forEach((n) => {
+    const c = (n.category || n.categoryLabel || '').toString()
+    if (c) set.add(c)
+  })
+  const nCats = set.size
+
+  // 副标题（左上方）
+  const sub = document.getElementById('evo-garden-subtitle')
+  if (sub) {
+    const on = settings && settings.ownerName ? settings.ownerName : '她'
+    sub.textContent = `${on} 的 · ${nNotes} 条笔记 / ${nCats} 个分类`
+  }
+
+  // 右侧「X 节点」
+  const count = document.getElementById('evo-notes-count')
+  if (count) count.textContent = `${nNotes} 节点`
+
+  // 图例：有二级就显示全部；没笔记就隐藏
+  const legend = document.getElementById('evo-graph-legend')
+  if (legend) {
+    if (!nNotes) {
+      legend.style.display = 'none'
+    } else if (nCats === 0) {
+      legend.innerHTML = '<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)] text-xs">核心主题</span>'
+    } else if (notes.length < 6) {
+      legend.innerHTML = `
+        <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)] text-xs">核心主题</span>
+        <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs">分类领域</span>`
+    } else {
+      legend.innerHTML = `
+        <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)] text-xs">核心主题</span>
+        <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs">分类领域</span>
+        <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-pink)]/20 text-[var(--evo-pink)] text-xs">话题标签</span>`
+    }
+  }
+
+  // 图谱描述（meta 意义不大，这里给 HTML title 下面的说明）
 }
 
 async function init() {
+  // 先加载飞书数据再构建图，避免白图
+  const box = document.getElementById('evo-notes-list')
+  if (box) box.innerHTML = '<div class="text-center py-8 text-[var(--evo-ink-3)] text-sm">同步笔记中…</div>'
+
+  const { notes: nArr, settings } = await loadData()
+  const graph = buildGraphFromNotes(nArr)
+  GRAPH_NODES = graph.NODES
+  GRAPH_LINKS = graph.LINKS
+  ADJACENCY = buildAdjacency()
+
   renderGraph()
   applyTransform()
   setupPan()
   setupWheel()
   setupZoomButtons()
-  // 笔记区加载占位
-  const box = document.getElementById('evo-notes-list')
-  if (box) box.innerHTML = '<div class="text-center py-8 text-[var(--evo-ink-3)] text-sm">加载中…</div>'
-  await loadData()
   renderNotes()
+  applyStats({ notes: nArr, settings })
 }
 
 if (document.readyState === 'loading') {

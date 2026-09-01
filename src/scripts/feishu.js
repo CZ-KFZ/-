@@ -127,9 +127,11 @@ function normalizeNote(record) {
     id: record.record_id,
     title: f['标题'] || '',
     tags,
-    excerpt: f['摘要'] || '',
+    excerpt: f['摘要'] || f['内容摘要'] || '',
     graphNode: f['关联节点'] || '',
-    publishedAt: formatDate(f['发布时间'])
+    category: extractOption(f['分类'], '未分类'),
+    categoryLabel: f['分类显示名'] || extractOption(f['分类'], '') || f['分类名'] || '',
+    publishedAt: formatDate(f['发布时间'] || f['创建时间'] || f['日期'])
   }
 }
 
