@@ -71,6 +71,17 @@ function parseAttachment(fieldValue) {
 function normalizeArticle(record) {
   const f = record.fields || {}
   const cover = parseAttachment(f['封面'])
+  // 是否付费：字段「是否付费」单选，只要不是「免费」或明确「付费」都算付费
+  const paidOpt = extractOption(f['是否付费'], '')
+  const isPaid = /付费|是|paid|true/i.test(paidOpt)
+  const priceRaw = f['售价（元）'] ?? f['售价'] ?? f['价格'] ?? ''
+  const price = priceRaw === '' || priceRaw === null || priceRaw === undefined
+    ? 0
+    : Number(priceRaw) || 0
+  const buyUrl = f['购买链接'] || f['付费链接'] || f['商品链接'] || ''
+  const fullContent = f['全文内容'] || f['全文'] || f['付费正文'] || ''
+  const freeExcerpt = f['免费部分'] || f['试读'] || f['摘要'] || ''
+
   return {
     id: record.record_id,
     title: f['标题'] || '',
@@ -81,7 +92,13 @@ function normalizeArticle(record) {
     excerpt: f['摘要'] || '',
     content: f['正文'] || '',
     coverImage: cover ? cover.url : null,
-    featured: f['推荐'] || false
+    featured: f['推荐'] || false,
+    // 付费相关
+    isPaid,
+    price,
+    buyUrl,
+    fullContent,
+    freeExcerpt
   }
 }
 
@@ -231,4 +248,35 @@ export async function fetchSiteSettings() {
   const records = await fetchFromFeishu('settings')
   if (!records || !records.length) return null
   return normalizeSettings(records[0])
+}
+
+// ------------------------------------------------------------
+// 兑换码：后端校验 + 原子标记已用
+// 入参：{ code: string, articleId?: string }
+// 返回：{ ok:true, articleContent:string, articleTitle:string } | { ok:false, message:string }
+// ------------------------------------------------------------
+export async function redeemCode({ code, articleId }) {
+  if (!code) return { ok: false, message: '兑换码不能为空' }
+  const trimmed = code.trim().toUpperCase()
+  const url = isDev
+    ? '/api/redeem'
+    : `https://${window.location.hostname}/api/redeem`
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ code: trimmed, articleId: articleId || '' })
+    })
+    const data = await res.json()
+    if (!data.ok) return { ok: false, message: data.message || '兑换失败' }
+    return {
+      ok: true,
+      articleContent: data.articleContent || '',
+      articleTitle: data.articleTitle || '',
+      articleId: data.articleId || ''
+    }
+  } catch (err) {
+    console.warn('[EchoVerse] 兑换码校验失败：', err.message)
+    return { ok: false, message: '网络异常，请稍后再试' }
+  }
 }
