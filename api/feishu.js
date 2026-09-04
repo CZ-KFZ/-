@@ -7,13 +7,13 @@
 //   FEISHU_TABLE_ARTICLES / PROJECTS / NOTES / TIMELINE / SETTINGS / CODES
 // ============================================================
 
-const {
+import {
   requireEnv,
   getTableId,
   getToken,
   listRecords,
   getFirstRecord
-} = require('./_feishu-helpers.js')
+} from './_feishu-helpers.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -27,7 +27,6 @@ export default async function handler(req, res) {
   }
   const tableId = getTableId(type)
   if (!tableId) {
-    // 未知类型 vs 没配置表：做个简单区分
     if (type !== 'articles' && type !== 'projects' && type !== 'notes' && type !== 'timeline' && type !== 'settings' && type !== 'codes') {
       return res.status(400).json({ error: `未知的数据类型: ${type}` })
     }

@@ -16,13 +16,13 @@
 //   - 备注 / 核销来源（文本）
 // ============================================================
 
-const {
+import {
   requireEnv,
   getTableId,
   getToken,
   listRecords,
   updateRecord
-} = require('./_feishu-helpers.js')
+} from './_feishu-helpers.js'
 
 // 字段名可能的各种写法（兼容新手字段命名）
 const CODE_FIELDS = ['兑换码', 'code', 'Code', '码', '卡密']
