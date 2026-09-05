@@ -10,7 +10,8 @@
     "preview": "vite preview --host"
   },
   "dependencies": {
-    "lucide": "^1.8.0"
+    "lucide": "^1.8.0",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.1",
