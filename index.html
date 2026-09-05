@@ -17,18 +17,12 @@
          Hero · 首屏
          =================================================== -->
     <section class="relative min-h-[calc(100vh-64px)] flex flex-col items-center justify-center overflow-hidden px-6 py-16">
-      <!-- 3D Canvas 背景层（Three.js） -->
-      <div id="evo-three-canvas" class="absolute inset-0 pointer-events-none" style="z-index: 0;"></div>
+      <!-- 3D Canvas 背景层（Three.js）—— 可交互：拖拽旋转、滚轮缩放 -->
+      <div id="evo-three-canvas" class="absolute inset-0" style="z-index: 0;"></div>
 
-      <div class="relative z-10 text-center max-w-4xl mx-auto pointer-events-none">
-        <div class="evo-animate-float mb-10 evo-reveal" data-reveal-delay="0">
-          <div class="w-48 h-48 mx-auto rounded-full evo-gradient-border evo-glass flex items-center justify-center evo-glow-breath opacity-90">
-            <div class="w-36 h-36 rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] via-[var(--evo-violet)] to-[var(--evo-pink)] flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.5)]">
-              <span id="evo-home-avatar-char" class="evo-display text-5xl text-white drop-shadow-lg">Echo</span>
-            </div>
-          </div>
-        </div>
-        <h1 class="evo-display text-4xl sm:text-5xl md:text-7xl mb-6 evo-reveal" data-reveal-delay="100">
+      <!-- 文字浮层：pointer-events-none 让鼠标事件穿透到 3D canvas，只有按钮可点 -->
+      <div class="relative z-10 text-center max-w-4xl mx-auto pointer-events-none mt-[-60px]">
+        <h1 class="evo-display text-4xl sm:text-5xl md:text-7xl mb-6 evo-reveal drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]" data-reveal-delay="100">
           你好，我是 <span id="evo-home-doppelganger-name" class="evo-gradient-text">Echo</span>
         </h1>
         <p id="evo-home-hero-desc" class="evo-body text-base sm:text-lg md:text-xl text-[var(--evo-ink-2)] mb-10 max-w-2xl mx-auto evo-reveal" data-reveal-delay="200">
@@ -40,7 +34,7 @@
       </div>
 
       <!-- 四大入口轨道卡片 -->
-      <div class="relative z-10 mt-16 sm:mt-20 w-full max-w-5xl mx-auto pointer-events-auto">
+      <div class="relative z-10 mt-auto w-full max-w-5xl mx-auto pointer-events-auto">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <a href="portfolio.html" data-dom-id="orbit-portfolio" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-card-hover evo-reveal" data-reveal-delay="400">
             <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-purple-500)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-purple transition-all">🎨</div>
@@ -66,7 +60,7 @@
       </div>
 
       <!-- 交互提示 -->
-      <div class="relative z-10 mt-8 text-xs text-[var(--evo-ink-3)] evo-reveal flex items-center gap-2 opacity-70" data-reveal-delay="800">
+      <div class="relative z-10 mt-6 text-xs text-[var(--evo-ink-3)] evo-reveal flex items-center gap-2 opacity-70 pointer-events-none" data-reveal-delay="800">
         <span>🖱️</span>
         <span>拖动旋转 · 滚轮缩放 · 3D 空间站</span>
       </div>
