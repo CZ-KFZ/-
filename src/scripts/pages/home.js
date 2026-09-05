@@ -7,7 +7,6 @@
 
 import { fetchProjects, fetchArticles, fetchNotes, fetchSiteSettings } from '../feishu.js'
 import { PROJECTS as MOCK_PROJECTS, ARTICLES as MOCK_ARTICLES } from '../data.js'
-import { initThreeScene, disposeThreeScene } from '../three-scene.js'
 
 // 作品集配色映射（和 portfolio.js 对齐）
 const ACCENT_GRADIENT = {
@@ -218,15 +217,8 @@ async function loadAllData() {
 }
 
 async function init() {
-  // 初始化 3D 场景（中心球体 + 星空 + 轨道环）
-  const canvasContainer = document.getElementById('evo-three-canvas')
-  if (canvasContainer) {
-    try {
-      initThreeScene(canvasContainer)
-    } catch (e) {
-      console.warn('[EchoVerse] 3D 场景初始化失败，降级为普通背景：', e.message)
-    }
-  }
+  buildStarfield()
+  setupParallax()
 
   const { projects, articles, notes, settings } = await loadAllData()
   applySettings(settings)
@@ -235,11 +227,6 @@ async function init() {
   renderFeaturedProjects(projects)
   renderRecentArticles(articles)
 }
-
-// 页面卸载时清理 3D 资源
-window.addEventListener('beforeunload', () => {
-  try { disposeThreeScene() } catch (e) {}
-})
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init)
