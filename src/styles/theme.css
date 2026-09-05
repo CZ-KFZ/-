@@ -3,19 +3,22 @@
 @import "tailwindcss";
 
 /* ============================================================
-   EchoVerse · 设计系统 theme.css
-   抽自设计稿 <style id="theme-vars"> —— 单一真相源
+   EchoVerse · 设计系统 theme.css  v2.0 · 深空霓虹升级版
+   基于 PRD 设计稿升级：星云背景 · 星空漂浮 · 玻璃饱和态 · 霓虹光晕
    ============================================================ */
 
 :root {
-  /* 深色宇宙基底 */
-  --evo-bg: #0a0a0f;
-  --evo-bg-elevated: #11111a;
+  /* —— 深色宇宙基底（PRD 深空色调）—— */
+  --evo-bg: #050510;
+  --evo-bg-elevated: #0d0d1a;
+  --evo-bg-tertiary: #141428;
   --evo-surface: rgba(255, 255, 255, 0.04);
   --evo-surface-2: rgba(255, 255, 255, 0.08);
-  --evo-surface-glass: rgba(255, 255, 255, 0.06);
+  --evo-surface-glass: rgba(20, 20, 40, 0.6);
+  --evo-glass-strong: rgba(13, 13, 26, 0.85);
+  --evo-glass-ultra: rgba(8, 8, 18, 0.92);
 
-  /* 主品牌：星云紫 */
+  /* —— 主品牌：星云紫 —— */
   --evo-purple-50: #f5f3ff;
   --evo-purple-100: #ede9fe;
   --evo-purple-200: #ddd6fe;
@@ -27,50 +30,55 @@
   --evo-purple-800: #5b21b6;
   --evo-purple-900: #4c1d95;
 
-  /* 霓虹光晕 */
-  --evo-cyan: #22d3ee;
+  /* —— 霓虹光晕（PRD 配色）—— */
+  --evo-cyan: #06b6d4;
+  --evo-cyan-light: rgba(6, 182, 212, 0.18);
   --evo-pink: #f472b6;
+  --evo-pink-light: rgba(244, 114, 182, 0.15);
   --evo-violet: #a78bfa;
 
-  /* 语义色彩 */
+  /* —— 语义色彩 —— */
   --evo-ink: #f8fafc;
-  --evo-ink-2: #94a3b8;
+  --evo-ink-2: #a5b4cf;
   --evo-ink-3: #64748b;
   --evo-line: rgba(255, 255, 255, 0.08);
-  --evo-border: rgba(255, 255, 255, 0.1);
+  --evo-border: rgba(148, 163, 184, 0.1);
+  --evo-border-glow: rgba(168, 85, 247, 0.35);
+  --evo-border-glow-strong: rgba(168, 85, 247, 0.6);
 
-  /* 状态色 */
+  /* —— 状态色 —— */
   --evo-state-success: #34d399;
   --evo-state-warning: #fbbf24;
   --evo-state-error: #f87171;
   --evo-state-info: #38bdf8;
 
-  /* 半径 */
+  /* —— 半径 —— */
   --evo-radius-sm: 4px;
-  --evo-radius-md: 8px;
-  --evo-radius-lg: 12px;
-  --evo-radius-xl: 16px;
+  --evo-radius-md: 10px;
+  --evo-radius-lg: 16px;
+  --evo-radius-xl: 20px;
   --evo-radius-full: 9999px;
 
-  /* 静态阴影 */
+  /* —— 静态阴影 —— */
   --evo-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --evo-shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.05);
   --evo-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.05);
 
-  /* 悬浮层阴影 */
-  --evo-float-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.35);
+  /* —— 悬浮层阴影 —— */
+  --evo-float-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.5);
 
-  /* 霓虹光晕 */
-  --evo-glow-purple: 0 0 40px rgba(139, 92, 246, 0.35);
-  --evo-glow-cyan: 0 0 30px rgba(34, 211, 238, 0.3);
-  --evo-glow-pink: 0 0 30px rgba(244, 114, 182, 0.3);
+  /* —— 霓虹光晕（PRD 增强版）—— */
+  --evo-glow-purple: 0 0 60px rgba(168, 85, 247, 0.2);
+  --evo-glow-purple-strong: 0 0 80px rgba(168, 85, 247, 0.3);
+  --evo-glow-cyan: 0 0 30px rgba(6, 182, 212, 0.4);
+  --evo-glow-pink: 0 0 30px rgba(244, 114, 182, 0.4);
 
-  /* 字体 */
+  /* —— 字体 —— */
   --evo-font-display: 'Tektur', 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   --evo-font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   --evo-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Tailwind 语义桥接 */
+  /* —— Tailwind 语义桥接 —— */
   --evo-background: var(--evo-bg);
   --evo-foreground: var(--evo-ink);
   --evo-card: var(--evo-surface);
@@ -85,7 +93,7 @@
   --evo-ring: var(--evo-purple-400);
 }
 
-/* Tailwind v4 token 映射 —— 让 bg-primary / text-muted-foreground 等语义类生效 */
+/* Tailwind v4 token 映射 */
 @theme inline {
   --color-background: var(--evo-background);
   --color-foreground: var(--evo-foreground);
@@ -117,16 +125,56 @@
     font-family: var(--evo-font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    min-height: 100vh;
   }
+
+  /* ====== 深空星云背景（全局，所有页面共享）====== */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 15% 25%, rgba(168, 85, 247, 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 85% 75%, rgba(6, 182, 212, 0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 500px 400px at 50% 50%, rgba(244, 114, 182, 0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 300px at 70% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ====== 漂浮星空（全局动画）====== */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.2), transparent),
+      radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.2), transparent),
+      radial-gradient(1.5px 1.5px at 160px 120px, rgba(168, 85, 247, 0.5), transparent),
+      radial-gradient(1px 1px at 200px 50px, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 250px 160px, rgba(6, 182, 212, 0.4), transparent),
+      radial-gradient(1px 1px at 300px 100px, rgba(255,255,255,0.25), transparent);
+    background-size: 350px 200px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+    animation: evo-star-float 60s linear infinite;
+  }
+
+  /* 让所有直接子内容在星云之上 */
+  body > * { position: relative; z-index: 1; }
+
   ::selection { background: var(--evo-purple-500); color: #fff; }
-  /* 自定义滚动条 */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: var(--evo-surface-2);
+    background: linear-gradient(180deg, var(--evo-purple-500), var(--evo-cyan));
     border-radius: var(--evo-radius-full);
   }
-  ::-webkit-scrollbar-thumb:hover { background: var(--evo-purple-500); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--evo-purple-400); }
   td, th { word-break: break-word; }
   th { white-space: nowrap; }
 }
@@ -155,19 +203,26 @@
 }
 
 /* ============================================================
-   玻璃态
+   玻璃态（PRD 增强：blur + saturate）
    ============================================================ */
 .evo-glass {
   background: var(--evo-surface-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--evo-border);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid var(--evo-border-glow);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .evo-glass-strong {
-  background: rgba(17, 17, 26, 0.72);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid var(--evo-border);
+  background: var(--evo-glass-strong);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid var(--evo-border-glow);
+}
+.evo-glass-ultra {
+  background: var(--evo-glass-ultra);
+  backdrop-filter: blur(32px) saturate(1.5);
+  -webkit-backdrop-filter: blur(32px) saturate(1.5);
+  border-bottom: 1px solid var(--evo-border-glow);
 }
 
 /* ============================================================
@@ -178,6 +233,9 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+.evo-gradient-bg {
+  background: linear-gradient(135deg, var(--evo-purple-500), var(--evo-cyan));
 }
 .evo-gradient-border {
   position: relative;
@@ -195,8 +253,18 @@
   pointer-events: none;
 }
 .evo-glow-purple { box-shadow: var(--evo-glow-purple); }
+.evo-glow-purple-strong { box-shadow: var(--evo-glow-purple-strong); }
 .evo-glow-cyan { box-shadow: var(--evo-glow-cyan); }
 .evo-glow-pink { box-shadow: var(--evo-glow-pink); }
+
+/* 光晕呼吸动画 */
+.evo-glow-breath {
+  animation: evo-glow-breath 4s ease-in-out infinite;
+}
+@keyframes evo-glow-breath {
+  0%, 100% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.25); }
+  50% { box-shadow: 0 0 60px rgba(168, 85, 247, 0.5); }
+}
 
 /* ============================================================
    动画
@@ -233,6 +301,14 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+@keyframes evo-star-float {
+  from { background-position: 0 0; }
+  to { background-position: 350px 200px; }
+}
+@keyframes evo-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
 .evo-animate-orbit { animation: evo-orbit 30s linear infinite; }
 .evo-animate-float { animation: evo-float 6s ease-in-out infinite; }
@@ -241,11 +317,11 @@
 .evo-animate-slide-in { animation: evo-slide-in-right 0.3s ease-out; }
 .evo-animate-fade-in { animation: evo-fade-in 0.4s ease-out; }
 
-/* 滚动揭示：默认隐藏，进入视口后 .is-visible 触发动画 */
+/* 滚动揭示 */
 .evo-reveal {
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: opacity, transform;
 }
 .evo-reveal.is-visible {
@@ -253,7 +329,7 @@
   transform: translateY(0);
 }
 
-/* Echo 打字指示器（3 个跳动小点） */
+/* Echo 打字指示器 */
 .evo-typing-dot {
   display: inline-block;
   width: 6px;
@@ -270,7 +346,7 @@
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* 图标占位（兼容设计稿中的 data-icon 写法） */
+/* 图标占位 */
 [data-icon] {
   display: inline-flex;
   align-items: center;
@@ -298,6 +374,18 @@
 .evo-drawer-overlay.is-open {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* 卡片悬浮增强 */
+.evo-card-hover {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s ease;
+}
+.evo-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: var(--evo-border-glow-strong);
+  box-shadow: var(--evo-glow-purple-strong);
 }
 
 /* prefers-reduced-motion 适配 */

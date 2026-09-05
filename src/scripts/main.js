@@ -43,12 +43,17 @@ function renderHeader() {
   }).join('')
 
   mount.innerHTML = `
-    <header class="fixed top-0 inset-x-0 z-50 evo-glass-strong border-b border-[var(--evo-border)]">
+    <header class="fixed top-0 inset-x-0 z-50 evo-glass-ultra shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        <a href="index.html" data-dom-id="nav-home-logo" class="evo-title text-xl evo-gradient-text shrink-0">EchoVerse</a>
+        <a href="index.html" data-dom-id="nav-home-logo" class="flex items-center gap-3 shrink-0">
+          <div class="w-8 h-8 rounded-[var(--evo-radius-sm)] bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-cyan)] flex items-center justify-center evo-glow-purple">
+            <span class="evo-title text-sm text-white font-bold">E</span>
+          </div>
+          <span class="evo-title text-xl evo-gradient-text">EchoVerse</span>
+        </a>
         <nav class="hidden md:flex items-center gap-8">${navLinks}</nav>
         <div class="flex items-center gap-2">
-          <a href="chat.html" data-dom-id="cta-header-chat" class="hidden sm:inline-flex px-4 py-2 rounded-[var(--evo-radius-md)] bg-[var(--evo-primary)] text-white text-sm font-medium hover:bg-[var(--evo-purple-400)] transition-colors">对话</a>
+          <a href="chat.html" data-dom-id="cta-header-chat" class="hidden sm:inline-flex px-4 py-2 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-purple-500)] to-[var(--evo-cyan)] text-white text-sm font-medium hover:opacity-90 transition-all evo-glow-purple">对话</a>
           <button id="evo-menu-btn" aria-label="打开菜单" class="md:hidden w-10 h-10 rounded-[var(--evo-radius-md)] evo-glass flex items-center justify-center text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
           </button>
@@ -57,16 +62,21 @@ function renderHeader() {
     </header>
     <!-- 移动端抽屉 -->
     <div id="evo-drawer-overlay" class="evo-drawer-overlay md:hidden"></div>
-    <aside id="evo-drawer" class="md:hidden fixed top-0 right-0 z-[70] h-full w-72 max-w-[80vw] evo-glass-strong border-l border-[var(--evo-border)] translate-x-full transition-transform duration-300 ease-out">
+    <aside id="evo-drawer" class="md:hidden fixed top-0 right-0 z-[70] h-full w-72 max-w-[80vw] evo-glass-strong border-l border-[var(--evo-border-glow)] translate-x-full transition-transform duration-300 ease-out">
       <div class="flex items-center justify-between p-4 border-b border-[var(--evo-border)]">
-        <span class="evo-title text-lg evo-gradient-text">EchoVerse</span>
+        <span class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-[var(--evo-radius-sm)] bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-cyan)] flex items-center justify-center evo-glow-purple">
+            <span class="evo-title text-xs text-white font-bold">E</span>
+          </span>
+          <span class="evo-title text-lg evo-gradient-text">EchoVerse</span>
+        </span>
         <button id="evo-drawer-close" aria-label="关闭菜单" class="w-9 h-9 rounded-[var(--evo-radius-md)] hover:bg-[var(--evo-surface-2)] flex items-center justify-center text-[var(--evo-ink-2)] transition-colors">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
       <nav class="p-3 space-y-1">${drawerLinks}</nav>
       <div class="px-4 mt-6 pt-6 border-t border-[var(--evo-border)]">
-        <a href="chat.html" class="block w-full text-center px-4 py-3 rounded-[var(--evo-radius-md)] bg-[var(--evo-primary)] text-white text-sm font-medium hover:bg-[var(--evo-purple-400)] transition-colors">和 Echo 聊聊 →</a>
+        <a href="chat.html" class="block w-full text-center px-4 py-3 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-purple-500)] to-[var(--evo-cyan)] text-white text-sm font-medium hover:opacity-90 transition-all evo-glow-purple">和 Echo 聊聊 →</a>
       </div>
     </aside>
   `
@@ -109,9 +119,18 @@ function renderFooter() {
   const mount = document.getElementById('evo-footer')
   if (!mount) return
   mount.innerHTML = `
-    <footer class="border-t border-[var(--evo-border)] py-12 mt-20">
-      <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[var(--evo-ink-3)] text-sm">
-        <span class="evo-title">EchoVerse</span>
+    <footer class="relative border-t border-[var(--evo-border-glow)] py-12 mt-20 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute bottom-0 left-1/4 w-96 h-32 bg-[var(--evo-purple-500)]/10 blur-[100px] rounded-full"></div>
+        <div class="absolute bottom-0 right-1/4 w-80 h-24 bg-[var(--evo-cyan)]/10 blur-[80px] rounded-full"></div>
+      </div>
+      <div class="relative max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[var(--evo-ink-3)] text-sm">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-[var(--evo-radius-sm)] bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-cyan)] flex items-center justify-center">
+            <span class="evo-title text-[10px] text-white font-bold">E</span>
+          </span>
+          <span class="evo-title">EchoVerse</span>
+        </div>
         <span>© 2026 阴之体道 · 个人数字化空间站</span>
       </div>
     </footer>

@@ -16,7 +16,9 @@
       <!-- 名片 -->
       <div class="evo-glass rounded-[var(--evo-radius-lg)] p-6 sm:p-8 md:p-12 mb-8 sm:mb-10 evo-reveal">
         <div class="flex flex-col md:flex-row items-center gap-6 sm:gap-8">
-          <div id="evo-profile-avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] via-[var(--evo-violet)] to-[var(--evo-pink)] flex items-center justify-center text-white text-3xl sm:text-4xl font-bold evo-glow-purple shrink-0 overflow-hidden">阴</div>
+          <div id="evo-profile-avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full evo-gradient-border evo-glow-purple flex items-center justify-center shrink-0 overflow-hidden">
+            <div class="w-full h-full rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] via-[var(--evo-violet)] to-[var(--evo-pink)] flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">阴</div>
+          </div>
           <div class="text-center md:text-left flex-1 min-w-0">
             <h1 id="evo-profile-name" class="evo-display text-2xl sm:text-3xl md:text-4xl mb-2">阴之体道</h1>
             <p id="evo-profile-identity" class="text-[var(--evo-ink-2)] mb-3">独立设计师 / 创意程序员 / 数字游民</p>
@@ -31,7 +33,7 @@
       <!-- 成长轨迹 -->
       <div class="mb-10 sm:mb-12">
         <h2 class="evo-title text-xl sm:text-2xl mb-6 sm:mb-8 flex items-center gap-3 evo-reveal">
-          <span class="w-1.5 h-6 rounded-full bg-[var(--evo-primary)]"></span>成长轨迹
+          <span class="w-1.5 h-6 rounded-full bg-gradient-to-b from-[var(--evo-purple-500)] to-[var(--evo-cyan)] evo-glow-purple"></span>成长轨迹
         </h2>
         <div class="relative border-l border-[var(--evo-border)] ml-3 space-y-8 sm:space-y-10" id="evo-timeline">
           <!-- 由 about.js 渲染 -->
@@ -41,7 +43,7 @@
       <!-- 技能标签 -->
       <div>
         <h2 class="evo-title text-xl sm:text-2xl mb-6 flex items-center gap-3 evo-reveal">
-          <span class="w-1.5 h-6 rounded-full bg-[var(--evo-primary)]"></span>技能标签
+          <span class="w-1.5 h-6 rounded-full bg-gradient-to-b from-[var(--evo-purple-500)] to-[var(--evo-cyan)] evo-glow-purple"></span>技能标签
         </h2>
         <div class="flex flex-wrap gap-3 evo-reveal" data-reveal-delay="100" id="evo-skills">
           <!-- 由 about.js 渲染 -->
