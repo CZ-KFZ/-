@@ -1,86 +1,301 @@
 // ============================================================
-// 飞书多维表格 API 公共辅助函数（给 Vercel Serverless Function 用）
-// 导出：getToken / listRecords / getFirstRecord / updateRecord
-// 注意：本项目 package.json 里 type=module，这里必须用 ESM 语法
+// EchoVerse · 飞书数据层（前端）
+// 调 Vercel Serverless Function（/api/feishu）拉飞书多维表格数据
+// 解析飞书记录的字段结构（fields 是个对象），含附件 URL 构造
+// 当后端未配置或拉取失败时，返回 null 让上层走 mock fallback
 // ============================================================
 
-const FEISHU_BASE = 'https://open.feishu.cn/open-apis'
+// 是否在开发环境（Vite 注入）
+const isDev = import.meta.env.DEV
 
-const TABLE_ENV_MAP = {
-  articles: 'FEISHU_TABLE_ARTICLES',
-  projects: 'FEISHU_TABLE_PROJECTS',
-  notes: 'FEISHU_TABLE_NOTES',
-  timeline: 'FEISHU_TABLE_TIMELINE',
-  settings: 'FEISHU_TABLE_SETTINGS',
-  codes: 'FEISHU_TABLE_CODES'
+// ------------------------------------------------------------
+// 调后端代理
+// ------------------------------------------------------------
+async function fetchFromFeishu(type) {
+  const url = isDev
+    ? `/api/feishu?type=${type}`
+    : `https://${window.location.hostname}/api/feishu?type=${type}`
+
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data.fallback || !data.success) return null
+    return data.records
+  } catch (err) {
+    console.warn(`[EchoVerse] 飞书数据拉取失败（${type}），使用 mock：`, err.message)
+    return null
+  }
 }
 
-export function requireEnv() {
-  const appId = process.env.FEISHU_APP_ID
-  const appSecret = process.env.FEISHU_APP_SECRET
-  const appToken = process.env.FEISHU_APP_TOKEN
-  if (!appId || !appSecret || !appToken) return null
-  return { appId, appSecret, appToken }
+// ------------------------------------------------------------
+// 解析单选字段：飞书单选返回 { text: "选项名" }，多选返回 [{ text }]
+// 这里统一提取出选项名字符串
+// ------------------------------------------------------------
+function extractOption(fieldValue, fallback = '') {
+  if (!fieldValue) return fallback
+  if (typeof fieldValue === 'string') return fieldValue
+  if (typeof fieldValue === 'object') {
+    if (Array.isArray(fieldValue)) {
+      const first = fieldValue[0]
+      return first ? (first.text || first.value || first.name || fallback) : fallback
+    }
+    return fieldValue.text || fieldValue.value || fieldValue.name || fallback
+  }
+  return fallback
 }
 
-export function getTableId(type) {
-  const envName = TABLE_ENV_MAP[type]
-  if (!envName) return null
-  return process.env[envName] || null
+// ------------------------------------------------------------
+// 解析超链接字段：飞书「超链接」类型返回 { text, link } 或
+// [{ text, link }]；字符串则原样返回。
+// 不解析会导致 href 变成 [object Object]，点击跳到 /object Object
+// ------------------------------------------------------------
+function extractUrl(fieldValue, fallback = '') {
+  if (!fieldValue) return fallback
+  if (typeof fieldValue === 'string') return fieldValue
+  if (typeof fieldValue === 'object') {
+    if (Array.isArray(fieldValue)) {
+      const first = fieldValue[0]
+      if (!first) return fallback
+      return first.link || first.url || first.text || fallback
+    }
+    return fieldValue.link || fieldValue.url || fieldValue.text || fallback
+  }
+  return fallback
 }
 
-export async function getToken(appId, appSecret) {
-  const res = await fetch(`${FEISHU_BASE}/auth/v3/tenant_access_token/internal`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    body: JSON.stringify({ app_id: appId, app_secret: appSecret })
+// ------------------------------------------------------------
+// 解析附件字段：飞书附件返回 [{ file_token, name, type, url, ... }]
+// url 是临时的（带 session），前端不能直接用。
+// 要用公开可访问的 URL，需要：
+//   - 表格设为"互联网可阅读" + 用 download 接口
+//   - 或前端展示时走后端代理下载
+// 简化：这里返回 file_token，由后端代理下载（/api/feishu-file?token=xxx）
+// ------------------------------------------------------------
+function parseAttachment(fieldValue) {
+  if (!fieldValue || !Array.isArray(fieldValue) || !fieldValue.length) return null
+  const file = fieldValue[0]
+  return {
+    name: file.name,
+    type: file.type,
+    // 通过后端代理下载文件（避免暴露 session）
+    url: `/api/feishu-file?file_token=${file.file_token}&name=${encodeURIComponent(file.name || '')}`
+  }
+}
+
+// ------------------------------------------------------------
+// 解析飞书记录为文章结构
+// 飞书字段约定：标题/分类/分类显示名/日期/阅读时长/摘要/封面/正文/推荐
+// ------------------------------------------------------------
+function normalizeArticle(record) {
+  const f = record.fields || {}
+  const cover = parseAttachment(f['封面'])
+  // 是否付费：字段「是否付费」单选，只要不是「免费」或明确「付费」都算付费
+  const paidOpt = extractOption(f['是否付费'], '')
+  const isPaid = /付费|是|paid|true/i.test(paidOpt)
+  const priceRaw = f['售价（元）'] ?? f['售价'] ?? f['价格'] ?? ''
+  const price = priceRaw === '' || priceRaw === null || priceRaw === undefined
+    ? 0
+    : Number(priceRaw) || 0
+  const buyUrl = extractUrl(f['购买链接'] || f['付费链接'] || f['商品链接'] || '')
+  const fullContent = f['全文内容'] || f['全文'] || f['付费正文'] || ''
+  const freeExcerpt = f['免费部分'] || f['试读'] || f['摘要'] || ''
+
+  return {
+    id: record.record_id,
+    title: f['标题'] || '',
+    category: extractOption(f['分类'], 'design'),
+    categoryLabel: f['分类显示名'] || extractOption(f['分类'], ''),
+    date: formatDate(f['日期']),
+    readTime: f['阅读时长'] || '',
+    excerpt: f['摘要'] || '',
+    content: f['正文'] || '',
+    coverImage: cover ? cover.url : null,
+    featured: f['推荐'] || false,
+    // 付费相关
+    isPaid,
+    price,
+    buyUrl,
+    fullContent,
+    freeExcerpt
+  }
+}
+
+// ------------------------------------------------------------
+// 解析飞书记录为作品结构
+// 飞书字段约定：标题/分类/分类显示名/年份/简介/封面/主题色/视频/Demo链接
+// ------------------------------------------------------------
+function normalizeProject(record) {
+  const f = record.fields || {}
+  const cover = parseAttachment(f['封面'])
+  const video = parseAttachment(f['视频'])
+  return {
+    id: record.record_id,
+    title: f['标题'] || '',
+    category: extractOption(f['分类'], 'design'),
+    categoryLabel: f['分类显示名'] || extractOption(f['分类'], ''),
+    year: String(f['年份'] || ''),
+    desc: f['简介'] || '',
+    accent: extractOption(f['主题色'], 'purple'),
+    coverImage: cover ? cover.url : null,
+    video: video ? video.url : null,
+    demoUrl: f['Demo链接'] || f['访问链接'] || f['链接'] || null
+  }
+}
+
+// ------------------------------------------------------------
+// 解析飞书记录为笔记结构
+// 飞书字段约定：标题/标签/摘要/关联节点/发布时间
+// 标签字段是数组，每项是 { text: '标签名' }
+// ------------------------------------------------------------
+function normalizeNote(record) {
+  const f = record.fields || {}
+  const tagsRaw = f['标签'] || []
+  const tags = (Array.isArray(tagsRaw) ? tagsRaw : [tagsRaw]).map((t, i) => {
+    const tones = ['purple', 'cyan', 'pink']
+    return {
+      label: typeof t === 'string' ? t : t.text || t.name || '',
+      tone: tones[i % 3]
+    }
+  }).filter((t) => t.label)
+
+  return {
+    id: record.record_id,
+    title: f['标题'] || '',
+    tags,
+    excerpt: f['摘要'] || f['内容摘要'] || '',
+    graphNode: f['关联节点'] || '',
+    category: extractOption(f['分类'], '未分类'),
+    categoryLabel: f['分类显示名'] || extractOption(f['分类'], '') || f['分类名'] || '',
+    publishedAt: formatDate(f['发布时间'] || f['创建时间'] || f['日期'])
+  }
+}
+
+// ------------------------------------------------------------
+// 解析飞书记录为时间线节点
+// 飞书字段约定：时间段/标题/描述/圆点配色
+// ------------------------------------------------------------
+function normalizeTimeline(record) {
+  const f = record.fields || {}
+  return {
+    period: f['时间段'] || '',
+    title: f['标题'] || '',
+    desc: f['描述'] || '',
+    dot: extractOption(f['圆点配色'], 'primary')
+  }
+}
+
+// ------------------------------------------------------------
+// 解析站点设置
+// 飞书字段约定：姓名/头像首字/头像图片/身份描述/简介/技能标签/社交链接
+// ------------------------------------------------------------
+function normalizeSettings(record) {
+  const f = record.fields || {}
+  const avatar = parseAttachment(f['头像图片'])
+  const skillsRaw = f['技能标签'] || []
+  const skills = (Array.isArray(skillsRaw) ? skillsRaw : [skillsRaw]).map((s) => {
+    const label = typeof s === 'string' ? s : s.text || s.name || ''
+    return { label, tone: 'default' }
+  }).filter((s) => s.label)
+
+  const socialsRaw = f['社交链接'] || []
+  const socials = (Array.isArray(socialsRaw) ? socialsRaw : [socialsRaw]).map((s) => {
+    if (typeof s === 'string') return { label: '·', title: s, href: s }
+    return {
+      label: s['图标字符'] || '·',
+      title: s['名称'] || '',
+      href: s['链接'] || '#'
+    }
   })
-  const data = await res.json()
-  if (data.code !== 0) throw new Error(`获取 token 失败: ${data.msg}`)
-  return data.tenant_access_token
+
+  return {
+    ownerName: f['姓名'] || '',
+    avatarChar: f['头像首字'] || '阴',
+    avatarImage: avatar ? avatar.url : null,
+    identity: f['身份描述'] || '',
+    bio: f['简介'] || '',
+    skills,
+    socials
+  }
 }
 
-export async function listRecords(token, appToken, tableId) {
-  let allRecords = []
-  let pageToken = ''
-  let hasMore = true
+// ------------------------------------------------------------
+// 飞书日期字段处理：返回的是时间戳（毫秒）
+// ------------------------------------------------------------
+function formatDate(fieldValue) {
+  if (!fieldValue) return ''
+  if (typeof fieldValue === 'number') {
+    const d = new Date(fieldValue)
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+  }
+  if (typeof fieldValue === 'string') return fieldValue
+  if (fieldValue instanceof Array && fieldValue[0]) {
+    return formatDate(fieldValue[0])
+  }
+  return ''
+}
 
-  while (hasMore) {
-    const url = new URL(
-      `${FEISHU_BASE}/bitable/v1/apps/${appToken}/tables/${tableId}/records`
-    )
-    url.searchParams.set('page_size', '500')
-    if (pageToken) url.searchParams.set('page_token', pageToken)
+// ------------------------------------------------------------
+// 暴露的拉取函数：返回归一化后的数据，或 null（触发上层 fallback）
+// ------------------------------------------------------------
 
+export async function fetchArticles() {
+  const records = await fetchFromFeishu('articles')
+  if (!records) return null
+  return records.map(normalizeArticle)
+}
+
+export async function fetchProjects() {
+  const records = await fetchFromFeishu('projects')
+  if (!records) return null
+  return records.map(normalizeProject)
+}
+
+export async function fetchNotes() {
+  const records = await fetchFromFeishu('notes')
+  if (!records) return null
+  return records.map(normalizeNote)
+}
+
+export async function fetchTimeline() {
+  const records = await fetchFromFeishu('timeline')
+  if (!records) return null
+  return records.map(normalizeTimeline)
+}
+
+export async function fetchSiteSettings() {
+  const records = await fetchFromFeishu('settings')
+  if (!records || !records.length) return null
+  return normalizeSettings(records[0])
+}
+
+// ------------------------------------------------------------
+// 兑换码：后端校验 + 原子标记已用
+// 入参：{ code: string, articleId?: string }
+// 返回：{ ok:true, articleContent:string, articleTitle:string } | { ok:false, message:string }
+// ------------------------------------------------------------
+export async function redeemCode({ code, articleId, articleTitle }) {
+  if (!code) return { ok: false, message: '兑换码不能为空' }
+  const trimmed = code.trim().toUpperCase()
+  const url = isDev
+    ? '/api/redeem'
+    : `https://${window.location.hostname}/api/redeem`
+  try {
     const res = await fetch(url, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` }
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ code: trimmed, articleId: articleId || '', articleTitle: articleTitle || '' })
     })
     const data = await res.json()
-    if (data.code !== 0) throw new Error(`读取记录失败: ${data.msg}`)
-    allRecords = allRecords.concat(data.data.items || [])
-    hasMore = data.data.has_more
-    pageToken = data.data.page_token || ''
+    if (!data.ok) return { ok: false, message: data.message || '兑换失败' }
+    return {
+      ok: true,
+      articleContent: data.articleContent || '',
+      articleTitle: data.articleTitle || '',
+      articleId: data.articleId || ''
+    }
+  } catch (err) {
+    console.warn('[EchoVerse] 兑换码校验失败：', err.message)
+    return { ok: false, message: '网络异常，请稍后再试' }
   }
-  return allRecords
-}
-
-export async function getFirstRecord(token, appToken, tableId) {
-  const records = await listRecords(token, appToken, tableId)
-  return records[0] || null
-}
-
-export async function updateRecord(token, appToken, tableId, recordId, fields) {
-  const url = `${FEISHU_BASE}/bitable/v1/apps/${appToken}/tables/${tableId}/records/${encodeURIComponent(recordId)}`
-  const res = await fetch(url, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    },
-    body: JSON.stringify({ fields })
-  })
-  const data = await res.json()
-  if (data.code !== 0) throw new Error(`更新记录失败: ${data.msg}`)
-  return data.data || {}
 }
