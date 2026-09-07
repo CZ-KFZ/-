@@ -1,17 +1,19 @@
 // ============================================================
-// EchoVerse · 兑换码核销 v2（JSON 模式）
+// EchoVerse · 兑换码核销 v2（单行存储）
 //
-// 优化：1 篇文章 1 行，兑换码池存 JSON 数组
+// 1 篇文章 1 行，兑换码池以「|」分隔存于长文本字段
 //   飞书「兑换码」表字段：
-//   - 文章标题（文本）           → "谁在定义阴与阳"
-//   - 兑换码池（长文本/JSON）   → ["CODE1","CODE2",...]
-//   - 已用兑换码（长文本/JSON）  → ["CODE3",...]
+//   - 文章标题（文本）           → 谁在定义"阴"与"阳"？
+//   - 兑换码池（长文本）         → CODE1|CODE2|CODE3|...
+//   - 已用兑换码（长文本）       → CODE4|...（初始为空）
 //   - 总数（数字）               → 1000
 //   - 已用数（数字）             → 0
 //
+// 兼容：池字段若以「[」开头则按 JSON 数组解析（向后兼容旧数据）
+//
 // 流程：
 //   1) 读取兑换码表（按文章标题匹配到那 1 行）
-//   2) 解析「兑换码池」JSON → 查找用户输入的码
+//   2) 解析「兑换码池」→ 查找用户输入的码
 //   3) 找到 → 从池中删除 + 加到「已用兑换码」→ 回写飞书
 //   4) 查文章表返回全文
 // ============================================================
@@ -40,14 +42,43 @@ function extractText(val) {
   return String(val)
 }
 
-function parseJsonArray(text) {
-  if (!text) return []
-  try {
-    const arr = JSON.parse(text)
-    return Array.isArray(arr) ? arr : []
-  } catch {
-    return []
+// 解析兑换码列表：兼容 JSON 数组、| 分隔、换行分隔、逗号分隔
+// 返回 { list: String[], isJson: Boolean } —— isJson 决定回写时用哪种格式
+function parseCodeList(text) {
+  if (!text) return { list: [], isJson: false }
+  const raw = typeof text === 'string' ? text : String(text)
+  const trimmed = raw.trim()
+  // 1) JSON 数组（旧数据兼容）
+  if (trimmed.startsWith('[')) {
+    try {
+      const arr = JSON.parse(trimmed)
+      if (Array.isArray(arr)) {
+        return { list: arr.map(c => String(c).toUpperCase()), isJson: true }
+      }
+    } catch {
+      // JSON 解析失败，降级到分隔符模式
+    }
   }
+  // 2) 分隔符模式：优先 |，其次换行，最后逗号
+  let parts
+  if (trimmed.includes('|')) {
+    parts = trimmed.split('|')
+  } else if (trimmed.includes('\n')) {
+    parts = trimmed.split(/\r?\n/)
+  } else {
+    parts = trimmed.split(',')
+  }
+  const list = parts
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .map(s => s.toUpperCase())
+  return { list, isJson: false }
+}
+
+// 按原格式回写兑换码列表
+function stringifyCodeList(list, isJson) {
+  if (isJson) return JSON.stringify(list)
+  return list.join('|')
 }
 
 function findField(fields, candidates) {
@@ -118,9 +149,9 @@ export default async function handler(req, res) {
     const targetFields = targetRow.fields || {}
     const rowArticleTitle = extractText(findField(targetFields, TITLE_FIELDS))
 
-    // 3) 解析兑换码池 JSON
+    // 3) 解析兑换码池（兼容 JSON 数组与 | 分隔两种格式）
     const poolText = extractText(findField(targetFields, POOL_FIELDS))
-    const pool = parseJsonArray(poolText).map(c => String(c).toUpperCase())
+    const { list: pool, isJson: poolIsJson } = parseCodeList(poolText)
 
     if (pool.length === 0) return res.status(200).json({ ok: false, message: '兑换码池为空' })
 
@@ -129,7 +160,7 @@ export default async function handler(req, res) {
     if (idx === -1) {
       // 检查是否在已用列表里
       const usedText = extractText(findField(targetFields, USED_POOL_FIELDS))
-      const usedPool = parseJsonArray(usedText).map(c => String(c).toUpperCase())
+      const usedPool = parseCodeList(usedText).list
       if (usedPool.includes(userCode)) {
         return res.status(200).json({ ok: false, message: '该兑换码已使用' })
       }
@@ -141,8 +172,7 @@ export default async function handler(req, res) {
     newPool.splice(idx, 1)
 
     const usedText = extractText(findField(targetFields, USED_POOL_FIELDS))
-    const usedPool = parseJsonArray(usedText)
-    usedPool.push(userCode)
+    const newUsedPool = [...parseCodeList(usedText).list, userCode]
 
     // 找到字段名用于回写
     const poolFieldName = POOL_FIELDS.find(k => targetFields[k] !== undefined && targetFields[k] !== null && targetFields[k] !== '') || POOL_FIELDS[0]
@@ -150,14 +180,13 @@ export default async function handler(req, res) {
     const countFieldName = COUNT_FIELDS.find(k => targetFields[k] !== undefined && targetFields[k] !== null) || null
     const usedCountFieldName = USED_COUNT_FIELDS.find(k => targetFields[k] !== undefined && targetFields[k] !== null) || null
 
-    const ip = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || (req.socket && req.socket.remoteAddress) || '').toString().split(',')[0].trim()
-
     const updatePatch = {
-      [poolFieldName]: JSON.stringify(newPool),
-      [usedPoolFieldName]: JSON.stringify(usedPool)
+      // 按原格式回写：池字段是什么格式，已用字段也用同样格式
+      [poolFieldName]: stringifyCodeList(newPool, poolIsJson),
+      [usedPoolFieldName]: stringifyCodeList(newUsedPool, poolIsJson)
     }
     if (countFieldName) updatePatch[countFieldName] = newPool.length
-    if (usedCountFieldName) updatePatch[usedCountFieldName] = usedPool.length
+    if (usedCountFieldName) updatePatch[usedCountFieldName] = newUsedPool.length
 
     await updateRecord(token, env.appToken, codesTableId, targetRow.record_id, updatePatch)
 
