@@ -166,6 +166,8 @@
 
   /* 让所有直接子内容在星云之上 */
   body > * { position: relative; z-index: 1; }
+  /* Header 容器需高于 main，否则 main 的透明 padding 区会盖住固定导航、拦截点击 */
+  #evo-header { z-index: 50 !important; }
 
   ::selection { background: var(--evo-purple-500); color: #fff; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }

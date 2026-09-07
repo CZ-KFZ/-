@@ -255,7 +255,7 @@ export async function fetchSiteSettings() {
 // 入参：{ code: string, articleId?: string }
 // 返回：{ ok:true, articleContent:string, articleTitle:string } | { ok:false, message:string }
 // ------------------------------------------------------------
-export async function redeemCode({ code, articleId }) {
+export async function redeemCode({ code, articleId, articleTitle }) {
   if (!code) return { ok: false, message: '兑换码不能为空' }
   const trimmed = code.trim().toUpperCase()
   const url = isDev
@@ -265,7 +265,7 @@ export async function redeemCode({ code, articleId }) {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ code: trimmed, articleId: articleId || '' })
+      body: JSON.stringify({ code: trimmed, articleId: articleId || '', articleTitle: articleTitle || '' })
     })
     const data = await res.json()
     if (!data.ok) return { ok: false, message: data.message || '兑换失败' }

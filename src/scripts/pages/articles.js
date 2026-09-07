@@ -267,7 +267,7 @@ function openArticleModal(article) {
       btn.disabled = true
       btn.classList.add('opacity-60')
       showMsg('正在验证…')
-      const r = await redeemCode({ code, articleId: article.id })
+      const r = await redeemCode({ code, articleId: article.id, articleTitle: article.title })
       btn.disabled = false
       btn.classList.remove('opacity-60')
       if (!r.ok) {
