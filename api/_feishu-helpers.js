@@ -91,7 +91,7 @@ export async function getFirstRecord(token, appToken, tableId) {
 export async function updateRecord(token, appToken, tableId, recordId, fields) {
   const url = `${FEISHU_BASE}/bitable/v1/apps/${appToken}/tables/${tableId}/records/${encodeURIComponent(recordId)}`
   const res = await fetch(url, {
-    method: 'PATCH',
+     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json; charset=utf-8'
