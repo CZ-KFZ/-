@@ -221,7 +221,7 @@ function openArticleModal(article) {
   modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm'
   modal.innerHTML = `
     <div class="evo-glass max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-[var(--evo-radius-lg)] p-6 md:p-10 relative" onclick="event.stopPropagation()">
-      <button class="absolute top-4 right-4 w-9 h-9 rounded-full bg-[var(--evo-surface-2)] hover:bg-[var(--evo-purple-500)]/30 text-[var(--evo-ink-2)] hover:text-white transition-all flex items-center justify-center" id="evo-article-close" aria-label="关闭">
+      <button class="fixed top-4 right-4 z-[110] w-10 h-10 rounded-full bg-[var(--evo-surface-2)]/90 backdrop-blur border border-[var(--evo-border)] hover:bg-[var(--evo-purple-500)]/40 text-[var(--evo-ink-2)] hover:text-white transition-all flex items-center justify-center shadow-lg" id="evo-article-close" aria-label="关闭">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       ${coverHtml}
