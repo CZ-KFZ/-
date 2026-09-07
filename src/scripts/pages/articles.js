@@ -1,17 +1,17 @@
 // ============================================================
-// 文章 articles.js（CMS + 付费版）
+// 文章 articles.js（CMS + 付费版 · 三级层级）
 // 数据源：优先飞书多维表格；为空或未配置时回退到 data.js
-// 新功能：
-//   - 文章卡片显示「付费 ¥XX」/「免费」角标
-//   - 付费文章：详情里只显示免费部分（摘要 / 前 3 段 / 免费字段内容）+ 🔒 遮罩
-//   - [立即支付 ¥XX 解锁] 按钮（跳飞书表里填的 buyUrl，即链动小铺商品链接）
-//   - 输入兑换码 → 调后端 /api/redeem 校验 → 解锁全文，解锁态存 localStorage
+// 层级结构：
+//   一级：文章页（展示 子栏目入口：免费/付费/合集）
+//   二级：点子栏目 → 看文章列表（或合集列表）
+//   三级：点文章 → 弹详情（付费文章含支付解锁流程）
 // ============================================================
 
 import { fetchArticles, redeemCode } from '../feishu.js'
-import { ARTICLES as MOCK_ARTICLES, ARTICLE_FILTERS } from '../data.js'
+import { ARTICLES as MOCK_ARTICLES } from '../data.js'
 
-let currentFilter = 'all'
+// 当前视图：home 文章首页 / free 免费列表 / paid 付费列表 / collections 合集列表
+let currentView = 'home'
 let articles = []
 
 const CAT_TONE = {
@@ -41,28 +41,6 @@ function markUnlocked(articleId) {
 function isUnlocked(articleId) {
   if (!articleId) return false
   return getUnlockedSet().has(String(articleId))
-}
-
-function renderFilters() {
-  const bar = document.getElementById('evo-articles-filters')
-  if (!bar) return
-  bar.innerHTML = ARTICLE_FILTERS.map(
-    (f) => `
-      <button data-filter="${f.key}" class="px-4 py-2 rounded-full text-sm transition-all ${
-        f.key === currentFilter
-          ? 'bg-[var(--evo-primary)] text-white'
-          : 'border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:border-[var(--evo-purple-400)]'
-      }">${f.label}</button>`
-  ).join('')
-  bar.querySelectorAll('[data-filter]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.filter
-      if (key === currentFilter) return
-      currentFilter = key
-      renderFilters()
-      renderList()
-    })
-  })
 }
 
 // 付费角标
@@ -115,7 +93,6 @@ function textToParagraphs(text) {
 
 // 拿「免费可见的部分」
 function getFreePreview(article) {
-  // 优先级：手动填的免费部分 > 正文前 3 段 > 摘要
   if (article.freeExcerpt) return textToParagraphs(article.freeExcerpt)
   const fullText = article.fullContent || article.content || ''
   if (!fullText) return `<p class="text-[var(--evo-ink-3)] italic">（付费文章的试读部分请在飞书「免费部分/试读」字段填写，或在正文里写前 3 段。）</p>`
@@ -134,6 +111,192 @@ function getFullContentHtml(article) {
 function priceText(a) {
   if (!a || !a.price) return ''
   return (Number(a.price) % 1 === 0) ? String(a.price) : Number(a.price).toFixed(2)
+}
+
+// ============================================================
+// 一级：文章首页（子栏目入口卡片）
+// ============================================================
+function renderHome() {
+  const list = document.getElementById('evo-articles-list')
+  const empty = document.getElementById('evo-articles-empty')
+  if (!list) return
+
+  const freeCount = articles.filter((a) => !a.isPaid || !a.price).length
+  const paidCount = articles.filter((a) => a.isPaid && a.price).length
+
+  list.classList.remove('hidden')
+  empty.classList.add('hidden')
+
+  const cards = [
+    {
+      view: 'free',
+      icon: '🌿',
+      title: '免费文章',
+      desc: '无需付费，直接阅读全部免费内容',
+      count: freeCount,
+      tone: 'from-[var(--evo-cyan)]/20 to-[var(--evo-purple-500)]/10 border-[var(--evo-cyan)]/30',
+      badgeCls: 'bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)]'
+    },
+    {
+      view: 'paid',
+      icon: '🔒',
+      title: '付费文章',
+      desc: '单篇付费解锁，支持兑换码永久解锁',
+      count: paidCount,
+      tone: 'from-[var(--evo-pink)]/20 to-[var(--evo-purple-500)]/15 border-[var(--evo-pink)]/40',
+      badgeCls: 'bg-gradient-to-r from-[var(--evo-pink)]/20 to-[var(--evo-purple-500)]/20 text-white border border-[var(--evo-pink)]/40'
+    },
+    {
+      view: 'collections',
+      icon: '📚',
+      title: '合集',
+      desc: '多篇文章打包，合集价更优惠（即将上线）',
+      count: null,
+      tone: 'from-[var(--evo-violet)]/20 to-[var(--evo-purple-700)]/15 border-[var(--evo-violet)]/30',
+      badgeCls: 'bg-[var(--evo-violet)]/20 text-[var(--evo-violet)]'
+    }
+  ]
+
+  list.innerHTML = `
+    <div class="mb-8 text-center">
+      <h1 class="evo-title text-3xl sm:text-4xl mb-3">文章</h1>
+      <p class="text-[var(--evo-ink-2)]">选择栏目，开始阅读</p>
+    </div>
+    <div class="grid gap-4 sm:gap-6 md:grid-cols-3">
+      ${cards.map((c, i) => `
+        <div class="evo-glass evo-reveal rounded-[var(--evo-radius-lg)] p-6 md:p-8 cursor-pointer hover:bg-[var(--evo-surface-2)] transition-all group relative overflow-hidden bg-gradient-to-br ${c.tone} border" data-reveal-delay="${i * 100}" data-nav="${c.view}">
+          <div class="text-4xl mb-4">${c.icon}</div>
+          <h3 class="evo-title text-xl mb-2">${c.title}</h3>
+          <p class="text-sm text-[var(--evo-ink-2)] mb-4 leading-relaxed">${c.desc}</p>
+          ${c.count !== null ? `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${c.badgeCls}">${c.count} 篇</span>` : `<span class="inline-block px-3 py-1 rounded-full text-xs ${c.badgeCls}">即将上线</span>`}
+          <div class="mt-4 text-[var(--evo-purple-300)] text-sm opacity-0 group-hover:opacity-100 transition-opacity">进入 →</div>
+        </div>
+      `).join('')}
+    </div>
+  `
+
+  list.querySelectorAll('[data-nav]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const view = card.dataset.nav
+      navigate(view)
+    })
+  })
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ============================================================
+// 二级：文章列表（免费/付费）+ 返回按钮
+// ============================================================
+function renderArticleList(view) {
+  const list = document.getElementById('evo-articles-list')
+  const empty = document.getElementById('evo-articles-empty')
+  if (!list) return
+
+  const isFree = view === 'free'
+  const items = isFree
+    ? articles.filter((a) => !a.isPaid || !a.price)
+    : articles.filter((a) => a.isPaid && a.price)
+
+  const title = isFree ? '免费文章' : '付费文章'
+  const icon = isFree ? '🌿' : '🔒'
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="mb-6">
+        <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          返回文章
+        </button>
+      </div>
+      <h2 class="evo-title text-2xl mb-6">${icon} ${title}</h2>
+    `
+    list.classList.remove('hidden')
+    empty.classList.remove('hidden')
+    empty.querySelector('p').textContent = `暂无${title}`
+    bindBack(list)
+    return
+  }
+
+  list.classList.remove('hidden')
+  empty.classList.add('hidden')
+
+  list.innerHTML = `
+    <div class="mb-6">
+      <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        返回文章
+      </button>
+      <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
+      <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇文章</p>
+    </div>
+    <div class="space-y-4 sm:space-y-6">
+      ${items.map((a, i) => articleCard(a, i)).join('')}
+    </div>
+  `
+
+  list.querySelectorAll('[data-article-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.articleId
+      const article = articles.find((a) => a.id === id)
+      if (article) openArticleModal(article)
+    })
+  })
+  bindBack(list)
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ============================================================
+// 二级：合集列表（占位，等飞书建表后补读取逻辑）
+// ============================================================
+function renderCollections() {
+  const list = document.getElementById('evo-articles-list')
+  const empty = document.getElementById('evo-articles-empty')
+  if (!list) return
+
+  list.classList.remove('hidden')
+  empty.classList.add('hidden')
+
+  list.innerHTML = `
+    <div class="mb-6">
+      <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        返回文章
+      </button>
+      <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">📚 合集</h2>
+      <p class="text-sm text-[var(--evo-ink-3)]">多篇文章打包，合集价更优惠</p>
+    </div>
+    <div class="evo-glass rounded-[var(--evo-radius-lg)] p-8 md:p-12 text-center">
+      <div class="text-5xl mb-4">📚</div>
+      <h3 class="evo-title text-xl mb-3">合集功能即将上线</h3>
+      <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed max-w-md mx-auto">
+        合集功能需要先在飞书多维表格中创建「合集」数据表，配置合集名称、包含文章、合集价格和购买链接后，前端会自动展示合集列表。
+      </p>
+      <p class="text-[var(--evo-ink-3)] text-xs mt-4">创建合集 = 飞书表加一行，前端自动读取</p>
+    </div>
+  `
+  bindBack(list)
+}
+
+// 绑定返回按钮
+function bindBack(scope) {
+  scope.querySelectorAll('.evo-back-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      navigate(btn.dataset.nav || 'home')
+    })
+  })
+}
+
+// 导航：切换视图
+function navigate(view) {
+  currentView = view
+  if (view === 'home') renderHome()
+  else if (view === 'free' || view === 'paid') renderArticleList(view)
+  else if (view === 'collections') renderCollections()
+  // 滚动到列表顶部
+  const list = document.getElementById('evo-articles-list')
+  if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 // ============================================================
@@ -277,7 +440,6 @@ function openArticleModal(article) {
       // 成功：标记已解锁 + 刷新弹窗全文
       markUnlocked(article.id)
       showMsg('✓ 验证成功，正在解锁全文…', true)
-      // 如果后端返回了全文内容，就用后端的；否则用本地（如果本地就有全文也能用）
       const fullText = r.articleContent || article.fullContent || article.content || ''
       const bodyEl = modal.querySelector('#evo-article-body')
       if (bodyEl) {
@@ -285,37 +447,11 @@ function openArticleModal(article) {
           ? textToParagraphs(fullText)
           : getFullContentHtml({ ...article, fullContent: article.fullContent })
       }
-      // 标题旁边加个「已解锁」
       openArticleModal(article) // 重开一次，让顶部角标刷新
     }
     btn.addEventListener('click', doRedeem)
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRedeem() })
   }
-}
-
-function renderList() {
-  const list = document.getElementById('evo-articles-list')
-  const empty = document.getElementById('evo-articles-empty')
-  if (!list) return
-
-  const items = currentFilter === 'all' ? articles : articles.filter((a) => a.category === currentFilter)
-  if (!items.length) {
-    list.innerHTML = ''
-    list.classList.add('hidden')
-    empty.classList.remove('hidden')
-    return
-  }
-  list.classList.remove('hidden')
-  empty.classList.add('hidden')
-  list.innerHTML = items.map((a, i) => articleCard(a, i)).join('')
-  list.querySelectorAll('[data-article-id]').forEach((card) => {
-    card.addEventListener('click', () => {
-      const id = card.dataset.articleId
-      const article = articles.find((a) => a.id === id)
-      if (article) openArticleModal(article)
-    })
-  })
-  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
 async function loadData() {
@@ -337,11 +473,14 @@ async function loadData() {
 }
 
 async function init() {
-  renderFilters()
   const list = document.getElementById('evo-articles-list')
   if (list) list.innerHTML = '<div class="text-center py-16 text-[var(--evo-ink-3)]">加载中…</div>'
+  // 隐藏旧的筛选栏（如果 HTML 里还有的话）
+  const filtersBar = document.getElementById('evo-articles-filters')
+  if (filtersBar) filtersBar.style.display = 'none'
   await loadData()
-  renderList()
+  // 默认渲染文章首页（一级）
+  renderHome()
 }
 
 if (document.readyState === 'loading') {
