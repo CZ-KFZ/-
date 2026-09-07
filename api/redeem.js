@@ -135,15 +135,37 @@ export default async function handler(req, res) {
     const codeRows = await listRecords(token, env.appToken, codesTableId)
 
     // 2) 按文章标题匹配到对应行
+    // 模糊匹配：去除书名号、引号、空格后再比较，避免《场域》vs 场域 这种细微差异
+    const normalizeTitle = (t) => String(t || '')
+      .replace(/[\s《》""''「」『』'"]/g, '')
+      .toLowerCase()
+
     let targetRow = null
     if (userArticleTitle) {
+      // 2a) 严格匹配
       targetRow = codeRows.find((r) => {
         const t = extractText(findField(r.fields || {}, TITLE_FIELDS))
         return t === userArticleTitle
       })
+      // 2b) 严格匹配失败 → 模糊匹配（去书名号/引号/空格后比较）
+      if (!targetRow) {
+        const userNorm = normalizeTitle(userArticleTitle)
+        targetRow = codeRows.find((r) => {
+          const t = extractText(findField(r.fields || {}, TITLE_FIELDS))
+          return normalizeTitle(t) === userNorm
+        })
+      }
+      // 2c) 两种匹配都失败 → 明确报错，不能静默 fallback 到第一行（会误导用户）
+      if (!targetRow) {
+        return res.status(200).json({
+          ok: false,
+          message: `该文章「${userArticleTitle}」未在兑换码表中配置，请检查飞书「兑换码」表是否已添加该文章对应的行`
+        })
+      }
+    } else {
+      // 没传 articleTitle → fallback 到第一行（兼容旧前端）
+      targetRow = codeRows[0]
     }
-    // 没匹配到就取第一行（兜底）
-    if (!targetRow) targetRow = codeRows[0]
     if (!targetRow) return res.status(200).json({ ok: false, message: '兑换码表为空' })
 
     const targetFields = targetRow.fields || {}
@@ -190,17 +212,20 @@ export default async function handler(req, res) {
 
     await updateRecord(token, env.appToken, codesTableId, targetRow.record_id, updatePatch)
 
-    // 6) 查文章表返回全文
+    // 6) 查文章表返回全文（同样用模糊匹配，避免《场域》vs 场域 匹配失败）
     const allArticles = await listRecords(token, env.appToken, articlesTableId)
+    const rowNorm = normalizeTitle(rowArticleTitle)
+    const userNorm = normalizeTitle(userArticleTitle)
     const article = allArticles.find((a) => {
       const t = extractText(findField(a.fields || {}, ARTICLE_TITLE_FIELDS))
-      return t && (t === rowArticleTitle || t === userArticleTitle)
-    }) || (rowArticleTitle && allArticles.find((a) => {
-      const t = extractText(findField(a.fields || {}, ARTICLE_TITLE_FIELDS))
-      return t === rowArticleTitle
-    }))
+      if (!t) return false
+      const tNorm = normalizeTitle(t)
+      // 严格匹配 OR 模糊匹配（去书名号后比较）
+      return t === rowArticleTitle || t === userArticleTitle ||
+             tNorm === rowNorm || tNorm === userNorm
+    })
 
-    if (!article) return res.status(200).json({ ok: false, message: '该兑换码对应的文章不存在或已下架' })
+    if (!article) return res.status(200).json({ ok: false, message: '该兑换码对应的文章不存在或已下架（请检查飞书文章表和兑换码表的标题是否一致）' })
 
     const artFields = article.fields || {}
     const fullContent = extractText(artFields['全文内容'] || artFields['全文'] || artFields['付费正文'] || artFields['正文'] || '')
