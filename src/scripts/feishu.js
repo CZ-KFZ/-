@@ -46,6 +46,25 @@ function extractOption(fieldValue, fallback = '') {
 }
 
 // ------------------------------------------------------------
+// 解析超链接字段：飞书「超链接」类型返回 { text, link } 或
+// [{ text, link }]；字符串则原样返回。
+// 不解析会导致 href 变成 [object Object]，点击跳到 /object Object
+// ------------------------------------------------------------
+function extractUrl(fieldValue, fallback = '') {
+  if (!fieldValue) return fallback
+  if (typeof fieldValue === 'string') return fieldValue
+  if (typeof fieldValue === 'object') {
+    if (Array.isArray(fieldValue)) {
+      const first = fieldValue[0]
+      if (!first) return fallback
+      return first.link || first.url || first.text || fallback
+    }
+    return fieldValue.link || fieldValue.url || fieldValue.text || fallback
+  }
+  return fallback
+}
+
+// ------------------------------------------------------------
 // 解析附件字段：飞书附件返回 [{ file_token, name, type, url, ... }]
 // url 是临时的（带 session），前端不能直接用。
 // 要用公开可访问的 URL，需要：
@@ -78,7 +97,7 @@ function normalizeArticle(record) {
   const price = priceRaw === '' || priceRaw === null || priceRaw === undefined
     ? 0
     : Number(priceRaw) || 0
-  const buyUrl = f['购买链接'] || f['付费链接'] || f['商品链接'] || ''
+  const buyUrl = extractUrl(f['购买链接'] || f['付费链接'] || f['商品链接'] || '')
   const fullContent = f['全文内容'] || f['全文'] || f['付费正文'] || ''
   const freeExcerpt = f['免费部分'] || f['试读'] || f['摘要'] || ''
 
