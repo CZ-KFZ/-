@@ -112,12 +112,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, message: 'Method not allowed' })
 
   const env = requireEnv()
-  if (!env) return res.status(200).json({ ok: false, message: '服务器未配置飞书环境变量' })
+  if (!env) return res.status(200).json({ ok: false, message: '服务器未配置飞书环境变量（缺 FEISHU_APP_ID / FEISHU_APP_SECRET / FEISHU_APP_TOKEN）' })
 
   const codesTableId = getTableId('codes')
-  if (!codesTableId) return res.status(200).json({ ok: false, message: '未配置兑换码表' })
+  if (!codesTableId) return res.status(200).json({ ok: false, message: '未配置 FEISHU_TABLE_CODES 环境变量（兑换码表 ID）' })
   const articlesTableId = getTableId('articles')
-  if (!articlesTableId) return res.status(200).json({ ok: false, message: '未配置文章表' })
+  if (!articlesTableId) return res.status(200).json({ ok: false, message: '未配置 FEISHU_TABLE_ARTICLES 环境变量（文章表 ID）' })
 
   let body = req.body
   if (typeof body === 'string') {
