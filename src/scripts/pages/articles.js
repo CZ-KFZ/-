@@ -9,6 +9,7 @@
 
 import { fetchArticles, redeemCode } from '../feishu.js'
 import { ARTICLES as MOCK_ARTICLES } from '../data.js'
+import { parseMarkdown } from '../markdown.js'
 
 // 当前视图：home 文章首页 / free 免费列表 / paid 付费列表 / collections 合集列表
 let currentView = 'home'
@@ -81,8 +82,13 @@ function articleCard(a, index) {
 }
 
 // 把正文转成段落 HTML
-function textToParagraphs(text) {
+// format=plain（默认）：按空行分段，段内换行 <br>，向后兼容
+// format=markdown：调 parseMarkdown 渲染配图、加粗、引用、列表、代码块等
+function textToParagraphs(text, format) {
   if (!text) return ''
+  if (format === 'markdown') {
+    return `<div class="prose-content evo-md text-[var(--evo-ink-2)] leading-loose space-y-4">${parseMarkdown(text)}</div>`
+  }
   return `<div class="prose-content text-[var(--evo-ink-2)] leading-loose space-y-4">${
     text
       .split(/\n\n+/)
@@ -94,18 +100,19 @@ function textToParagraphs(text) {
 
 // 拿「免费可见的部分」
 function getFreePreview(article) {
-  if (article.freeExcerpt) return textToParagraphs(article.freeExcerpt)
+  const fmt = article.contentFormat
+  if (article.freeExcerpt) return textToParagraphs(article.freeExcerpt, fmt)
   const fullText = article.fullContent || article.content || ''
   if (!fullText) return `<p class="text-[var(--evo-ink-3)] italic">（付费文章的试读部分请在飞书「免费部分/试读」字段填写，或在正文里写前 3 段。）</p>`
   const paras = fullText.split(/\n\n+/).filter((p) => p.trim()).slice(0, 3)
-  return textToParagraphs(paras.join('\n\n'))
+  return textToParagraphs(paras.join('\n\n'), fmt)
 }
 
 // 拿「全文内容」
 function getFullContentHtml(article) {
   const text = article.fullContent || article.content || ''
   if (!text) return `<p class="text-[var(--evo-ink-3)] italic">这篇文章暂无正文内容。</p>`
-  return textToParagraphs(text)
+  return textToParagraphs(text, article.contentFormat)
 }
 
 // 提取「价格文本」
@@ -583,7 +590,7 @@ function openArticleModal(article) {
       const bodyEl = modal.querySelector('#evo-article-body')
       if (bodyEl) {
         bodyEl.innerHTML = fullText
-          ? textToParagraphs(fullText)
+          ? textToParagraphs(fullText, article.contentFormat)
           : getFullContentHtml({ ...article, fullContent: article.fullContent })
       }
       openArticleModal(article) // 重开一次，让顶部角标刷新
@@ -607,7 +614,8 @@ async function loadData() {
     price: 0,
     buyUrl: '',
     fullContent: a.content || '',
-    freeExcerpt: a.excerpt || ''
+    freeExcerpt: a.excerpt || '',
+    contentFormat: 'plain'
   }))
 }
 
