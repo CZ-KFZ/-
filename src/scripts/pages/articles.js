@@ -123,6 +123,11 @@ function renderHome() {
 
   const freeCount = articles.filter((a) => !a.isPaid || !a.price).length
   const paidCount = articles.filter((a) => a.isPaid && a.price).length
+  // 散文：飞书「分类」字段为「散文」的文章
+  const proseCount = articles.filter((a) => {
+    const cat = String(a.category || a.categoryLabel || '').toLowerCase()
+    return cat === '散文' || cat.includes('散文')
+  }).length
 
   list.classList.remove('hidden')
   empty.classList.add('hidden')
@@ -154,22 +159,32 @@ function renderHome() {
       count: null,
       tone: 'from-[var(--evo-violet)]/20 to-[var(--evo-purple-700)]/15 border-[var(--evo-violet)]/30',
       badgeCls: 'bg-[var(--evo-violet)]/20 text-[var(--evo-violet)]'
+    },
+    {
+      view: 'prose',
+      icon: '✒️',
+      title: '散文',
+      desc: '随笔、札记、生活感悟与文学性记录',
+      count: proseCount,
+      tone: 'from-[var(--evo-amber)]/20 to-[var(--evo-orange)]/10 border-[var(--evo-amber)]/30',
+      badgeCls: 'bg-[var(--evo-amber)]/15 text-[var(--evo-amber)]'
     }
   ]
 
   list.innerHTML = `
-    <div class="mb-8 text-center">
-      <h1 class="evo-title text-3xl sm:text-4xl mb-3">文章</h1>
-      <p class="text-[var(--evo-ink-2)]">选择栏目，开始阅读</p>
-    </div>
-    <div class="grid gap-4 sm:gap-6 md:grid-cols-3">
+    <div class="grid gap-4 sm:gap-5 md:grid-cols-2 mt-2">
       ${cards.map((c, i) => `
-        <div class="evo-glass evo-reveal rounded-[var(--evo-radius-lg)] p-6 md:p-8 cursor-pointer hover:bg-[var(--evo-surface-2)] transition-all group relative overflow-hidden bg-gradient-to-br ${c.tone} border" data-reveal-delay="${i * 100}" data-nav="${c.view}">
-          <div class="text-4xl mb-4">${c.icon}</div>
-          <h3 class="evo-title text-xl mb-2">${c.title}</h3>
-          <p class="text-sm text-[var(--evo-ink-2)] mb-4 leading-relaxed">${c.desc}</p>
-          ${c.count !== null ? `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${c.badgeCls}">${c.count} 篇</span>` : `<span class="inline-block px-3 py-1 rounded-full text-xs ${c.badgeCls}">即将上线</span>`}
-          <div class="mt-4 text-[var(--evo-purple-300)] text-sm opacity-0 group-hover:opacity-100 transition-opacity">进入 →</div>
+        <div class="evo-glass evo-reveal rounded-[var(--evo-radius-lg)] p-5 md:p-6 cursor-pointer hover:bg-[var(--evo-surface-2)] transition-all group relative overflow-hidden border ${c.tone}" data-reveal-delay="${i * 100}" data-nav="${c.view}">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${c.tone} opacity-10 blur-2xl pointer-events-none"></div>
+          <div class="relative">
+            <div class="flex items-start justify-between mb-4">
+              <div class="text-2xl">${c.icon}</div>
+              ${c.count !== null ? `<span class="text-xs font-mono text-[var(--evo-ink-3)]">${c.count} 篇</span>` : `<span class="text-xs ${c.badgeCls} px-2 py-0.5 rounded-full">即将上线</span>`}
+            </div>
+            <h3 class="evo-title text-lg font-semibold mb-1.5">${c.title}</h3>
+            <p class="text-xs text-[var(--evo-ink-3)] leading-relaxed mb-4">${c.desc}</p>
+            <div class="flex items-center gap-1 text-xs text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">进入 <span>→</span></div>
+          </div>
         </div>
       `).join('')}
     </div>
@@ -248,8 +263,43 @@ function renderArticleList(view) {
 }
 
 // ============================================================
-// 二级：合集列表（占位，等飞书建表后补读取逻辑）
+// 二级：合集列表（每个合集卡片带免费/付费角标）
+// 数据源：飞书「合集」表（待建）；字段约定：
+//   合集名 / 包含文章（多向关联或文本）/ 合集简介 / 合集封面 /
+//   是否付费（单选）/ 合集售价（数字）/ 购买链接（超链接）
+// 没有飞书数据时显示占位
 // ============================================================
+
+// 合集角标
+function collectionBadgeHtml(c) {
+  if (!c.isPaid || !c.price) {
+    return '<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)] text-[11px]">免费合集</span>'
+  }
+  const priceText = (Number(c.price) % 1 === 0) ? String(c.price) : Number(c.price).toFixed(2)
+  return `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-gradient-to-r from-[var(--evo-pink)]/20 to-[var(--evo-purple-500)]/20 text-white text-[11px] font-semibold border border-[var(--evo-pink)]/40 tracking-wide">付费合集 ¥${priceText}</span>`
+}
+
+// 渲染单个合集卡片
+function collectionCard(c, index) {
+  const coverHtml = c.coverImage
+    ? `<div class="mb-4 rounded-[var(--evo-radius-md)] overflow-hidden aspect-[16/9]"><img src="${c.coverImage}" alt="${c.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
+    : ''
+  const articleCount = c.articleIds?.length || c.articleCount || 0
+  return `
+    <article class="evo-glass rounded-[var(--evo-radius-lg)] p-6 md:p-8 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal group relative overflow-hidden" data-reveal-delay="${Math.min(index * 80, 400)}" data-collection-id="${c.id || ''}">
+      ${coverHtml}
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        ${collectionBadgeHtml(c)}
+        ${articleCount ? `<span class="text-xs text-[var(--evo-ink-3)]">${articleCount} 篇文章</span>` : ''}
+      </div>
+      <h2 class="evo-title text-xl sm:text-2xl mb-3">${c.title || '未命名合集'}</h2>
+      <p class="text-[var(--evo-ink-2)] leading-relaxed">${c.desc || '（暂无简介）'}</p>
+      <div class="mt-4 flex items-center justify-between text-sm">
+        <div class="text-[var(--evo-purple-300)] opacity-0 group-hover:opacity-100 transition-opacity">查看合集内文章 →</div>
+      </div>
+    </article>`
+}
+
 function renderCollections() {
   const list = document.getElementById('evo-articles-list')
   const empty = document.getElementById('evo-articles-empty')
@@ -258,6 +308,34 @@ function renderCollections() {
   list.classList.remove('hidden')
   empty.classList.add('hidden')
 
+  // 飞书「合集」表还没建，先显示占位
+  // 等用户在飞书建好「合集」表 + 我加 feishu.js 读取函数后，这里会读真实数据
+  const collections = []
+
+  if (!collections.length) {
+    list.innerHTML = `
+      <div class="mb-6">
+        <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          返回文章
+        </button>
+        <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">📚 合集</h2>
+        <p class="text-sm text-[var(--evo-ink-3)]">多篇文章打包，每个合集独立标记免费或付费</p>
+      </div>
+      <div class="evo-glass rounded-[var(--evo-radius-lg)] p-8 md:p-12 text-center">
+        <div class="text-5xl mb-4">📚</div>
+        <h3 class="evo-title text-xl mb-3">合集功能即将上线</h3>
+        <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed max-w-md mx-auto mb-4">
+          合集支持免费合集和付费合集两种类型。每个合集卡片会显示对应的角标（<span class="text-[var(--evo-cyan)]">免费合集</span> / <span class="text-[var(--evo-pink)]">付费合集 ¥XX</span>），点合集查看内含文章列表。
+        </p>
+        <p class="text-[var(--evo-ink-3)] text-xs">需要在飞书多维表格中创建「合集」表后启用</p>
+      </div>
+    `
+    bindBack(list)
+    return
+  }
+
+  // 有合集数据时的渲染（等飞书建表后启用）
   list.innerHTML = `
     <div class="mb-6">
       <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
@@ -265,18 +343,15 @@ function renderCollections() {
         返回文章
       </button>
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">📚 合集</h2>
-      <p class="text-sm text-[var(--evo-ink-3)]">多篇文章打包，合集价更优惠</p>
+      <p class="text-sm text-[var(--evo-ink-3)]">多篇文章打包，每个合集独立定价</p>
     </div>
-    <div class="evo-glass rounded-[var(--evo-radius-lg)] p-8 md:p-12 text-center">
-      <div class="text-5xl mb-4">📚</div>
-      <h3 class="evo-title text-xl mb-3">合集功能即将上线</h3>
-      <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed max-w-md mx-auto">
-        合集功能需要先在飞书多维表格中创建「合集」数据表，配置合集名称、包含文章、合集价格和购买链接后，前端会自动展示合集列表。
-      </p>
-      <p class="text-[var(--evo-ink-3)] text-xs mt-4">创建合集 = 飞书表加一行，前端自动读取</p>
+    <div class="space-y-4 sm:space-y-6">
+      ${collections.map((c, i) => collectionCard(c, i)).join('')}
     </div>
   `
   bindBack(list)
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
 // 绑定返回按钮
@@ -294,9 +369,72 @@ function navigate(view) {
   if (view === 'home') renderHome()
   else if (view === 'free' || view === 'paid') renderArticleList(view)
   else if (view === 'collections') renderCollections()
+  else if (view === 'prose') renderProse()
   // 滚动到列表顶部
   const list = document.getElementById('evo-articles-list')
   if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// ============================================================
+// 二级：散文列表（按飞书「分类」字段筛选「散文」）
+// ============================================================
+function renderProse() {
+  const list = document.getElementById('evo-articles-list')
+  const empty = document.getElementById('evo-articles-empty')
+  if (!list) return
+
+  const items = articles.filter((a) => {
+    const cat = String(a.category || a.categoryLabel || '').toLowerCase()
+    return cat === '散文' || cat.includes('散文')
+  })
+
+  const title = '散文'
+  const icon = '✒️'
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="mb-6">
+        <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          返回文章
+        </button>
+      </div>
+      <h2 class="evo-title text-2xl mb-6">${icon} ${title}</h2>
+    `
+    list.classList.remove('hidden')
+    empty.classList.remove('hidden')
+    empty.querySelector('p').textContent = `暂无${title}`
+    bindBack(list)
+    return
+  }
+
+  list.classList.remove('hidden')
+  empty.classList.add('hidden')
+
+  list.innerHTML = `
+    <div class="mb-6">
+      <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        返回文章
+      </button>
+      <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
+      <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇散文</p>
+    </div>
+    <div class="space-y-4 sm:space-y-6">
+      ${items.map((a, i) => articleCard(a, i)).join('')}
+    </div>
+  `
+
+  list.querySelectorAll('[data-article-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.articleId
+      const article = articles.find((a) => a.id === id)
+      if (article) openArticleModal(article)
+    })
+  })
+  bindBack(list)
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
 // ============================================================
