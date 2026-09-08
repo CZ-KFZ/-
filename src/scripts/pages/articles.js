@@ -55,26 +55,27 @@ function paidBadgeHtml(a) {
 function articleCard(a, index) {
   const toneCls = CAT_TONE[a.category] || CAT_TONE['道']
   const coverHtml = a.coverImage
-    ? `<div class="mb-4 rounded-[var(--evo-radius-md)] overflow-hidden aspect-[16/9]"><img src="${a.coverImage}" alt="${a.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
+    ? `<div class="aspect-[16/9] overflow-hidden rounded-t-[var(--evo-radius-lg)]"><img src="${a.coverImage}" alt="${a.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
     : ''
   const unlocked = isUnlocked(a.id)
   const lockIcon = (a.isPaid && a.price && !unlocked) ? '<span class="ml-1">🔒</span>' : ''
   return `
-    <article class="evo-glass rounded-[var(--evo-radius-lg)] p-6 md:p-8 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal group relative overflow-hidden" data-reveal-delay="${Math.min(index * 80, 400)}" data-article-id="${a.id}">
+    <article class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" data-article-id="${a.id}">
       ${coverHtml}
-      <div class="flex flex-wrap items-center gap-3 mb-4">
-        <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${a.categoryLabel || a.category}</span>
-        ${paidBadgeHtml(a)}
-        <span class="text-xs text-[var(--evo-ink-3)]">${a.date}</span>
-        ${a.readTime ? `<span class="text-xs text-[var(--evo-ink-3)]">${a.readTime}</span>` : ''}
-      </div>
-      <h2 class="evo-title text-xl sm:text-2xl mb-3 flex items-center">${a.title}${lockIcon}</h2>
-      <p class="text-[var(--evo-ink-2)] leading-relaxed">${a.excerpt || a.freeExcerpt || '（暂无摘要）'}</p>
-      <div class="mt-4 flex items-center justify-between text-sm">
-        <div class="text-[var(--evo-purple-300)] opacity-0 group-hover:opacity-100 transition-opacity">
-          ${unlocked ? '已解锁 · 阅读全文 →' : '阅读全文 →'}
+      <div class="p-4 md:p-5 flex-1 flex flex-col">
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <span class="px-1.5 py-0.5 rounded-[var(--evo-radius-sm)] ${toneCls} text-[11px]">${a.categoryLabel || a.category}</span>
+          ${paidBadgeHtml(a)}
         </div>
-        ${unlocked ? '<span class="text-xs text-[var(--evo-cyan)]">✓ 已解锁</span>' : ''}
+        <h2 class="evo-title text-base sm:text-lg mb-2 line-clamp-2 flex items-start">${a.title}${lockIcon}</h2>
+        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3 flex-1">${a.excerpt || a.freeExcerpt || '（暂无摘要）'}</p>
+        <div class="mt-3 pt-3 border-t border-[var(--evo-border)] flex items-center justify-between text-xs text-[var(--evo-ink-3)]">
+          <span>${a.date}</span>
+          ${unlocked
+            ? '<span class="text-[var(--evo-cyan)]">✓ 已解锁</span>'
+            : '<span class="text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">阅读 →</span>'
+          }
+        </div>
       </div>
     </article>`
 }
@@ -245,7 +246,7 @@ function renderArticleList(view) {
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
       <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇文章</p>
     </div>
-    <div class="space-y-4 sm:space-y-6">
+    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${items.map((a, i) => articleCard(a, i)).join('')}
     </div>
   `
@@ -420,7 +421,7 @@ function renderProse() {
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
       <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇散文</p>
     </div>
-    <div class="space-y-4 sm:space-y-6">
+    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${items.map((a, i) => articleCard(a, i)).join('')}
     </div>
   `
