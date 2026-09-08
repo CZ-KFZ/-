@@ -100,6 +100,9 @@ function normalizeArticle(record) {
   const buyUrl = extractUrl(f['购买链接'] || f['付费链接'] || f['商品链接'] || '')
   const fullContent = f['全文内容'] || f['全文'] || f['付费正文'] || ''
   const freeExcerpt = f['免费部分'] || f['试读'] || f['摘要'] || ''
+  // 正文格式：单选「Markdown」→ 用 markdown.js 渲染；其他（含空）→ 纯文本段落
+  const formatOpt = extractOption(f['正文格式'], '')
+  const contentFormat = /markdown|md/i.test(formatOpt) ? 'markdown' : 'plain'
 
   return {
     id: record.record_id,
@@ -117,7 +120,9 @@ function normalizeArticle(record) {
     price,
     buyUrl,
     fullContent,
-    freeExcerpt
+    freeExcerpt,
+    // 正文渲染格式：plain 纯文本 / markdown
+    contentFormat
   }
 }
 
