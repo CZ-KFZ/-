@@ -4,7 +4,7 @@
 //
 // 环境变量（在 Vercel 后台配置）：
 //   FEISHU_APP_ID / FEISHU_APP_SECRET / FEISHU_APP_TOKEN
-//   FEISHU_TABLE_ARTICLES / PROJECTS / NOTES / TIMELINE / SETTINGS / CODES
+//   FEISHU_TABLE_ARTICLES / PROJECTS / NOTES / TIMELINE / SETTINGS / CODES / COLLECTIONS
 // ============================================================
 
 import {
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   }
   const tableId = getTableId(type)
   if (!tableId) {
-    if (type !== 'articles' && type !== 'projects' && type !== 'notes' && type !== 'timeline' && type !== 'settings' && type !== 'codes') {
+    if (type !== 'articles' && type !== 'projects' && type !== 'notes' && type !== 'timeline' && type !== 'settings' && type !== 'codes' && type !== 'collections') {
       return res.status(400).json({ error: `未知的数据类型: ${type}` })
     }
     return res.status(200).json({ error: `未配置 ${type} 表 Table ID`, fallback: true })
