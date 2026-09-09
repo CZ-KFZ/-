@@ -456,12 +456,12 @@ function renderCollectionDetail(collectionId) {
     `}
   `
 
-  // 点文章卡片
+  // 点文章卡片 → 传合集对象过去，让详情弹窗按合集是否解锁判定
   list.querySelectorAll('[data-article-id]').forEach((card) => {
     card.addEventListener('click', () => {
       const id = card.dataset.articleId
       const article = articles.find((a) => a.id === id)
-      if (article) openArticleModal(article)
+      if (article) openArticleModal(article, c)
     })
   })
   bindBack(list)
@@ -597,7 +597,7 @@ function renderProse() {
 // ============================================================
 // 文章详情弹窗（核心：对付费文章解锁流程）
 // ============================================================
-function openArticleModal(article) {
+function openArticleModal(article, fromCollection) {
   const existing = document.getElementById('evo-article-modal')
   if (existing) existing.remove()
 
@@ -605,15 +605,81 @@ function openArticleModal(article) {
   const coverHtml = article.coverImage
     ? `<div class="mb-6 rounded-[var(--evo-radius-md)] overflow-hidden aspect-[16/9]"><img src="${article.coverImage}" alt="${article.title}" class="w-full h-full object-cover" /></div>`
     : ''
-  const unlocked = isUnlocked(article.id) || !article.isPaid || !article.price
+  // 判定是否解锁：
+  //   1. 文章本身标记为已解锁
+  //   2. 来自付费合集 → 合集内所有文章都已解锁才算解锁
+  //   3. 文章自身免费（且不在付费合集里）→ 算解锁
+  const fromPaidCollection = fromCollection && fromCollection.isPaid && fromCollection.price
+  const collectionUnlocked = fromPaidCollection
+    ? (fromCollection.articleIds || []).every((id) => isUnlocked(id))
+    : false
+  const unlocked = isUnlocked(article.id)
+    || (fromPaidCollection ? collectionUnlocked : (!article.isPaid || !article.price))
 
   // 显示内容
   let bodyHtml = ''
   if (!article.isPaid || !article.price || unlocked) {
     // 免费 / 已解锁 → 全文
     bodyHtml = getFullContentHtml(article)
+  } else if (fromPaidCollection) {
+    // 来自付费合集且未解锁 → 显示合集购买入口 + 合集兑换码输入
+    const c = fromCollection
+    const price = Number(c.price) % 1 === 0 ? String(c.price) : Number(c.price).toFixed(2)
+    const buyBtn = c.buyUrl
+      ? `<a href="${c.buyUrl}" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-2 px-5 py-3 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-purple-500)] hover:from-[var(--evo-purple-500)] hover:to-[var(--evo-pink)] text-white font-semibold transition-all shadow-lg hover:shadow-[var(--evo-purple-500)]/40">
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+           立即支付 ¥${price} 解锁合集《${c.title}》
+         </a>`
+      : `<span class="text-[var(--evo-ink-3)] text-sm">（站长还没配置购买链接，请稍后再来或联系作者。）</span>`
+
+    bodyHtml = `
+      <div>
+        <!-- 免费预览（合集内文章的摘要/试读） -->
+        <div class="mb-4">
+          ${getFreePreview(article)}
+        </div>
+        <!-- 遮罩 -->
+        <div class="relative">
+          <div class="h-40 pointer-events-none select-none" aria-hidden="true"
+               style="mask-image: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%);
+                      -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%);">
+            <div class="prose-content text-[var(--evo-ink-3)] leading-loose space-y-4 opacity-60 blur-[2px]">
+              <p>………… 本文属于付费合集，付费后可解锁整合集 ………… ………………………… </p>
+              <p>………… 一次付费，永久阅读本合集内全部文章 ……………………………………… </p>
+              <p>…………………………………………………………………………………………………………………………………………</p>
+            </div>
+          </div>
+          <!-- 合集解锁面板 -->
+          <div class="mt-[-2rem] sm:mt-[-3rem] rounded-[var(--evo-radius-lg)] evo-glass border border-[var(--evo-purple-400)]/40 p-5 sm:p-6 evo-glow-purple space-y-4 text-center">
+            <div class="flex items-center justify-center gap-2 text-xl font-bold text-white">
+              <span>🔒</span>
+              <span>付费合集 · 解锁全部 ${(c.articleIds || []).length} 篇</span>
+            </div>
+            <p class="text-sm text-[var(--evo-ink-2)]">
+              本文属于付费合集《${c.title}》，付费后可永久阅读本合集内全部文章。
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              ${buyBtn}
+            </div>
+
+            <!-- 合集兑换码输入 -->
+            <div class="pt-2 border-t border-[var(--evo-border)]">
+              <p class="text-xs text-[var(--evo-ink-3)] mb-2">已经在链动小铺付款并拿到兑换码？粘贴下方验证解锁整合集：</p>
+              <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-center max-w-md mx-auto">
+                <input id="evo-redeem-input" type="text" placeholder="输入 12 位兑换码，如 A7K2-9XYP-3B5D"
+                  class="flex-1 px-4 py-3 rounded-[var(--evo-radius-md)] bg-[var(--evo-surface-2)] border border-[var(--evo-border)] focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)] text-[var(--evo-ink)] text-sm tracking-wider font-mono" />
+                <button id="evo-redeem-btn" class="px-5 py-3 rounded-[var(--evo-radius-md)] border border-[var(--evo-purple-400)] text-[var(--evo-purple-300)] hover:bg-[var(--evo-purple-500)]/20 hover:text-white transition-colors font-semibold whitespace-nowrap">
+                  验证解锁
+                </button>
+              </div>
+              <div id="evo-redeem-msg" class="mt-2 text-xs h-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>`
   } else {
-    // 付费文章未解锁 → 免费预览 + 遮罩 + 两按钮
+    // 单篇付费文章未解锁 → 免费预览 + 遮罩 + 两按钮
     const price = priceText(article)
     const buyBtn = article.buyUrl
       ? `<a href="${article.buyUrl}" target="_blank" rel="noopener noreferrer"
@@ -725,6 +791,31 @@ function openArticleModal(article) {
       btn.disabled = true
       btn.classList.add('opacity-60')
       showMsg('正在验证…')
+
+      // 来自付费合集 → 走合集核销分支
+      if (fromPaidCollection) {
+        const r = await redeemCode({
+          code,
+          collectionId: fromCollection.id,
+          collectionName: fromCollection.title,
+          type: 'collection'
+        })
+        btn.disabled = false
+        btn.classList.remove('opacity-60')
+        if (!r.ok) {
+          showMsg('✗ ' + (r.message || '兑换失败'), false)
+          return
+        }
+        // 合集核销成功：批量标记合集内所有文章为已解锁
+        const ids = r.articleIds || fromCollection.articleIds || []
+        ids.forEach((aid) => markUnlocked(aid))
+        showMsg(`✓ 验证成功，已解锁整合集（${ids.length} 篇）`, true)
+        // 重开弹窗显示全文
+        setTimeout(() => openArticleModal(article, fromCollection), 600)
+        return
+      }
+
+      // 单篇付费文章核销
       const r = await redeemCode({ code, articleId: article.id, articleTitle: article.title })
       btn.disabled = false
       btn.classList.remove('opacity-60')
