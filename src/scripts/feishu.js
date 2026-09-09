@@ -275,11 +275,61 @@ export async function fetchSiteSettings() {
 }
 
 // ------------------------------------------------------------
-// 兑换码：后端校验 + 原子标记已用
-// 入参：{ code: string, articleId?: string }
-// 返回：{ ok:true, articleContent:string, articleTitle:string } | { ok:false, message:string }
+// 解析飞书记录为合集结构
+// 飞书字段约定：合集名/合集简介/合集封面/是否付费/合集售价/购买链接/包含文章（多向关联）
+// 「包含文章」多向关联字段返回 [{ record_id, text }] 数组，提取 record_id 列表
 // ------------------------------------------------------------
-export async function redeemCode({ code, articleId, articleTitle }) {
+function normalizeCollection(record) {
+  const f = record.fields || {}
+  const cover = parseAttachment(f['合集封面'])
+
+  // 多向关联字段返回 [{ record_id, text/title, ... }]
+  const linkedRaw = f['包含文章'] || []
+  const linkedArr = Array.isArray(linkedRaw) ? linkedRaw : [linkedRaw]
+  const articleIds = linkedArr
+    .map((item) => (item && (item.record_id || item.recordId)) || '')
+    .filter(Boolean)
+  const articleCount = articleIds.length || Number(f['文章数量']) || 0
+
+  // 是否付费
+  const paidOpt = extractOption(f['是否付费'], '')
+  const isPaid = /付费|是|paid|true/i.test(paidOpt)
+  const priceRaw = f['合集售价'] ?? f['售价'] ?? f['价格'] ?? ''
+  const price = priceRaw === '' || priceRaw === null || priceRaw === undefined
+    ? 0
+    : Number(priceRaw) || 0
+  const buyUrl = extractUrl(f['购买链接'] || f['付费链接'] || f['商品链接'] || '')
+
+  return {
+    id: record.record_id,
+    title: f['合集名'] || f['名称'] || '未命名合集',
+    desc: f['合集简介'] || f['简介'] || '',
+    coverImage: cover ? cover.url : null,
+    isPaid,
+    price,
+    buyUrl,
+    articleIds,
+    articleCount
+  }
+}
+
+export async function fetchCollections() {
+  const records = await fetchFromFeishu('collections')
+  if (!records) return null
+  return records.map(normalizeCollection)
+}
+
+// ------------------------------------------------------------
+// 兑换码：后端校验 + 原子标记已用
+// 入参：
+//   { code, articleId, articleTitle }            → 单篇兑换（type 默认 article）
+//   { code, collectionId, collectionName, type:'collection' } → 合集兑换
+// 返回：
+//   单篇：{ ok:true, type:'article', articleContent, articleTitle, articleId }
+//   合集：{ ok:true, type:'collection', collectionId, collectionName, articleIds:[..], unlockedCount }
+//   失败：{ ok:false, message }
+// ------------------------------------------------------------
+export async function redeemCode({ code, articleId, articleTitle, collectionId, collectionName, type }) {
   if (!code) return { ok: false, message: '兑换码不能为空' }
   const trimmed = code.trim().toUpperCase()
   const url = isDev
@@ -289,12 +339,32 @@ export async function redeemCode({ code, articleId, articleTitle }) {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ code: trimmed, articleId: articleId || '', articleTitle: articleTitle || '' })
+      body: JSON.stringify({
+        code: trimmed,
+        articleId: articleId || '',
+        articleTitle: articleTitle || '',
+        collectionId: collectionId || '',
+        collectionName: collectionName || '',
+        type: type || 'article'
+      })
     })
     const data = await res.json()
     if (!data.ok) return { ok: false, message: data.message || '兑换失败' }
+    // 合集兑换：返回合集内所有文章 id
+    if (data.type === 'collection') {
+      return {
+        ok: true,
+        type: 'collection',
+        collectionId: data.collectionId || '',
+        collectionName: data.collectionName || '',
+        articleIds: data.articleIds || [],
+        unlockedCount: data.unlockedCount || 0
+      }
+    }
+    // 单篇兑换：返回文章内容
     return {
       ok: true,
+      type: 'article',
       articleContent: data.articleContent || '',
       articleTitle: data.articleTitle || '',
       articleId: data.articleId || ''
