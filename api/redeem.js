@@ -237,9 +237,14 @@ export default async function handler(req, res) {
       const cFields = collectionRow.fields || {}
       const linkedRaw = findField(cFields, COLLECTION_LINK_FIELDS) || []
       const linkedArr = Array.isArray(linkedRaw) ? linkedRaw : [linkedRaw]
-      const articleIds = linkedArr
-        .map((item) => (item && (item.record_id || item.recordId)) || '')
-        .filter(Boolean)
+      // 多向关联字段返回 [{ record_ids: [..], table_id, text, text_arr, type }]
+      // record_ids 是复数（带 s），嵌套在数组第一个对象里
+      const firstLinked = linkedArr[0] || {}
+      const articleIds = Array.isArray(firstLinked.record_ids)
+        ? firstLinked.record_ids.filter(Boolean)
+        : (Array.isArray(firstLinked.record_id)
+            ? firstLinked.record_id.filter(Boolean)
+            : linkedArr.map((item) => (item && (item.record_id || item.recordId)) || '').filter(Boolean))
 
       if (!articleIds.length) {
         return res.status(200).json({ ok: false, message: '该合集没有关联任何文章，请在飞书「合集」表的「包含文章」字段里勾选文章' })
