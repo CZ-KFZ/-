@@ -7,12 +7,14 @@
 //   三级：点文章 → 弹详情（付费文章含支付解锁流程）
 // ============================================================
 
-import { fetchArticles, redeemCode } from '../feishu.js'
+import { fetchArticles, fetchCollections, redeemCode } from '../feishu.js'
 import { ARTICLES as MOCK_ARTICLES } from '../data.js'
 import { parseMarkdown } from '../markdown.js'
 
-// 当前视图：home 文章首页 / free 免费列表 / paid 付费列表 / collections 合集列表
+// 当前视图：home 文章首页 / free 免费列表 / paid 付费列表 / collections 合集列表 / collection 单个合集详情
 let currentView = 'home'
+let currentCollectionId = null
+let collections = []
 let articles = []
 
 const CAT_TONE = {
@@ -163,8 +165,8 @@ function renderHome() {
       view: 'collections',
       icon: '📚',
       title: '合集',
-      desc: '多篇文章打包，合集价更优惠（即将上线）',
-      count: null,
+      desc: '多篇文章打包，合集价更优惠，一次解锁整组',
+      count: collections.length,
       tone: 'from-[var(--evo-violet)]/20 to-[var(--evo-purple-700)]/15 border-[var(--evo-violet)]/30',
       badgeCls: 'bg-[var(--evo-violet)]/20 text-[var(--evo-violet)]'
     },
@@ -287,23 +289,28 @@ function collectionBadgeHtml(c) {
   return `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-gradient-to-r from-[var(--evo-pink)]/20 to-[var(--evo-purple-500)]/20 text-white text-[11px] font-semibold border border-[var(--evo-pink)]/40 tracking-wide">付费合集 ¥${priceText}</span>`
 }
 
-// 渲染单个合集卡片
+// 渲染单个合集卡片（卡片网格版，与文章卡片风格一致）
 function collectionCard(c, index) {
   const coverHtml = c.coverImage
-    ? `<div class="mb-4 rounded-[var(--evo-radius-md)] overflow-hidden aspect-[16/9]"><img src="${c.coverImage}" alt="${c.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
+    ? `<div class="aspect-[16/9] overflow-hidden rounded-t-[var(--evo-radius-lg)]"><img src="${c.coverImage}" alt="${c.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
     : ''
   const articleCount = c.articleIds?.length || c.articleCount || 0
+  // 合集是否整体已解锁（免费合集视为已解锁；付费合集看本地是否标记过）
+  const unlocked = !c.isPaid || !c.price || (c.articleIds || []).every((id) => isUnlocked(id))
   return `
-    <article class="evo-glass rounded-[var(--evo-radius-lg)] p-6 md:p-8 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal group relative overflow-hidden" data-reveal-delay="${Math.min(index * 80, 400)}" data-collection-id="${c.id || ''}">
+    <article class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" data-collection-id="${c.id || ''}">
       ${coverHtml}
-      <div class="flex flex-wrap items-center gap-3 mb-4">
-        ${collectionBadgeHtml(c)}
-        ${articleCount ? `<span class="text-xs text-[var(--evo-ink-3)]">${articleCount} 篇文章</span>` : ''}
-      </div>
-      <h2 class="evo-title text-xl sm:text-2xl mb-3">${c.title || '未命名合集'}</h2>
-      <p class="text-[var(--evo-ink-2)] leading-relaxed">${c.desc || '（暂无简介）'}</p>
-      <div class="mt-4 flex items-center justify-between text-sm">
-        <div class="text-[var(--evo-purple-300)] opacity-0 group-hover:opacity-100 transition-opacity">查看合集内文章 →</div>
+      <div class="p-4 md:p-5 flex-1 flex flex-col">
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          ${collectionBadgeHtml(c)}
+          ${articleCount ? `<span class="text-xs text-[var(--evo-ink-3)]">${articleCount} 篇文章</span>` : ''}
+        </div>
+        <h2 class="evo-title text-base sm:text-lg mb-2 line-clamp-2">${c.title || '未命名合集'}</h2>
+        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3 flex-1">${c.desc || '（暂无简介）'}</p>
+        <div class="mt-3 pt-3 border-t border-[var(--evo-border)] flex items-center justify-between text-xs text-[var(--evo-ink-3)]">
+          <span>${unlocked ? '已解锁' : (c.isPaid && c.price ? '需付费' : '免费')}</span>
+          <span class="text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">查看 →</span>
+        </div>
       </div>
     </article>`
 }
@@ -315,10 +322,6 @@ function renderCollections() {
 
   list.classList.remove('hidden')
   empty.classList.add('hidden')
-
-  // 飞书「合集」表还没建，先显示占位
-  // 等用户在飞书建好「合集」表 + 我加 feishu.js 读取函数后，这里会读真实数据
-  const collections = []
 
   if (!collections.length) {
     list.innerHTML = `
@@ -332,18 +335,16 @@ function renderCollections() {
       </div>
       <div class="evo-glass rounded-[var(--evo-radius-lg)] p-8 md:p-12 text-center">
         <div class="text-5xl mb-4">📚</div>
-        <h3 class="evo-title text-xl mb-3">合集功能即将上线</h3>
+        <h3 class="evo-title text-xl mb-3">还没有合集</h3>
         <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed max-w-md mx-auto mb-4">
-          合集支持免费合集和付费合集两种类型。每个合集卡片会显示对应的角标（<span class="text-[var(--evo-cyan)]">免费合集</span> / <span class="text-[var(--evo-pink)]">付费合集 ¥XX</span>），点合集查看内含文章列表。
+          在飞书多维表格的「合集」表里添加合集行，并关联文章，这里就会自动显示。
         </p>
-        <p class="text-[var(--evo-ink-3)] text-xs">需要在飞书多维表格中创建「合集」表后启用</p>
       </div>
     `
     bindBack(list)
     return
   }
 
-  // 有合集数据时的渲染（等飞书建表后启用）
   list.innerHTML = `
     <div class="mb-6">
       <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
@@ -351,13 +352,157 @@ function renderCollections() {
         返回文章
       </button>
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">📚 合集</h2>
-      <p class="text-sm text-[var(--evo-ink-3)]">多篇文章打包，每个合集独立定价</p>
+      <p class="text-sm text-[var(--evo-ink-3)]">${collections.length} 个合集，每个合集独立定价</p>
     </div>
-    <div class="space-y-4 sm:space-y-6">
+    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${collections.map((c, i) => collectionCard(c, i)).join('')}
     </div>
   `
+
+  // 点合集卡片 → 进合集详情
+  list.querySelectorAll('[data-collection-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.collectionId
+      const c = collections.find((x) => x.id === id)
+      if (c) navigate('collection', id)
+    })
+  })
   bindBack(list)
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ============================================================
+// 三级：单个合集详情（合集内文章列表 + 付费合集兑换入口）
+// ============================================================
+function renderCollectionDetail(collectionId) {
+  const list = document.getElementById('evo-articles-list')
+  const empty = document.getElementById('evo-articles-empty')
+  if (!list) return
+
+  const c = collections.find((x) => x.id === collectionId)
+  if (!c) {
+    navigate('collections')
+    return
+  }
+
+  list.classList.remove('hidden')
+  empty.classList.add('hidden')
+
+  // 用合集关联的 articleIds 过滤出文章
+  const items = (c.articleIds || [])
+    .map((id) => articles.find((a) => a.id === id))
+    .filter(Boolean)
+
+  // 整体是否已解锁
+  const allUnlocked = !c.isPaid || !c.price || (c.articleIds || []).every((id) => isUnlocked(id))
+
+  // 付费合集未解锁时显示兑换面板
+  const unlockPanelHtml = (!c.isPaid || !c.price || allUnlocked) ? '' : `
+    <div class="mb-6 rounded-[var(--evo-radius-lg)] evo-glass border border-[var(--evo-purple-400)]/40 p-5 sm:p-6 evo-glow-purple space-y-4">
+      <div class="flex items-center gap-2 text-lg font-bold text-white">
+        <span>🔒</span>
+        <span>付费合集 · 一次解锁全部 ${items.length} 篇</span>
+      </div>
+      <p class="text-sm text-[var(--evo-ink-2)]">
+        付费后可永久阅读本合集内的全部文章。付款后会拿到兑换码，输入下方验证即可解锁整合集。
+      </p>
+      ${c.buyUrl ? `
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="${c.buyUrl}" target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-5 py-3 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-purple-500)] hover:from-[var(--evo-purple-500)] hover:to-[var(--evo-pink)] text-white font-semibold transition-all shadow-lg hover:shadow-[var(--evo-purple-500)]/40">
+             立即支付 ¥${priceText(c)} 解锁合集
+          </a>
+        </div>
+      ` : '<p class="text-[var(--evo-ink-3)] text-sm">（站长还没配置购买链接）</p>'}
+      <div class="pt-2 border-t border-[var(--evo-border)]">
+        <p class="text-xs text-[var(--evo-ink-3)] mb-2">已经付款并拿到兑换码？粘贴下方验证解锁整合集：</p>
+        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center max-w-md">
+          <input id="evo-collection-redeem-input" type="text" placeholder="输入兑换码"
+            class="flex-1 px-4 py-3 rounded-[var(--evo-radius-md)] bg-[var(--evo-surface-2)] border border-[var(--evo-border)] focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)] text-[var(--evo-ink)] text-sm tracking-wider font-mono" />
+          <button id="evo-collection-redeem-btn" class="px-5 py-3 rounded-[var(--evo-radius-md)] border border-[var(--evo-purple-400)] text-[var(--evo-purple-300)] hover:bg-[var(--evo-purple-500)]/20 hover:text-white transition-colors font-semibold whitespace-nowrap">
+            验证解锁
+          </button>
+        </div>
+        <div id="evo-collection-redeem-msg" class="mt-2 text-xs h-4"></div>
+      </div>
+    </div>
+  `
+
+  list.innerHTML = `
+    <div class="mb-6">
+      <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="collections">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        返回合集
+      </button>
+      <div class="mt-4 mb-2">
+        <div class="flex flex-wrap items-center gap-3 mb-2">
+          ${collectionBadgeHtml(c)}
+          ${items.length ? `<span class="text-xs text-[var(--evo-ink-3)]">${items.length} 篇文章</span>` : ''}
+        </div>
+        <h2 class="evo-title text-2xl sm:text-3xl mb-2">${c.title || '未命名合集'}</h2>
+        ${c.desc ? `<p class="text-sm text-[var(--evo-ink-2)] leading-relaxed mb-2">${c.desc}</p>` : ''}
+      </div>
+    </div>
+    ${unlockPanelHtml}
+    ${items.length ? `
+      <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        ${items.map((a, i) => articleCard(a, i)).join('')}
+      </div>
+    ` : `
+      <div class="evo-glass rounded-[var(--evo-radius-lg)] p-8 text-center text-[var(--evo-ink-3)]">
+        <p>这个合集还没有关联文章。</p>
+      </div>
+    `}
+  `
+
+  // 点文章卡片
+  list.querySelectorAll('[data-article-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.articleId
+      const article = articles.find((a) => a.id === id)
+      if (article) openArticleModal(article)
+    })
+  })
+  bindBack(list)
+
+  // 绑定合集兑换码
+  const input = list.querySelector('#evo-collection-redeem-input')
+  const btn = list.querySelector('#evo-collection-redeem-btn')
+  const msg = list.querySelector('#evo-collection-redeem-msg')
+  if (input && btn && msg) {
+    const showMsg = (text, ok = null) => {
+      msg.textContent = text || ''
+      msg.className = 'mt-2 text-xs h-4 ' + (ok === true ? 'text-[var(--evo-cyan)]' : ok === false ? 'text-[var(--evo-pink)]' : 'text-[var(--evo-ink-3)]')
+    }
+    const doRedeem = async () => {
+      const code = input.value.trim()
+      if (!code) { showMsg('请先输入兑换码', false); return }
+      btn.disabled = true
+      btn.classList.add('opacity-60')
+      showMsg('正在验证…')
+      const r = await redeemCode({
+        code,
+        collectionId: c.id,
+        collectionName: c.title,
+        type: 'collection'
+      })
+      btn.disabled = false
+      btn.classList.remove('opacity-60')
+      if (!r.ok) {
+        showMsg('✗ ' + (r.message || '兑换失败'), false)
+        return
+      }
+      // 合集核销成功：批量标记所有文章为已解锁
+      const ids = r.articleIds || c.articleIds || []
+      ids.forEach((aid) => markUnlocked(aid))
+      showMsg(`✓ 验证成功，已解锁 ${ids.length} 篇文章`, true)
+      // 重渲染合集详情，让所有文章显示为已解锁
+      setTimeout(() => renderCollectionDetail(c.id), 600)
+    }
+    btn.addEventListener('click', doRedeem)
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRedeem() })
+  }
 
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
@@ -371,12 +516,16 @@ function bindBack(scope) {
   })
 }
 
-// 导航：切换视图
-function navigate(view) {
+// 导航：切换视图（view='collection' 时第二参数为合集 id）
+function navigate(view, collectionId) {
   currentView = view
   if (view === 'home') renderHome()
   else if (view === 'free' || view === 'paid') renderArticleList(view)
   else if (view === 'collections') renderCollections()
+  else if (view === 'collection' && collectionId) {
+    currentCollectionId = collectionId
+    renderCollectionDetail(collectionId)
+  }
   else if (view === 'prose') renderProse()
   // 滚动到列表顶部
   const list = document.getElementById('evo-articles-list')
@@ -601,22 +750,28 @@ function openArticleModal(article) {
 }
 
 async function loadData() {
-  const raw = await fetchArticles()
+  // 并行拉文章 + 合集
+  const [raw, rawCollections] = await Promise.all([
+    fetchArticles(),
+    fetchCollections()
+  ])
   if (raw && raw.length) {
     articles = raw
-    return
+  } else {
+    // mock fallback 时补付费字段默认免费
+    articles = MOCK_ARTICLES.map((a) => ({
+      ...a,
+      coverImage: null,
+      isPaid: false,
+      price: 0,
+      buyUrl: '',
+      fullContent: a.content || '',
+      freeExcerpt: a.excerpt || '',
+      contentFormat: 'plain'
+    }))
   }
-  // mock fallback 时补付费字段默认免费
-  articles = MOCK_ARTICLES.map((a) => ({
-    ...a,
-    coverImage: null,
-    isPaid: false,
-    price: 0,
-    buyUrl: '',
-    fullContent: a.content || '',
-    freeExcerpt: a.excerpt || '',
-    contentFormat: 'plain'
-  }))
+  // 合集数据：拉到就用，拉不到就空数组（合集卡片会显示占位）
+  collections = (rawCollections && rawCollections.length) ? rawCollections : []
 }
 
 async function init() {
