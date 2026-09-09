@@ -26,7 +26,8 @@ const TABLE_ENV_MAP = {
   notes: 'FEISHU_TABLE_NOTES',
   timeline: 'FEISHU_TABLE_TIMELINE',
   settings: 'FEISHU_TABLE_SETTINGS',
-  codes: 'FEISHU_TABLE_CODES'
+  codes: 'FEISHU_TABLE_CODES',
+  collections: 'FEISHU_TABLE_COLLECTIONS'
 }
 
 export function requireEnv() {
@@ -91,7 +92,7 @@ export async function getFirstRecord(token, appToken, tableId) {
 export async function updateRecord(token, appToken, tableId, recordId, fields) {
   const url = `${FEISHU_BASE}/bitable/v1/apps/${appToken}/tables/${tableId}/records/${encodeURIComponent(recordId)}`
   const res = await fetch(url, {
-     method: 'PUT',
+    method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json; charset=utf-8'

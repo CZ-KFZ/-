@@ -88,12 +88,14 @@ function findField(fields, candidates) {
   return ''
 }
 
-const TITLE_FIELDS = ['文章标题', '对应文章标题', '标题', '对应文章']
+const TITLE_FIELDS = ['文章标题', '对应文章标题', '标题', '对应文章', '合集名', '合集标题', '对应合集']
+const COLLECTION_TITLE_FIELDS = ['合集名', '名称', '标题', '合集标题']
 const POOL_FIELDS = ['兑换码池', '兑换码', '卡密池', '码池']
 const USED_POOL_FIELDS = ['已用兑换码', '已用码', '已使用码']
 const COUNT_FIELDS = ['总数', '总量', '数量']
 const USED_COUNT_FIELDS = ['已用数', '已用', '已使用数']
 const ARTICLE_TITLE_FIELDS = ['标题', '文章标题', '名称']
+const COLLECTION_LINK_FIELDS = ['包含文章', '关联文章', '文章列表']
 
 export default async function handler(req, res) {
   res.setHeader('Vary', 'Origin')
@@ -127,51 +129,57 @@ export default async function handler(req, res) {
   const userCode = String(body.code || '').trim().toUpperCase()
   if (!userCode) return res.status(200).json({ ok: false, message: '请输入兑换码' })
   const userArticleTitle = String(body.articleTitle || '').trim()
+  const userCollectionName = String(body.collectionName || '').trim()
+  const redeemType = String(body.type || 'article').toLowerCase() // 'article' | 'collection'
+
+  // 模糊匹配：去除书名号、引号、空格后再比较
+  const normalizeTitle = (t) => String(t || '')
+    .replace(/[\s《》""''「」『』'"]/g, '')
+    .toLowerCase()
 
   try {
     const token = await getToken(env.appId, env.appSecret)
 
-    // 1) 读兑换码表（通常只有几行，每行 1 篇文章）
+    // 1) 读兑换码表
     const codeRows = await listRecords(token, env.appToken, codesTableId)
 
-    // 2) 按文章标题匹配到对应行
-    // 模糊匹配：去除书名号、引号、空格后再比较，避免《场域》vs 场域 这种细微差异
-    const normalizeTitle = (t) => String(t || '')
-      .replace(/[\s《》""''「」『』'"]/g, '')
-      .toLowerCase()
-
+    // 2) 按标题/合集名匹配到对应行
     let targetRow = null
-    if (userArticleTitle) {
+    const matchKey = redeemType === 'collection' ? userCollectionName : userArticleTitle
+    const matchFields = redeemType === 'collection'
+      ? [...COLLECTION_TITLE_FIELDS, ...TITLE_FIELDS]
+      : TITLE_FIELDS
+
+    if (matchKey) {
       // 2a) 严格匹配
       targetRow = codeRows.find((r) => {
-        const t = extractText(findField(r.fields || {}, TITLE_FIELDS))
-        return t === userArticleTitle
+        const t = extractText(findField(r.fields || {}, matchFields))
+        return t === matchKey
       })
-      // 2b) 严格匹配失败 → 模糊匹配（去书名号/引号/空格后比较）
+      // 2b) 模糊匹配
       if (!targetRow) {
-        const userNorm = normalizeTitle(userArticleTitle)
+        const userNorm = normalizeTitle(matchKey)
         targetRow = codeRows.find((r) => {
-          const t = extractText(findField(r.fields || {}, TITLE_FIELDS))
+          const t = extractText(findField(r.fields || {}, matchFields))
           return normalizeTitle(t) === userNorm
         })
       }
-      // 2c) 两种匹配都失败 → 明确报错，不能静默 fallback 到第一行（会误导用户）
       if (!targetRow) {
+        const label = redeemType === 'collection' ? '合集' : '文章'
         return res.status(200).json({
           ok: false,
-          message: `该文章「${userArticleTitle}」未在兑换码表中配置，请检查飞书「兑换码」表是否已添加该文章对应的行`
+          message: `该${label}「${matchKey}」未在兑换码表中配置，请检查飞书「兑换码」表是否已添加该${label}对应的行`
         })
       }
     } else {
-      // 没传 articleTitle → fallback 到第一行（兼容旧前端）
       targetRow = codeRows[0]
     }
     if (!targetRow) return res.status(200).json({ ok: false, message: '兑换码表为空' })
 
     const targetFields = targetRow.fields || {}
-    const rowArticleTitle = extractText(findField(targetFields, TITLE_FIELDS))
+    const rowTitle = extractText(findField(targetFields, matchFields))
 
-    // 3) 解析兑换码池（兼容 JSON 数组与 | 分隔两种格式）
+    // 3) 解析兑换码池
     const poolText = extractText(findField(targetFields, POOL_FIELDS))
     const { list: pool, isJson: poolIsJson } = parseCodeList(poolText)
 
@@ -180,7 +188,6 @@ export default async function handler(req, res) {
     // 4) 在池中查找用户输入的码
     const idx = pool.indexOf(userCode)
     if (idx === -1) {
-      // 检查是否在已用列表里
       const usedText = extractText(findField(targetFields, USED_POOL_FIELDS))
       const usedPool = parseCodeList(usedText).list
       if (usedPool.includes(userCode)) {
@@ -196,14 +203,12 @@ export default async function handler(req, res) {
     const usedText = extractText(findField(targetFields, USED_POOL_FIELDS))
     const newUsedPool = [...parseCodeList(usedText).list, userCode]
 
-    // 找到字段名用于回写
     const poolFieldName = POOL_FIELDS.find(k => targetFields[k] !== undefined && targetFields[k] !== null && targetFields[k] !== '') || POOL_FIELDS[0]
     const usedPoolFieldName = USED_POOL_FIELDS.find(k => targetFields[k] !== undefined && targetFields[k] !== null && targetFields[k] !== '') || USED_POOL_FIELDS[0]
     const countFieldName = COUNT_FIELDS.find(k => targetFields[k] !== undefined && targetFields[k] !== null) || null
     const usedCountFieldName = USED_COUNT_FIELDS.find(k => targetFields[k] !== undefined && targetFields[k] !== null) || null
 
     const updatePatch = {
-      // 按原格式回写：池字段是什么格式，已用字段也用同样格式
       [poolFieldName]: stringifyCodeList(newPool, poolIsJson),
       [usedPoolFieldName]: stringifyCodeList(newUsedPool, poolIsJson)
     }
@@ -212,16 +217,53 @@ export default async function handler(req, res) {
 
     await updateRecord(token, env.appToken, codesTableId, targetRow.record_id, updatePatch)
 
-    // 6) 查文章表返回全文（同样用模糊匹配，避免《场域》vs 场域 匹配失败）
+    // 6) 分支：合集返回合集内所有文章 id；单篇返回文章全文
+    if (redeemType === 'collection') {
+      // 合集核销：读合集表，找到对应合集行，取「包含文章」多向关联里的 record_id 列表
+      const collectionsTableId = getTableId('collections')
+      if (!collectionsTableId) {
+        return res.status(200).json({ ok: false, message: '未配置 FEISHU_TABLE_COLLECTIONS 环境变量（合集表 ID）' })
+      }
+      const collectionRows = await listRecords(token, env.appToken, collectionsTableId)
+      const userNorm = normalizeTitle(userCollectionName || rowTitle)
+      const collectionRow = collectionRows.find((r) => {
+        const t = extractText(findField(r.fields || {}, COLLECTION_TITLE_FIELDS))
+        return normalizeTitle(t) === userNorm || t === userCollectionName || t === rowTitle
+      })
+      if (!collectionRow) {
+        return res.status(200).json({ ok: false, message: '合集表里没找到对应合集，请检查「兑换码」表标题与「合集」表合集名是否一致' })
+      }
+
+      const cFields = collectionRow.fields || {}
+      const linkedRaw = findField(cFields, COLLECTION_LINK_FIELDS) || []
+      const linkedArr = Array.isArray(linkedRaw) ? linkedRaw : [linkedRaw]
+      const articleIds = linkedArr
+        .map((item) => (item && (item.record_id || item.recordId)) || '')
+        .filter(Boolean)
+
+      if (!articleIds.length) {
+        return res.status(200).json({ ok: false, message: '该合集没有关联任何文章，请在飞书「合集」表的「包含文章」字段里勾选文章' })
+      }
+
+      return res.status(200).json({
+        ok: true,
+        type: 'collection',
+        collectionId: collectionRow.record_id,
+        collectionName: extractText(findField(cFields, COLLECTION_TITLE_FIELDS)),
+        articleIds,
+        unlockedCount: articleIds.length
+      })
+    }
+
+    // 单篇核销：查文章表返回全文
     const allArticles = await listRecords(token, env.appToken, articlesTableId)
-    const rowNorm = normalizeTitle(rowArticleTitle)
+    const rowNorm = normalizeTitle(rowTitle)
     const userNorm = normalizeTitle(userArticleTitle)
     const article = allArticles.find((a) => {
       const t = extractText(findField(a.fields || {}, ARTICLE_TITLE_FIELDS))
       if (!t) return false
       const tNorm = normalizeTitle(t)
-      // 严格匹配 OR 模糊匹配（去书名号后比较）
-      return t === rowArticleTitle || t === userArticleTitle ||
+      return t === rowTitle || t === userArticleTitle ||
              tNorm === rowNorm || tNorm === userNorm
     })
 
@@ -233,6 +275,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       ok: true,
+      type: 'article',
       articleId: article.record_id,
       articleTitle,
       articleContent: fullContent
