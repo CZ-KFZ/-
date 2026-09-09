@@ -397,37 +397,51 @@ function renderCollectionDetail(collectionId) {
   // 整体是否已解锁
   const allUnlocked = !c.isPaid || !c.price || (c.articleIds || []).every((id) => isUnlocked(id))
 
-  // 付费合集未解锁时显示兑换面板
-  const unlockPanelHtml = (!c.isPaid || !c.price || allUnlocked) ? '' : `
-    <div class="mb-6 rounded-[var(--evo-radius-lg)] evo-glass border border-[var(--evo-purple-400)]/40 p-5 sm:p-6 evo-glow-purple space-y-4">
-      <div class="flex items-center gap-2 text-lg font-bold text-white">
-        <span>🔒</span>
-        <span>付费合集 · 一次解锁全部 ${items.length} 篇</span>
+  // 付费合集未解锁时的解锁面板（含合集简介 + 付费入口 + 兑换码）
+  const lockedPanelHtml = (!c.isPaid || !c.price || allUnlocked) ? '' : `
+    <div class="rounded-[var(--evo-radius-lg)] evo-glass border border-[var(--evo-purple-400)]/40 p-6 sm:p-8 evo-glow-purple space-y-6">
+      <div class="space-y-3">
+        <div class="flex items-center gap-2 text-2xl font-bold text-white">
+          <span>🔒</span>
+          <span>付费合集</span>
+        </div>
+        ${c.desc ? `
+          <div class="text-sm text-[var(--evo-ink-2)] leading-loose whitespace-pre-line">
+            ${c.desc}
+          </div>
+        ` : ''}
+        <p class="text-xs text-[var(--evo-ink-3)]">
+          本合集共 ${items.length} 篇文章，一次付费永久解锁全部内容。
+        </p>
       </div>
-      <p class="text-sm text-[var(--evo-ink-2)]">
-        付费后可永久阅读本合集内的全部文章。付款后会拿到兑换码，输入下方验证即可解锁整合集。
-      </p>
-      ${c.buyUrl ? `
-        <div class="flex flex-wrap items-center gap-3">
+
+      <div class="border-t border-[var(--evo-border)] pt-5 space-y-4">
+        ${c.buyUrl ? `
           <a href="${c.buyUrl}" target="_blank" rel="noopener noreferrer"
-             class="inline-flex items-center gap-2 px-5 py-3 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-purple-500)] hover:from-[var(--evo-purple-500)] hover:to-[var(--evo-pink)] text-white font-semibold transition-all shadow-lg hover:shadow-[var(--evo-purple-500)]/40">
+             class="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-purple-500)] hover:from-[var(--evo-purple-500)] hover:to-[var(--evo-pink)] text-white font-semibold transition-all shadow-lg hover:shadow-[var(--evo-purple-500)]/40">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
              立即支付 ¥${priceText(c)} 解锁合集
           </a>
+        ` : '<p class="text-[var(--evo-ink-3)] text-sm">（站长还没配置购买链接）</p>'}
+
+        <div class="pt-3 border-t border-[var(--evo-border)]">
+          <p class="text-xs text-[var(--evo-ink-3)] mb-3">已经付款并拿到兑换码？粘贴下方验证解锁整合集：</p>
+          <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center max-w-md">
+            <input id="evo-collection-redeem-input" type="text" placeholder="输入兑换码"
+              class="flex-1 px-4 py-3 rounded-[var(--evo-radius-md)] bg-[var(--evo-surface-2)] border border-[var(--evo-border)] focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)] text-[var(--evo-ink)] text-sm tracking-wider font-mono" />
+            <button id="evo-collection-redeem-btn" class="px-5 py-3 rounded-[var(--evo-radius-md)] border border-[var(--evo-purple-400)] text-[var(--evo-purple-300)] hover:bg-[var(--evo-purple-500)]/20 hover:text-white transition-colors font-semibold whitespace-nowrap">
+              验证解锁
+            </button>
+          </div>
+          <div id="evo-collection-redeem-msg" class="mt-2 text-xs h-4"></div>
         </div>
-      ` : '<p class="text-[var(--evo-ink-3)] text-sm">（站长还没配置购买链接）</p>'}
-      <div class="pt-2 border-t border-[var(--evo-border)]">
-        <p class="text-xs text-[var(--evo-ink-3)] mb-2">已经付款并拿到兑换码？粘贴下方验证解锁整合集：</p>
-        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center max-w-md">
-          <input id="evo-collection-redeem-input" type="text" placeholder="输入兑换码"
-            class="flex-1 px-4 py-3 rounded-[var(--evo-radius-md)] bg-[var(--evo-surface-2)] border border-[var(--evo-border)] focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)] text-[var(--evo-ink)] text-sm tracking-wider font-mono" />
-          <button id="evo-collection-redeem-btn" class="px-5 py-3 rounded-[var(--evo-radius-md)] border border-[var(--evo-purple-400)] text-[var(--evo-purple-300)] hover:bg-[var(--evo-purple-500)]/20 hover:text-white transition-colors font-semibold whitespace-nowrap">
-            验证解锁
-          </button>
-        </div>
-        <div id="evo-collection-redeem-msg" class="mt-2 text-xs h-4"></div>
       </div>
     </div>
   `
+
+  // 付费合集未解锁时不显示文章列表，只显示锁定面板
+  // 解锁后（或免费合集）才显示文章列表
+  const showArticleList = !c.isPaid || !c.price || allUnlocked
 
   list.innerHTML = `
     <div class="mb-6">
@@ -441,11 +455,11 @@ function renderCollectionDetail(collectionId) {
           ${items.length ? `<span class="text-xs text-[var(--evo-ink-3)]">${items.length} 篇文章</span>` : ''}
         </div>
         <h2 class="evo-title text-2xl sm:text-3xl mb-2">${c.title || '未命名合集'}</h2>
-        ${c.desc ? `<p class="text-sm text-[var(--evo-ink-2)] leading-relaxed mb-2">${c.desc}</p>` : ''}
+        ${showArticleList && c.desc ? `<p class="text-sm text-[var(--evo-ink-2)] leading-relaxed mb-2">${c.desc}</p>` : ''}
       </div>
     </div>
-    ${unlockPanelHtml}
-    ${items.length ? `
+    ${lockedPanelHtml}
+    ${showArticleList ? (items.length ? `
       <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         ${items.map((a, i) => articleCard(a, i)).join('')}
       </div>
@@ -453,7 +467,7 @@ function renderCollectionDetail(collectionId) {
       <div class="evo-glass rounded-[var(--evo-radius-lg)] p-8 text-center text-[var(--evo-ink-3)]">
         <p>这个合集还没有关联文章。</p>
       </div>
-    `}
+    `) : ''}
   `
 
   // 点文章卡片 → 传合集对象过去，让详情弹窗按合集是否解锁判定
