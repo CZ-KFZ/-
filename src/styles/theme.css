@@ -526,6 +526,72 @@
   box-shadow: var(--evo-glow-purple-strong);
 }
 
+/* ============================================================
+   赞赏浮动按钮（Donate FAB）
+   固定在屏幕左侧，顶部导航下方，桌面端显示图标+文字，移动端仅图标
+   ============================================================ */
+.evo-donate-fab {
+  position: fixed;
+  left: 16px;
+  top: 84px;
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px 8px 10px;
+  border-radius: var(--evo-radius-full);
+  background: var(--evo-glass-strong);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid var(--evo-border-glow);
+  color: var(--evo-ink);
+  font-family: var(--evo-font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--evo-float-shadow), 0 0 24px rgba(168, 85, 247, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: evo-donate-pulse 3.5s ease-in-out infinite;
+}
+.evo-donate-fab:hover {
+  transform: translateX(4px) scale(1.05);
+  border-color: var(--evo-border-glow-strong);
+  box-shadow: var(--evo-float-shadow), var(--evo-glow-purple-strong);
+  color: var(--evo-purple-300);
+}
+.evo-donate-fab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--evo-pink), var(--evo-purple-500));
+  color: #fff;
+  flex-shrink: 0;
+}
+.evo-donate-fab-label {
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+@keyframes evo-donate-pulse {
+  0%, 100% { box-shadow: var(--evo-float-shadow), 0 0 20px rgba(168, 85, 247, 0.2); }
+  50% { box-shadow: var(--evo-float-shadow), 0 0 36px rgba(168, 85, 247, 0.45); }
+}
+
+/* 移动端：仅显示图标，更紧凑，避免遮挡内容 */
+@media (max-width: 640px) {
+  .evo-donate-fab {
+    left: 10px;
+    top: 76px;
+    padding: 8px;
+    gap: 0;
+  }
+  .evo-donate-fab-label {
+    display: none;
+  }
+}
+
 /* prefers-reduced-motion 适配 */
 @media (prefers-reduced-motion: reduce) {
   *,
