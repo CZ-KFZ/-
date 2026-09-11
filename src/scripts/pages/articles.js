@@ -11,11 +11,13 @@ import { fetchArticles, fetchCollections, redeemCode } from '../feishu.js'
 import { ARTICLES as MOCK_ARTICLES } from '../data.js'
 import { parseMarkdown } from '../markdown.js'
 
-// 当前视图：home 文章首页 / free 免费列表 / paid 付费列表 / collections 合集列表 / collection 单个合集详情
+// 当前视图：home 文章首页 / free 免费列表 / paid 付费列表 / collections 合集列表 / collection 单个合集详情 / search 搜索结果
 let currentView = 'home'
 let currentCollectionId = null
 let collections = []
 let articles = []
+let searchQuery = ''
+let searchDebounceTimer = null
 
 const CAT_TONE = {
   '道': 'bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)]',
@@ -204,6 +206,66 @@ function renderHome() {
     card.addEventListener('click', () => {
       const view = card.dataset.nav
       navigate(view)
+    })
+  })
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ============================================================
+// 搜索结果视图：按标题 / 摘要 / 分类过滤全部文章
+// ============================================================
+function renderSearchResults() {
+  const list = document.getElementById('evo-articles-list')
+  const empty = document.getElementById('evo-articles-empty')
+  if (!list) return
+
+  const q = searchQuery.trim().toLowerCase()
+  const items = q
+    ? articles.filter((a) => {
+        const title = String(a.title || '').toLowerCase()
+        const excerpt = String(a.excerpt || a.freeExcerpt || '').toLowerCase()
+        const category = String(a.category || a.categoryLabel || '').toLowerCase()
+        return title.includes(q) || excerpt.includes(q) || category.includes(q)
+      })
+    : []
+
+  list.classList.remove('hidden')
+
+  if (!q) {
+    empty.classList.add('hidden')
+    return
+  }
+
+  if (!items.length) {
+    empty.classList.remove('hidden')
+    empty.querySelector('p').textContent = `没有找到包含「${searchQuery}」的文章`
+    list.innerHTML = `
+      <div class="mb-6">
+        <h2 class="evo-title text-2xl sm:text-3xl mb-2">🔍 搜索结果</h2>
+        <p class="text-sm text-[var(--evo-ink-3)]">关键词：${searchQuery}</p>
+      </div>
+    `
+    return
+  }
+
+  empty.classList.add('hidden')
+
+  list.innerHTML = `
+    <div class="mb-6">
+      <h2 class="evo-title text-2xl sm:text-3xl mb-2">🔍 搜索结果</h2>
+      <p class="text-sm text-[var(--evo-ink-3)]">关键词「${searchQuery}」共找到 ${items.length} 篇文章</p>
+    </div>
+    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      ${items.map((a, i) => articleCard(a, i)).join('')}
+    </div>
+  `
+
+  list.querySelectorAll('[data-article-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.articleId
+      const article = articles.find((a) => a.id === id)
+      if (article) openArticleModal(article)
     })
   })
 
@@ -541,6 +603,7 @@ function navigate(view, collectionId) {
     renderCollectionDetail(collectionId)
   }
   else if (view === 'prose') renderProse()
+  else if (view === 'search') renderSearchResults()
   // 滚动到列表顶部
   const list = document.getElementById('evo-articles-list')
   if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -885,6 +948,38 @@ async function init() {
   // 隐藏旧的筛选栏（如果 HTML 里还有的话）
   const filtersBar = document.getElementById('evo-articles-filters')
   if (filtersBar) filtersBar.style.display = 'none'
+
+  // 绑定搜索框
+  const searchInput = document.getElementById('evo-articles-search')
+  const searchClear = document.getElementById('evo-articles-search-clear')
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const val = e.target.value
+      if (searchClear) searchClear.classList.toggle('hidden', !val)
+      clearTimeout(searchDebounceTimer)
+      searchDebounceTimer = setTimeout(() => {
+        searchQuery = val
+        if (val.trim()) {
+          navigate('search')
+        } else {
+          // 清空搜索 → 回到文章首页
+          navigate('home')
+        }
+      }, 200)
+    })
+  }
+  if (searchClear) {
+    searchClear.addEventListener('click', () => {
+      if (searchInput) {
+        searchInput.value = ''
+        searchQuery = ''
+        searchClear.classList.add('hidden')
+        navigate('home')
+        searchInput.focus()
+      }
+    })
+  }
+
   await loadData()
   // 默认渲染文章首页（一级）
   renderHome()
