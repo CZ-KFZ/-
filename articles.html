@@ -1,32 +1,36 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="文章 — 阴之体道关于设计、技术、生活与思考的长期记录。" />
-  <meta name="theme-color" content="#0a0a0f" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<html lang="zh-CN" class="dark"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="文章 — 阴之体道关于设计、技术、生活与思考的长期记录。">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>文章 · EchoVerse</title>
 </head>
 <body class="min-h-screen antialiased">
   <div id="evo-header"></div>
 
   <main class="pt-16">
-    <section class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
-      <div class="text-center mb-10 sm:mb-12 evo-reveal">
-        <h1 class="evo-display text-3xl sm:text-4xl md:text-5xl mb-4">文章</h1>
-        <p class="text-[var(--evo-ink-2)]">设计、技术、生活与思考的长期记录</p>
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <div class="text-center mb-8 sm:mb-10 evo-reveal">
+        <p class="text-xs uppercase tracking-[0.3em] text-[var(--evo-ink-3)] mb-3">ARTICLES</p>
+        <h1 class="evo-display text-3xl sm:text-4xl md:text-5xl mb-3 bg-gradient-to-r from-[var(--evo-purple-300)] via-[var(--evo-ink)] to-[var(--evo-cyan)] bg-clip-text text-transparent">文章</h1>
+        <p class="text-sm text-[var(--evo-ink-3)]">设计、技术、生活与思考的长期记录</p>
       </div>
 
-      <!-- 分类筛选 -->
-      <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-10 evo-reveal" data-reveal-delay="100" id="evo-articles-filters">
-        <!-- 由 articles.js 渲染 -->
+      <!-- 搜索框 -->
+      <div class="max-w-xl mx-auto mb-8 evo-reveal" data-reveal-delay="100">
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--evo-ink-3)]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input id="evo-articles-search" type="text" placeholder="搜索文章标题…" class="w-full pl-12 pr-10 py-3 rounded-[var(--evo-radius-md)] evo-glass border border-[var(--evo-border)] bg-[var(--evo-surface-1)]/60 text-[var(--evo-ink)] placeholder:text-[var(--evo-ink-3)] focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)]/60 focus:border-[var(--evo-purple-400)] transition-all text-sm">
+          <button id="evo-articles-search-clear" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-[var(--evo-ink-3)] hover:text-[var(--evo-ink)] transition-colors" aria-label="清除搜索">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
       </div>
 
-      <!-- 文章列表 -->
-      <div class="space-y-5 sm:space-y-6" id="evo-articles-list">
-        <!-- 由 articles.js 渲染 -->
-      </div>
+      <!-- 子栏目入口（由 articles.js 渲染） -->
+      <div id="evo-articles-list"></div>
 
       <div id="evo-articles-empty" class="hidden text-center py-16 text-[var(--evo-ink-3)]">
         <p class="text-lg mb-2">📭</p>
@@ -37,7 +41,8 @@
 
   <div id="evo-footer"></div>
 
-  <script type="module" src="/src/scripts/main.js"></script>
-  <script type="module" src="/src/scripts/pages/articles.js"></script>
-</body>
-</html>
+  <script type="module" src="#"></script>
+  <script type="module" src="#"></script>
+
+
+</body></html>
