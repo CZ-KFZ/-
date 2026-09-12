@@ -146,7 +146,8 @@ function renderFeaturedCarousel(projects) {
   `).join('')
 
   container.innerHTML = `
-    <div class="relative rounded-[var(--evo-radius-lg)] overflow-hidden evo-glass evo-reveal" style="aspect-ratio: 21/9; min-height: 280px;">
+    <div class="relative rounded-[var(--evo-radius-lg)] overflow-hidden evo-glass evo-tilt-card evo-glow-card evo-reveal" style="aspect-ratio: 21/9; min-height: 280px;">
+      <div class="evo-tilt-inner relative w-full h-full">
       ${slidesHtml}
       <button class="evo-carousel-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all backdrop-blur-sm z-10" aria-label="上一张">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -156,6 +157,7 @@ function renderFeaturedCarousel(projects) {
       </button>
       <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
         ${dotsHtml}
+      </div>
       </div>
     </div>
   `
