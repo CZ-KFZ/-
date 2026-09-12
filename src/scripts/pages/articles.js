@@ -957,7 +957,7 @@ async function loadData() {
   const rawCollections = data.collections
 
   if (rawArticles && rawArticles.length) {
-    articles = rawArticles.map(normalizeArticle)
+    articles = rawArticles.map(normalizeArticle).filter((a) => !a.hidden)
   } else {
     articles = MOCK_ARTICLES.map((a) => ({
       ...a,

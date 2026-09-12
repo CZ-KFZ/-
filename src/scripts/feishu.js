@@ -134,6 +134,11 @@ export function normalizeArticle(record) {
     excerpt: f['摘要'] || '',
     content: f['正文'] || '',
     coverImage: cover ? cover.url : null,
+    // 隐藏字段：复选框勾选后不在网站显示
+    hidden: (() => {
+      const raw = f['隐藏'] ?? f['是否隐藏'] ?? f['隐藏文章'] ?? false
+      return raw === true || raw === 1 || /是|隐藏|true|yes/i.test(String(raw))
+    })(),
     // 推荐字段：兼容复选框(true/false)、单选(是/否)、数字(1/0)
     featured: (() => {
       const raw = f['推荐'] ?? f['是否推荐'] ?? f['首页推荐'] ?? false
@@ -275,7 +280,7 @@ function formatDate(fieldValue) {
 export async function fetchArticles() {
   const records = await fetchFromFeishu('articles')
   if (!records) return null
-  return records.map(normalizeArticle)
+  return records.map(normalizeArticle).filter((a) => !a.hidden)
 }
 
 export async function fetchProjects() {
