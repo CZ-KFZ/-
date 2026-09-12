@@ -280,7 +280,7 @@ function formatDate(fieldValue) {
 export async function fetchArticles() {
   const records = await fetchFromFeishu('articles')
   if (!records) return null
-  return records.map(normalizeArticle).filter((a) => !a.hidden)
+  return records.map(normalizeArticle)
 }
 
 export async function fetchProjects() {

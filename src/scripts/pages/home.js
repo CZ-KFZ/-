@@ -209,7 +209,7 @@ function renderFeaturedCarousel(projects) {
 function renderRecentArticles(articles) {
   const host = document.getElementById('evo-home-recent')
   if (!host) return
-  const items = [...articles]
+  const items = articles.filter((a) => !a.hidden)
   items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
   const list = items.slice(0, 4)
   if (!list.length) {

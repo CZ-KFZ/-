@@ -246,6 +246,7 @@ function renderSearchResults() {
   const q = searchQuery.trim().toLowerCase()
   const items = q
     ? articles.filter((a) => {
+        if (a.hidden) return false
         const title = String(a.title || '').toLowerCase()
         const excerpt = String(a.excerpt || a.freeExcerpt || '').toLowerCase()
         const category = String(a.category || a.categoryLabel || '').toLowerCase()
@@ -305,8 +306,8 @@ function renderArticleList(view) {
 
   const isFree = view === 'free'
   const items = isFree
-    ? articles.filter((a) => !a.isPaid || !a.price)
-    : articles.filter((a) => a.isPaid && a.price)
+    ? articles.filter((a) => (!a.isPaid || !a.price) && !a.hidden)
+    : articles.filter((a) => a.isPaid && a.price && !a.hidden)
 
   const title = isFree ? '免费文章' : '付费文章'
   const icon = isFree ? '🌿' : '🔒'
@@ -644,7 +645,7 @@ function renderProse() {
 
   const items = articles.filter((a) => {
     const cat = String(a.category || a.categoryLabel || '').toLowerCase()
-    return cat === '散文' || cat.includes('散文')
+    return (cat === '散文' || cat.includes('散文')) && !a.hidden
   })
 
   const title = '散文'
@@ -957,7 +958,7 @@ async function loadData() {
   const rawCollections = data.collections
 
   if (rawArticles && rawArticles.length) {
-    articles = rawArticles.map(normalizeArticle).filter((a) => !a.hidden)
+    articles = rawArticles.map(normalizeArticle)
   } else {
     articles = MOCK_ARTICLES.map((a) => ({
       ...a,
