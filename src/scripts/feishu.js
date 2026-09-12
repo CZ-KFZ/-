@@ -358,8 +358,13 @@ export async function fetchCollections() {
 function normalizeQa(record) {
   const f = record.fields || {}
   const keywordsRaw = f['关键词'] || []
-  const keywords = (Array.isArray(keywordsRaw) ? keywordsRaw : [keywordsRaw])
+  // 关键词可能是多选数组，也可能是文本（用 、, ; ；分隔）
+  const kwList = Array.isArray(keywordsRaw) ? keywordsRaw : [keywordsRaw]
+  const keywords = kwList
     .map((k) => (typeof k === 'string' ? k : k.text || k.name || ''))
+    .filter(Boolean)
+    .flatMap((k) => k.split(/[、,，;；\n]+/))
+    .map((k) => k.trim())
     .filter(Boolean)
 
   return {

@@ -173,7 +173,7 @@ function stylePrefix() {
 // ------------------------------------------------------------
 // QA 问答表匹配
 // 策略：
-//   1. 关键词命中（QA 的关键词出现在用户问题中）→ 强匹配
+//   1. 关键词匹配（双向包含 + 字符重叠率 ≥ 0.5）→ 强匹配
 //   2. 问题相似度（字符二元组重叠率）≥ 0.5 → 匹配
 // 返回匹配到的 QA 记录，否则 null
 // ------------------------------------------------------------
@@ -182,11 +182,24 @@ function matchQa(text) {
   if (!list.length) return null
   const q = norm(text)
 
-  // 1. 关键词强匹配
+  // 1. 关键词匹配（双向 + 字符重叠）
   for (const item of list) {
     const kws = item.keywords || []
-    if (kws.length && kws.some((k) => q.includes(norm(k)))) {
-      return item
+    for (const kw of kws) {
+      const k = norm(kw)
+      if (!k) continue
+      // 直接包含（任一方向）
+      if (q.includes(k) || k.includes(q)) return item
+      // 字符重叠率（去掉标点后比较）
+      const qClean = q.replace(/[？?！!。.,，、；;]/g, '')
+      const kClean = k.replace(/[？?！!。.,，、；;]/g, '')
+      if (!qClean || !kClean) continue
+      let overlap = 0
+      for (const ch of new Set(qClean)) {
+        if (kClean.includes(ch)) overlap++
+      }
+      const ratio = overlap / Math.min(qClean.length, kClean.length)
+      if (ratio >= 0.5) return item
     }
   }
 
