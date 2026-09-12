@@ -96,7 +96,7 @@ function applySettings(settings) {
   const avatarInner = document.getElementById('evo-home-avatar-inner')
   const avatarCharEl = document.getElementById('evo-home-avatar-char')
   if (settings.avatarImage && avatarInner) {
-    avatarInner.innerHTML = `<img src="${settings.avatarImage}" alt="${settings.ownerName || '头像'}" class="w-full h-full object-cover" />`
+    avatarInner.innerHTML = `<img src="${settings.avatarImage}" alt="${settings.ownerName || '头像'}" class="w-full h-full object-contain" />`
   } else if (avatarCharEl) {
     avatarCharEl.textContent = char
   }
