@@ -154,8 +154,8 @@ function renderHome() {
   const empty = document.getElementById('evo-articles-empty')
   if (!list) return
 
-  const freeCount = articles.filter((a) => (!a.isPaid || !a.price) && !a.hidden).length
-  const paidCount = articles.filter((a) => a.isPaid && a.price && !a.hidden).length
+  const freeCount = articles.filter((a) => !a.isPaid && !a.hidden).length
+  const paidCount = articles.filter((a) => a.isPaid && !a.hidden).length
   // 碎碎念：飞书「分类」字段为「散文」或「碎碎念」的文章
   const proseCount = articles.filter((a) => {
     const cat = String(a.category || a.categoryLabel || '').toLowerCase()
@@ -306,8 +306,8 @@ function renderArticleList(view) {
 
   const isFree = view === 'free'
   const items = isFree
-    ? articles.filter((a) => (!a.isPaid || !a.price) && !a.hidden)
-    : articles.filter((a) => a.isPaid && a.price && !a.hidden)
+    ? articles.filter((a) => !a.isPaid && !a.hidden)
+    : articles.filter((a) => a.isPaid && !a.hidden)
 
   const title = isFree ? '文章' : '付费文章'
   const icon = isFree ? '🌿' : '🔒'
