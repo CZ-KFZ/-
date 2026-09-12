@@ -4,83 +4,128 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="EchoVerse · 个人数字化空间站" />
-  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="theme-color" content="#000000" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>首页 · EchoVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    /* 液态玻璃效果（SpaceEdu 风格） */
+    .liquid-glass {
+      background: rgba(255, 255, 255, 0.01);
+      background-blend-mode: luminosity;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: none;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .liquid-glass::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.4px;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.15) 20%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0) 60%,
+        rgba(255, 255, 255, 0.15) 80%,
+        rgba(255, 255, 255, 0.45) 100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .font-serif-instrument {
+      font-family: 'Instrument Serif', serif;
+    }
+    body { background: #000; }
+  </style>
 </head>
-<body class="min-h-screen antialiased">
+<body class="min-h-screen antialiased bg-black text-white">
   <!-- 共享 Header（由 main.js 注入） -->
   <div id="evo-header"></div>
 
-  <main class="pt-16">
+  <main>
     <!-- ===================================================
-         Hero · 首屏（SpaceEdu 风格：全屏背景 + 居中排版）
+         Hero · 首屏（SpaceEdu 风格：纯黑 + 全屏视频 + 液态玻璃）
          =================================================== -->
-    <section class="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6 py-20">
-      <!-- 背景层：全屏星云图，无深色矩形遮罩 -->
+    <section class="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+      <!-- 全屏背景视频 -->
       <div class="absolute inset-0 pointer-events-none" id="evo-hero-bg">
-        <img src="/hero-bg.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" />
-        <!-- 均匀轻微压暗，保证文字可读，不产生边缘 -->
-        <div class="absolute inset-0 bg-[var(--evo-bg)]/25"></div>
-        <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[var(--evo-purple-600)] opacity-15 blur-[120px] evo-animate-pulse"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-[var(--evo-cyan)] opacity-10 blur-[100px] evo-animate-pulse" style="animation-delay: 2s;"></div>
+        <video
+          id="evo-hero-video"
+          class="absolute inset-0 w-full h-full object-cover object-bottom"
+          muted
+          autoplay
+          playsinline
+          preload="auto"
+          loop
+        >
+          <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_074625_a81f018a-956b-43fb-9aee-4d1508e30e6a.mp4" type="video/mp4" />
+        </video>
+        <!-- 轻微黑色叠加，保证文字可读 -->
+        <div class="absolute inset-0 bg-black/40"></div>
       </div>
 
       <!-- 居中内容 -->
-      <div class="relative z-10 text-center max-w-3xl mx-auto">
+      <div class="relative z-10 text-center max-w-3xl mx-auto px-6 py-12 -translate-y-[8%]">
         <!-- 头像（飞书后台同步） -->
         <div class="evo-animate-float mb-8 evo-reveal" data-reveal-delay="0">
-          <div class="w-32 h-32 sm:w-40 sm:h-40 mx-auto rounded-full overflow-hidden ring-2 ring-[var(--evo-cyan)]/40 shadow-[0_0_50px_rgba(6,182,212,0.25)]">
-            <div id="evo-home-avatar-inner" class="w-full h-full bg-gradient-to-br from-[var(--evo-purple-400)] via-[var(--evo-violet)] to-[var(--evo-pink)] flex items-center justify-center">
-              <span id="evo-home-avatar-char" class="evo-display text-4xl sm:text-5xl text-white drop-shadow-lg">E</span>
+          <div class="w-28 h-28 sm:w-36 sm:h-36 mx-auto rounded-full overflow-hidden liquid-glass p-[2px]">
+            <div id="evo-home-avatar-inner" class="w-full h-full rounded-full bg-white/5 flex items-center justify-center overflow-hidden">
+              <span id="evo-home-avatar-char" class="font-serif-instrument text-4xl sm:text-5xl text-white drop-shadow-lg">E</span>
             </div>
           </div>
         </div>
 
         <!-- Eyebrow -->
-        <p class="text-xs sm:text-sm tracking-[0.35em] text-[var(--evo-cyan)] mb-5 evo-reveal" data-reveal-delay="80">ECHOVERSE</p>
+        <p class="text-xs sm:text-sm tracking-[0.35em] text-white/50 mb-5 evo-reveal" data-reveal-delay="80">ECHOVERSE</p>
 
         <!-- 大标题 -->
-        <h1 class="evo-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6 evo-reveal" data-reveal-delay="120">
-          你好，我是 <span id="evo-home-doppelganger-name" class="evo-gradient-text">Echo</span>
+        <h1 class="font-serif-instrument text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white tracking-tight mb-6 evo-reveal" data-reveal-delay="120">
+          你好，我是 <span id="evo-home-doppelganger-name" class="italic">Echo</span>
         </h1>
 
-        <!-- 青色分隔线 -->
-        <div class="w-16 h-[3px] bg-[var(--evo-cyan)] rounded-full mx-auto mb-8 evo-reveal" data-reveal-delay="180"></div>
-
         <!-- 简介 -->
-        <p id="evo-home-hero-desc" class="evo-body text-base sm:text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed evo-reveal" data-reveal-delay="240">
+        <p id="evo-home-hero-desc" class="text-base sm:text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed evo-reveal" data-reveal-delay="240">
           她是我的数字分身，可以回答关于我的一切。在这里，作品、文章、思考被编织成一张可探索的知识网络。
         </p>
 
         <!-- 光泽药丸按钮 -->
-        <a href="chat.html" data-dom-id="cta-chat" class="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full bg-gradient-to-b from-white to-[#d8ecfe] text-[var(--evo-bg)] font-semibold text-base sm:text-lg shadow-[0_10px_30px_rgba(255,255,255,0.18),inset_0_0_0_2px_rgba(255,255,255,0.9)] hover:-translate-y-0.5 transition-all evo-reveal" data-reveal-delay="300">
+        <a href="chat.html" data-dom-id="cta-chat" class="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full bg-gradient-to-b from-white to-[#e5e7eb] text-black font-semibold text-base sm:text-lg shadow-[0_10px_30px_rgba(255,255,255,0.18),inset_0_0_0_2px_rgba(255,255,255,0.9)] hover:-translate-y-0.5 transition-all evo-reveal" data-reveal-delay="300">
           和 <span id="evo-home-doppelganger-name-2">Echo</span> 聊聊 <span aria-hidden="true">→</span>
         </a>
       </div>
 
-      <!-- 四大入口轨道卡片 -->
-      <div class="relative z-10 mt-16 sm:mt-24 w-full max-w-5xl mx-auto">
+      <!-- 四大入口轨道卡片（液态玻璃） -->
+      <div class="relative z-10 w-full max-w-5xl mx-auto px-6 pb-16">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <a href="portfolio.html" data-dom-id="orbit-portfolio" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-card-hover evo-reveal" data-reveal-delay="400">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-purple-500)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-purple transition-all">🎨</div>
-            <h3 class="evo-title text-base sm:text-lg mb-1">作品集</h3>
-            <p id="evo-home-count-projects" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">— 个项目</p>
+          <a href="portfolio.html" data-dom-id="orbit-portfolio" class="group liquid-glass rounded-2xl p-4 sm:p-6 text-center hover:bg-white/5 transition-all evo-reveal" data-reveal-delay="400">
+            <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center text-2xl">🎨</div>
+            <h3 class="text-base sm:text-lg mb-1 text-white">作品集</h3>
+            <p id="evo-home-count-projects" class="text-xs sm:text-sm text-white/50">— 个项目</p>
           </a>
-          <a href="articles.html" data-dom-id="orbit-articles" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-card-hover evo-reveal" data-reveal-delay="500">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-cyan)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-cyan transition-all">✍️</div>
-            <h3 class="evo-title text-base sm:text-lg mb-1">文章</h3>
-            <p id="evo-home-count-articles" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">— 篇长文</p>
+          <a href="articles.html" data-dom-id="orbit-articles" class="group liquid-glass rounded-2xl p-4 sm:p-6 text-center hover:bg-white/5 transition-all evo-reveal" data-reveal-delay="500">
+            <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center text-2xl">✍️</div>
+            <h3 class="text-base sm:text-lg mb-1 text-white">文章</h3>
+            <p id="evo-home-count-articles" class="text-xs sm:text-sm text-white/50">— 篇长文</p>
           </a>
-          <a href="garden.html" data-dom-id="orbit-garden" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-card-hover evo-reveal" data-reveal-delay="600">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-pink)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-pink transition-all">🌱</div>
-            <h3 class="evo-title text-base sm:text-lg mb-1">数字花园</h3>
-            <p id="evo-home-count-notes" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">— 条笔记</p>
+          <a href="garden.html" data-dom-id="orbit-garden" class="group liquid-glass rounded-2xl p-4 sm:p-6 text-center hover:bg-white/5 transition-all evo-reveal" data-reveal-delay="600">
+            <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center text-2xl">🌱</div>
+            <h3 class="text-base sm:text-lg mb-1 text-white">数字花园</h3>
+            <p id="evo-home-count-notes" class="text-xs sm:text-sm text-white/50">— 条笔记</p>
           </a>
-          <a href="about.html" data-dom-id="orbit-about" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-6 text-center hover:bg-[var(--evo-surface-2)] transition-all hover:scale-[1.02] evo-card-hover evo-reveal" data-reveal-delay="700">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-[var(--evo-radius-md)] bg-[var(--evo-violet)]/20 flex items-center justify-center text-2xl group-hover:evo-glow-purple transition-all">👤</div>
-            <h3 class="evo-title text-base sm:text-lg mb-1">关于我</h3>
-            <p id="evo-home-count-owner" class="text-xs sm:text-sm text-[var(--evo-ink-3)]">—</p>
+          <a href="about.html" data-dom-id="orbit-about" class="group liquid-glass rounded-2xl p-4 sm:p-6 text-center hover:bg-white/5 transition-all evo-reveal" data-reveal-delay="700">
+            <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center text-2xl">👤</div>
+            <h3 class="text-base sm:text-lg mb-1 text-white">关于我</h3>
+            <p id="evo-home-count-owner" class="text-xs sm:text-sm text-white/50">—</p>
           </a>
         </div>
       </div>
@@ -89,34 +134,34 @@
     <!-- ===================================================
          精选内容区块
          =================================================== -->
-    <section class="relative px-6 py-20 sm:py-28">
+    <section class="relative px-6 py-20 sm:py-28 bg-black">
       <div class="max-w-6xl mx-auto">
         <div class="flex items-end justify-between mb-10 evo-reveal">
           <div>
-            <p class="text-sm text-[var(--evo-purple-300)] mb-2 tracking-widest">— FEATURED</p>
-            <h2 class="evo-display text-3xl sm:text-4xl">精选作品</h2>
+            <p class="text-sm text-white/40 mb-2 tracking-widest uppercase">Featured</p>
+            <h2 class="font-serif-instrument text-3xl sm:text-4xl text-white">精选作品</h2>
           </div>
-          <a href="portfolio.html" class="hidden sm:inline-flex items-center gap-1 text-sm text-[var(--evo-ink-3)] hover:text-[var(--evo-purple-300)] transition-colors">查看全部 →</a>
+          <a href="portfolio.html" class="hidden sm:inline-flex items-center gap-1 text-sm text-white/50 hover:text-white transition-colors">查看全部 →</a>
         </div>
         <div id="evo-home-featured" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <!-- 由 home.js 渲染 -->
-          <div class="col-span-full text-center py-12 text-[var(--evo-ink-3)]">加载中…</div>
+          <div class="col-span-full text-center py-12 text-white/30">加载中…</div>
         </div>
       </div>
     </section>
 
-    <section class="relative px-6 py-16 sm:py-24 bg-gradient-to-b from-transparent via-[var(--evo-surface)]/40 to-transparent">
+    <section class="relative px-6 py-16 sm:py-24 bg-black">
       <div class="max-w-6xl mx-auto">
         <div class="flex items-end justify-between mb-10 evo-reveal">
           <div>
-            <p class="text-sm text-[var(--evo-cyan)] mb-2 tracking-widest">— RECENT</p>
-            <h2 class="evo-display text-3xl sm:text-4xl">最近文章</h2>
+            <p class="text-sm text-white/40 mb-2 tracking-widest uppercase">Recent</p>
+            <h2 class="font-serif-instrument text-3xl sm:text-4xl text-white">最近文章</h2>
           </div>
-          <a href="articles.html" class="hidden sm:inline-flex items-center gap-1 text-sm text-[var(--evo-ink-3)] hover:text-[var(--evo-cyan)] transition-colors">查看全部 →</a>
+          <a href="articles.html" class="hidden sm:inline-flex items-center gap-1 text-sm text-white/50 hover:text-white transition-colors">查看全部 →</a>
         </div>
         <div id="evo-home-recent" class="space-y-4">
           <!-- 由 home.js 渲染 -->
-          <div class="text-center py-12 text-[var(--evo-ink-3)]">加载中…</div>
+          <div class="text-center py-12 text-white/30">加载中…</div>
         </div>
       </div>
     </section>
