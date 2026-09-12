@@ -461,6 +461,7 @@ function processReply(text) {
   const delay = 600 + Math.random() * 400
   setTimeout(async () => {
     removeThinking()
+    isEchoTyping = false
     await ensureLiveData()
     const reply = matchReply(text.trim())
     await streamReply(reply)
