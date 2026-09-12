@@ -483,14 +483,12 @@ async function init() {
   // 先渲染加载状态
   conversation = [{ role: 'echo', html: '正在同步知识库…' }]
   renderMessages()
-  renderKbBanner()
 
   // 加载飞书数据
   await ensureLiveData()
 
   // 用真实数据渲染
   conversation = initialConversation()
-  renderKbBanner()
   renderMessages()
 }
 
