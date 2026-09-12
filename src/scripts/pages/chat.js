@@ -58,6 +58,22 @@ function avatarChar() {
   return on ? on.slice(0, 1) : 'E'
 }
 
+// 头像 HTML：有图片用图片，否则首字母
+function avatarHtml(size = 'w-8 h-8') {
+  const s = LIVE_DATA.settings
+  if (s && s.avatarImage) {
+    return `<div class="${size} rounded-full overflow-hidden shrink-0 ring-2 ring-white/30"><img src="${s.avatarImage}" alt="头像" class="w-full h-full object-cover" /></div>`
+  }
+  return `<div class="${size} rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] to-[var(--evo-pink)] flex items-center justify-center text-white text-xs font-bold shrink-0">${avatarChar()}</div>`
+}
+
+// 更新对话头部头像
+function updateHeaderAvatar() {
+  const el = document.getElementById('evo-chat-header-avatar')
+  if (!el) return
+  el.outerHTML = avatarHtml('w-10 h-10').replace('class="', 'id="evo-chat-header-avatar" class="')
+}
+
 // ------------------------------------------------------------
 // 初始问候（读站点设置后组装）
 // ------------------------------------------------------------
@@ -110,7 +126,7 @@ function messageEl(msg) {
          </div>`
       : ''
     wrap.innerHTML = `
-      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] to-[var(--evo-pink)] flex items-center justify-center text-white text-xs font-bold shrink-0">${avatarChar()}</div>
+      ${avatarHtml()}
       <div class="max-w-[80%] min-w-0">
         <div class="evo-glass rounded-2xl rounded-tl-sm px-4 sm:px-5 py-3 text-[var(--evo-ink)] text-sm leading-relaxed break-words"></div>
         ${sourcesHtml}
@@ -152,7 +168,7 @@ function showTyping() {
   wrap.id = 'evo-typing-indicator'
   wrap.className = 'flex gap-3 sm:gap-4 evo-animate-fade-in'
   wrap.innerHTML = `
-    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] to-[var(--evo-pink)] flex items-center justify-center text-white text-xs font-bold shrink-0">${avatarChar()}</div>
+    ${avatarHtml()}
     <div class="evo-glass rounded-2xl rounded-tl-sm px-5 py-4 flex items-center">
       <span class="evo-typing-dot"></span><span class="evo-typing-dot"></span><span class="evo-typing-dot"></span>
     </div>`
@@ -581,6 +597,13 @@ function setupForm() {
 // 初始化（先加载飞书，再渲染）
 // ------------------------------------------------------------
 async function init() {
+  // 先从本地缓存恢复设置，头像秒显
+  try {
+    const cached = localStorage.getItem('echoverse:home:settings')
+    if (cached) LIVE_DATA.settings = JSON.parse(cached)
+  } catch {}
+  if (LIVE_DATA.settings) updateHeaderAvatar()
+
   // 飞书异步加载，期间先渲染初始 UI，加载完后刷新
   renderAside()
   renderQuickPrompts()
@@ -592,6 +615,9 @@ async function init() {
   renderMessages()
 
   await ensureLiveData()
+  // 缓存最新设置，下次打开秒显
+  try { localStorage.setItem('echoverse:home:settings', JSON.stringify(LIVE_DATA.settings)) } catch {}
+  updateHeaderAvatar()
   conversation = initialConversation()
   renderAside()
   renderMessages()
