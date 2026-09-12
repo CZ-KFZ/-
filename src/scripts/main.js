@@ -327,6 +327,19 @@ function injectGlobalBg() {
 }
 
 // ------------------------------------------------------------
+// 预加载赞赏收款码图片：页面加载时就缓存，点开弹窗瞬间显示
+// ------------------------------------------------------------
+function preloadDonationImages() {
+  const urls = []
+  if (DONATION_CONFIG.alipay?.enabled) urls.push(DONATION_CONFIG.alipay.qrUrl)
+  if (DONATION_CONFIG.wechat?.enabled) urls.push(DONATION_CONFIG.wechat.qrUrl)
+  urls.forEach((src) => {
+    const img = new Image()
+    img.src = src
+  })
+}
+
+// ------------------------------------------------------------
 // 初始化入口
 // ------------------------------------------------------------
 function init() {
@@ -334,6 +347,7 @@ function init() {
   renderHeader()
   renderFooter()
   renderDonationButton()
+  preloadDonationImages()
   setupReveal()
   setupPageEnter()
 }
