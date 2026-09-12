@@ -13,7 +13,7 @@ import { parseMarkdown } from '../markdown.js'
 import { bindTiltEffect } from '../effects.js'
 
 // localStorage 缓存（5 分钟过期，二次访问秒开）
-const CACHE_KEY = 'ev_articles_cache_v1'
+const CACHE_KEY = 'ev_articles_cache_v2'
 const CACHE_TTL = 5 * 60 * 1000
 
 function getCached() {
