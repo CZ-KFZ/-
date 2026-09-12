@@ -296,9 +296,41 @@ function renderDonationButton() {
 }
 
 // ------------------------------------------------------------
+// 全局背景注入（首页已有 #evo-hero-bg，其他页面注入相同背景）
+// ------------------------------------------------------------
+function injectGlobalBg() {
+  // 首页已有自己的背景，跳过
+  if (document.getElementById('evo-hero-bg')) return
+  // 已注入过则跳过
+  if (document.getElementById('evo-global-bg')) return
+
+  const bg = document.createElement('div')
+  bg.id = 'evo-global-bg'
+  bg.className = 'fixed inset-0 pointer-events-none -z-10'
+  bg.innerHTML = `
+    <video
+      class="absolute inset-0 w-full h-full object-cover object-bottom"
+      muted
+      autoplay
+      loop
+      playsinline
+      preload="auto"
+    >
+      <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_074625_a81f018a-956b-43fb-9aee-4d1508e30e6a.mp4" type="video/mp4" />
+    </video>
+    <div class="absolute inset-0 bg-black/50"></div>
+  `
+  // 放到 body 最前面，确保在内容之下
+  document.body.insertBefore(bg, document.body.firstChild)
+  // 确保 body 是黑色背景，防止视频加载时白屏
+  document.body.classList.add('bg-black')
+}
+
+// ------------------------------------------------------------
 // 初始化入口
 // ------------------------------------------------------------
 function init() {
+  injectGlobalBg()
   renderHeader()
   renderFooter()
   renderDonationButton()
