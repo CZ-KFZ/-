@@ -201,6 +201,21 @@ function generateArticlesReply(text) {
   const list = (matched && matched.length ? matched : all.slice(0, 5))
   const on = ownerName()
   if (!list.length) return { html: applyStyle(`<p>目前文章库里还没有内容，${on} 还在持续写作中。</p>`), sources: [], followUps: [] }
+
+  // 如果用户问的是具体某篇文章「讲了什么」，给出概括
+  const askingAboutContent = /讲了什么|主要内容|写了什么|内容是什么|讲什么|摘要|概括/.test(text)
+  if (askingAboutContent && matched.length) {
+    const summaries = matched.map((a) => {
+      const summary = a.excerpt || a.content || a.desc || '暂无摘要'
+      return `<div class="mb-3"><strong class="text-[var(--evo-ink)]">《${a.title}》</strong>${a.date ? ` <span class="text-xs text-[var(--evo-ink-3)]">${a.date}</span>` : ''}<p class="text-sm text-[var(--evo-ink-2)] mt-1">${summary}</p></div>`
+    }).join('')
+    return {
+      html: applyStyle(`<p>根据你的问题，这几篇文章的主要内容是：</p>${summaries}`),
+      sources: matched.map((a) => ({ label: a.title, tone: 'cyan' })),
+      followUps: matched.slice(0, 2).map((a) => `${a.title} 里提到了哪些观点？`)
+    }
+  }
+
   const cards = list.map((a) => articleCard(a)).join('')
   return {
     html: applyStyle(`<p>${on} 目前写了 <strong>${all.length}</strong> 篇文章，${matched.length ? '根据你的问题，推荐这些：' : '近期值得一读：'}</p>${cards}`),
@@ -267,7 +282,14 @@ function matchReply(text) {
   if (includesAny(t, ['技术栈', '技术', '会什么', '擅长', '技能', '能力', '会用', '什么技术'])) {
     const s = LIVE_DATA.settings
     const arr = s && Array.isArray(s.skills) && s.skills.length ? s.skills : []
+    // 检查是否提到了具体作品
+    const projMatch = LIVE_DATA.projects.find((p) => t.includes(p.title))
+    if (projMatch && (projMatch.tech || projMatch.desc)) {
+      const tech = projMatch.tech || projMatch.desc
+      return { html: applyStyle(`<p>关于作品 <strong>${projMatch.title}</strong>：</p><p class="text-[var(--evo-ink-2)] mt-1">${tech}</p>`), sources: [{ label: projMatch.title, tone: 'purple' }], followUps: [`${projMatch.title} 还有什么特点？`] }
+    }
     if (arr.length) return { html: applyStyle(`<p>她主要的技术栈 / 技能包括：</p><div class="flex flex-wrap gap-2">${arr.map((sk) => `<span class="px-2 py-1 rounded bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs">${sk}</span>`).join('')}</div>`), sources: [{ label: '站点设置 - 技能项', tone: 'cyan' }], followUps: ['她用这些技术做过什么？'] }
+    return { html: applyStyle(`<p>她在作品中运用了多种技术，具体可以在作品集里查看每个项目的详情。</p>`), sources: [{ label: '作品集', tone: 'purple' }], followUps: ['介绍一下她的作品'] }
   }
   const p = searchItems(LIVE_DATA.projects, t).slice(0, 3), a = searchItems(LIVE_DATA.articles, t).slice(0, 3), n = searchItems(LIVE_DATA.notes, t).slice(0, 3)
   if (p.length || a.length || n.length) {
@@ -412,37 +434,23 @@ function removeThinking() {
   if (el) el.remove()
 }
 
-// 流式输出回复
-function streamReply(msg) {
+// 显示回复（整体淡入，避免流式切割 HTML 标签导致渲染失败）
+function showReply(msg) {
   return new Promise((resolve) => {
     const box = document.getElementById('evo-chat-messages')
-    // 创建一个空的消息容器
-    const echoMsg = { role: 'echo', html: '', sources: msg.sources, followUps: msg.followUps, streaming: true }
+    const echoMsg = { role: 'echo', html: msg.html || '', sources: msg.sources, followUps: msg.followUps }
     conversation.push(echoMsg)
     renderMessages()
-    const contentEl = box.querySelector('.evo-msg-content:last-child')
-    if (!contentEl) { resolve(); return }
-
-    const fullHtml = msg.html
-    // 提取纯文本用于逐字显示，保留 HTML 标签结构
-    // 简化版：按字符逐个显示完整 HTML
-    let i = 0
-    const speed = 8 // 每字毫秒
-    const timer = setInterval(() => {
-      i += 2
-      contentEl.innerHTML = fullHtml.slice(0, i)
-      scrollToBottom()
-      if (i >= fullHtml.length) {
-        clearInterval(timer)
-        echoMsg.html = fullHtml
-        echoMsg.streaming = false
-        // 流式结束后重新渲染（补上操作栏、来源、追问）
-        const idx = conversation.indexOf(echoMsg)
-        conversation[idx] = { role: 'echo', html: fullHtml, sources: msg.sources, followUps: msg.followUps }
-        renderMessages()
-        resolve()
-      }
-    }, speed)
+    // 找到刚添加的消息元素，加淡入动画
+    const msgs = box.querySelectorAll('.evo-msg-content')
+    const last = msgs[msgs.length - 1]
+    if (last) {
+      last.style.opacity = '0'
+      last.style.transition = 'opacity 0.4s ease'
+      requestAnimationFrame(() => { last.style.opacity = '1' })
+    }
+    scrollToBottom()
+    resolve()
   })
 }
 
@@ -458,7 +466,7 @@ function processReply(text) {
     isEchoTyping = false
     await ensureLiveData()
     const reply = matchReply(text.trim())
-    await streamReply(reply)
+    await showReply(reply)
     notifyTyping(false)
     notifyReply()
   }, delay)
