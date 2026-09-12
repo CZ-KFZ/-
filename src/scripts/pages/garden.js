@@ -10,6 +10,7 @@
 
 import { fetchNotes, fetchSiteSettings } from '../feishu.js'
 import { GARDEN_NOTES as MOCK_NOTES } from '../data.js'
+import { bindTiltEffect } from '../effects.js'
 
 let notes = []
 
@@ -400,7 +401,8 @@ function renderNotes() {
           return `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${NOTE_TONE[tone] || NOTE_TONE.purple} text-xs">${label}</span>`
         }).join('')
         return `
-      <article data-note="${n.id}" class="evo-glass rounded-[var(--evo-radius-lg)] p-5 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal" data-reveal-delay="${Math.min(150 + i * 80, 500)}">
+      <article data-note="${n.id}" class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] p-5 hover:bg-[var(--evo-surface-2)] transition-colors cursor-pointer evo-reveal" data-reveal-delay="${Math.min(150 + i * 80, 500)}" style="animation-delay:${Math.min(i * 60, 360)}ms">
+        <div class="evo-tilt-inner">
         <div class="flex flex-wrap gap-2 mb-3">
           ${catChip}
           ${tagsHtml}
@@ -408,6 +410,7 @@ function renderNotes() {
         <h3 class="evo-title text-lg mb-2">${n.title || '未命名笔记'}</h3>
         <p class="text-sm text-[var(--evo-ink-2)] line-clamp-2">${n.excerpt || '暂无摘要'}</p>
         ${n.publishedAt ? `<div class="mt-3 text-[11px] text-[var(--evo-ink-3)] evo-mono">${n.publishedAt}</div>` : ''}
+        </div>
       </article>`
       }
     )

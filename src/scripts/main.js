@@ -5,6 +5,7 @@
 
 import '../styles/theme.css'
 import { NAV_ITEMS } from './data.js'
+import { bindAllTiltCards } from './effects.js'
 
 // ============================================================
 // 赞赏（Donation）配置
@@ -349,6 +350,7 @@ function init() {
   renderDonationButton()
   preloadDonationImages()
   setupReveal()
+  bindAllTiltCards()
   setupPageEnter()
 }
 
@@ -361,5 +363,6 @@ if (document.readyState === 'loading') {
 // 暴露给页面脚本使用的工具
 window.EchoVerse = {
   getCurrentPageKey,
-  refreshReveal: setupReveal
+  refreshReveal: () => { setupReveal(); bindAllTiltCards() },
+  bindTilt: bindAllTiltCards
 }

@@ -2,31 +2,18 @@
 // 首页 home.js
 // 1) 生成星空背景（轻量，含闪烁动画）
 // 2) 鼠标视差：Hero 光晕随鼠标轻微移动
-// 3) 读飞书 / mock：设置（姓名/头像首字/分身名/描述）、统计数、精选作品、最近文章
+// 3) 读飞书 / mock：设置（姓名/头像首字/分身名/描述）、统计数、精选作品（大轮播）、最近文章
 // ============================================================
 
 import { fetchProjects, fetchArticles, fetchNotes, fetchSiteSettings } from '../feishu.js'
 import { PROJECTS as MOCK_PROJECTS, ARTICLES as MOCK_ARTICLES } from '../data.js'
-
-// 作品集配色映射（和 portfolio.js 对齐）
-const ACCENT_GRADIENT = {
-  purple: 'from-[var(--evo-purple-700)] to-[var(--evo-cyan)]/30',
-  cyan: 'from-[var(--evo-cyan)]/40 to-[var(--evo-purple-700)]',
-  pink: 'from-[var(--evo-pink)]/40 to-[var(--evo-violet)]/40',
-  violet: 'from-[var(--evo-violet)]/50 to-[var(--evo-pink)]/30'
-}
-const TAG_TONE = {
-  purple: 'bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)]',
-  cyan: 'bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)]',
-  pink: 'bg-[var(--evo-pink)]/20 text-[var(--evo-pink)]',
-  violet: 'bg-[var(--evo-violet)]/30 text-[var(--evo-violet)]'
-}
+import { TAG_TONE, ACCENT_GRADIENT, openProjectModal } from '../project-ui.js'
+import { bindTiltEffect } from '../effects.js'
 
 // 生成星空：在 #evo-hero-bg 内插入若干闪烁的小点
 function buildStarfield() {
   const bg = document.getElementById('evo-hero-bg')
   if (!bg) return
-  // 避免重复生成
   if (bg.dataset.starsBuilt === '1') return
   bg.dataset.starsBuilt = '1'
   const stars = document.createElement('div')
@@ -48,7 +35,7 @@ function buildStarfield() {
   bg.appendChild(stars)
 }
 
-// 鼠标视差：Hero 光晕 + 轨道环跟随鼠标轻微偏移
+// 鼠标视差
 function setupParallax() {
   const bg = document.getElementById('evo-hero-bg')
   if (!bg) return
@@ -77,7 +64,6 @@ function setupParallax() {
   })
 }
 
-// 设置文本内容
 function setText(id, text) {
   const el = document.getElementById(id)
   if (el) el.textContent = text
@@ -92,7 +78,6 @@ function applySettings(settings) {
   setText('evo-home-doppelganger-name', doppelName)
   setText('evo-home-doppelganger-name-2', doppelName)
 
-  // 头像：优先用飞书后台的头像图片，和「关于我」页保持一致；没有则用首字母
   const avatarInner = document.getElementById('evo-home-avatar-inner')
   const avatarCharEl = document.getElementById('evo-home-avatar-char')
   if (settings.avatarImage && avatarInner) {
@@ -114,37 +99,107 @@ function applyCounts(projects, articles, notes) {
   setText('evo-home-count-notes', `${notes.length} 条笔记`)
 }
 
-// 精选作品（推荐/最新的前 3 条，飞书优先 featured）
-function renderFeaturedProjects(projects) {
-  const host = document.getElementById('evo-home-featured')
-  if (!host) return
-  const items = [...projects]
-  // 优先 featured 在前，保持原顺序取前 3
-  items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
-  const list = items.slice(0, 3)
-  if (!list.length) {
-    host.innerHTML = '<div class="col-span-full text-center py-12 text-[var(--evo-ink-3)]">暂无项目，稍后回来看看吧。</div>'
+// ------------------------------------------------------------
+// 精选作品大轮播（首页）
+// ------------------------------------------------------------
+let projectsData = []
+
+function renderFeaturedCarousel(projects) {
+  projectsData = projects
+  const container = document.getElementById('evo-home-featured')
+  if (!container) return
+
+  let featured = projects.filter((p) => p.featured)
+  if (featured.length < 3) featured = projects.slice(0, Math.min(5, projects.length))
+  if (!featured.length) {
+    container.innerHTML = '<div class="col-span-full text-center py-12 text-white/30">暂无项目，稍后回来看看吧。</div>'
     return
   }
-  host.innerHTML = list.map((p) => {
-    const tone = TAG_TONE[p.accent] || TAG_TONE.purple
+
+  const slidesHtml = featured.map((p, i) => {
     const gradient = ACCENT_GRADIENT[p.accent] || ACCENT_GRADIENT.purple
-    const cover = p.coverImage
-      ? `<div class="aspect-[16/10] overflow-hidden rounded-t-[var(--evo-radius-lg)]"><img src="${p.coverImage}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
-      : `<div class="aspect-[16/10] bg-gradient-to-br ${gradient} flex items-center justify-center px-4 rounded-t-[var(--evo-radius-lg)]"><span class="evo-title text-lg sm:text-xl text-white/90 text-center">${p.title}</span></div>`
+    const toneCls = TAG_TONE[p.accent] || TAG_TONE.purple
+    const bg = p.coverImage
+      ? `<img src="${p.coverImage}" alt="${p.title}" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />`
+      : `<div class="absolute inset-0 bg-gradient-to-br ${gradient}"></div>`
     return `
-      <a href="portfolio.html" class="group evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal">
-        ${cover}
-        <div class="p-5">
+      <div class="evo-carousel-slide absolute inset-0 transition-opacity duration-700 ${i === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}" data-slide="${i}">
+        ${bg}
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
           <div class="flex items-center gap-2 mb-3 flex-wrap">
-            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${tone} text-xs">${p.categoryLabel || p.category}</span>
-            <span class="text-xs text-[var(--evo-ink-3)]">${p.year || ''}</span>
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${p.categoryLabel || p.category}</span>
+            <span class="text-xs text-white/70">${p.year || ''}</span>
           </div>
-          <h3 class="evo-title text-lg mb-2 group-hover:text-[var(--evo-purple-300)] transition-colors">${p.title}</h3>
-          <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3">${p.desc || ''}</p>
+          <h3 class="font-serif-instrument text-2xl sm:text-4xl text-white mb-2">${p.title}</h3>
+          <p class="text-white/70 text-sm sm:text-base max-w-xl mb-4 line-clamp-2">${p.desc || ''}</p>
+          <button class="evo-featured-open inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] bg-white/15 backdrop-blur-md hover:bg-white/25 text-white text-sm transition-all border border-white/20" data-project-id="${p.id}">
+            查看详情
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
         </div>
-      </a>`
+      </div>`
   }).join('')
+
+  const dotsHtml = featured.map((_, i) => `
+    <button class="evo-carousel-dot w-2.5 h-2.5 rounded-full transition-all ${i === 0 ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}" data-dot="${i}"></button>
+  `).join('')
+
+  container.innerHTML = `
+    <div class="relative rounded-[var(--evo-radius-lg)] overflow-hidden evo-glass evo-reveal" style="aspect-ratio: 21/9; min-height: 280px;">
+      ${slidesHtml}
+      <button class="evo-carousel-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all backdrop-blur-sm z-10" aria-label="上一张">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="evo-carousel-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all backdrop-blur-sm z-10" aria-label="下一张">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        ${dotsHtml}
+      </div>
+    </div>
+  `
+
+  // 轮播逻辑
+  let current = 0
+  let timer = null
+  const slides = container.querySelectorAll('.evo-carousel-slide')
+  const dots = container.querySelectorAll('.evo-carousel-dot')
+  const total = slides.length
+
+  function goTo(idx) {
+    slides[current].classList.add('opacity-0', 'pointer-events-none')
+    slides[current].classList.remove('opacity-100')
+    dots[current].classList.remove('bg-white', 'w-8')
+    dots[current].classList.add('bg-white/40')
+    current = (idx + total) % total
+    slides[current].classList.remove('opacity-0', 'pointer-events-none')
+    slides[current].classList.add('opacity-100')
+    dots[current].classList.add('bg-white', 'w-8')
+    dots[current].classList.remove('bg-white/40')
+  }
+  function next() { goTo(current + 1) }
+  function prev() { goTo(current - 1) }
+  function startAuto() { stopAuto(); timer = setInterval(next, 5000) }
+  function stopAuto() { if (timer) clearInterval(timer) }
+
+  container.querySelector('.evo-carousel-next').addEventListener('click', () => { next(); startAuto() })
+  container.querySelector('.evo-carousel-prev').addEventListener('click', () => { prev(); startAuto() })
+  dots.forEach((d) => d.addEventListener('click', () => { goTo(parseInt(d.dataset.dot)); startAuto() }))
+  container.addEventListener('mouseenter', stopAuto)
+  container.addEventListener('mouseleave', startAuto)
+
+  container.querySelectorAll('.evo-featured-open').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const id = btn.dataset.projectId
+      const project = projectsData.find((p) => p.id === id)
+      if (project) openProjectModal(project)
+    })
+  })
+
+  if (total > 1) startAuto()
+
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
@@ -153,11 +208,10 @@ function renderRecentArticles(articles) {
   const host = document.getElementById('evo-home-recent')
   if (!host) return
   const items = [...articles]
-  // 推荐的在前，其余按原顺序
   items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
   const list = items.slice(0, 4)
   if (!list.length) {
-    host.innerHTML = '<div class="text-center py-12 text-[var(--evo-ink-3)]">暂无文章，稍后回来看看吧。</div>'
+    host.innerHTML = '<div class="text-center py-12 text-white/30">暂无文章，稍后回来看看吧。</div>'
     return
   }
   const CAT_TONE = {
@@ -171,13 +225,14 @@ function renderRecentArticles(articles) {
     life: 'bg-[var(--evo-pink)]/20 text-[var(--evo-pink)]',
     thought: 'bg-[var(--evo-violet)]/30 text-[var(--evo-violet)]'
   }
-  host.innerHTML = list.map((a) => {
+  host.innerHTML = list.map((a, i) => {
     const tone = CAT_TONE[a.category] || CAT_TONE.design
     const cover = a.coverImage
       ? `<div class="hidden sm:block w-36 md:w-44 aspect-[16/10] rounded-[var(--evo-radius-md)] overflow-hidden shrink-0"><img src="${a.coverImage}" alt="${a.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
       : ''
     return `
-      <a href="articles.html" class="group evo-glass rounded-[var(--evo-radius-lg)] p-4 sm:p-5 flex gap-5 items-start hover:bg-[var(--evo-surface-2)] transition-all evo-reveal">
+      <a href="articles.html" class="group evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-4 sm:p-5 flex gap-5 items-start hover:bg-[var(--evo-surface-2)] transition-all evo-reveal evo-filter-item" data-reveal-delay="${Math.min(i * 80, 400)}" style="animation-delay:${Math.min(i * 60, 360)}ms">
+        <div class="evo-tilt-inner w-full flex gap-5 items-start">
         ${cover}
         <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -188,14 +243,14 @@ function renderRecentArticles(articles) {
           <h3 class="evo-title text-lg mb-2 group-hover:text-[var(--evo-cyan)] transition-colors">${a.title}</h3>
           <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-2">${a.excerpt || ''}</p>
         </div>
+        </div>
       </a>`
   }).join('')
+  host.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
-// ------------------------------------------------------------
 // 数据加载
-// ------------------------------------------------------------
 async function loadAllData() {
   const [projectsRaw, articlesRaw, notesRaw, settingsRaw] = await Promise.all([
     fetchProjects(),
@@ -206,7 +261,7 @@ async function loadAllData() {
 
   const projects = projectsRaw && projectsRaw.length ? projectsRaw : MOCK_PROJECTS.map((p) => ({
     id: p.id, title: p.title, category: p.category, categoryLabel: p.categoryLabel,
-    year: p.year, desc: p.desc, accent: p.accent, coverImage: null, demoUrl: null, featured: false
+    year: p.year, desc: p.desc, accent: p.accent, coverImage: null, demoUrl: null, featured: p.featured || false
   }))
   const articles = articlesRaw && articlesRaw.length ? articlesRaw : MOCK_ARTICLES.map((a) => ({
     id: a.id, title: a.title, category: a.category, categoryLabel: a.categoryLabel || a.category,
@@ -214,7 +269,6 @@ async function loadAllData() {
   }))
   const notes = notesRaw && notesRaw.length ? notesRaw : []
 
-  // 默认站点设置：fallback
   const settings = settingsRaw || {
     ownerName: '阴之体道',
     avatarChar: '阴',
@@ -228,9 +282,6 @@ async function loadAllData() {
   return { projects, articles, notes, settings }
 }
 
-// ------------------------------------------------------------
-// 本地缓存：头像等站点设置存 localStorage，二次访问瞬间显示
-// ------------------------------------------------------------
 const CACHE_KEY = 'echoverse:home:settings'
 
 function loadCachedSettings() {
@@ -245,26 +296,22 @@ function loadCachedSettings() {
 function saveCachedSettings(settings) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(settings))
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 async function init() {
   buildStarfield()
   setupParallax()
 
-  // 先显示缓存的头像（瞬间出现），后台再拉取最新数据
   const cached = loadCachedSettings()
   if (cached) applySettings(cached)
 
   const { projects, articles, notes, settings } = await loadAllData()
   applySettings(settings)
-  // 缓存最新设置，下次打开秒显
   saveCachedSettings(settings)
   applyCounts(projects, articles, notes)
   setText('evo-home-count-owner', settings.ownerName || '—')
-  renderFeaturedProjects(projects)
+  renderFeaturedCarousel(projects)
   renderRecentArticles(articles)
 }
 

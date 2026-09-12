@@ -10,6 +10,7 @@
 import { fetchFeishuMulti, normalizeArticle, normalizeCollection, redeemCode } from '../feishu.js'
 import { ARTICLES as MOCK_ARTICLES } from '../data.js'
 import { parseMarkdown } from '../markdown.js'
+import { bindTiltEffect } from '../effects.js'
 
 // localStorage 缓存（5 分钟过期，二次访问秒开）
 const CACHE_KEY = 'ev_articles_cache_v1'
@@ -83,7 +84,8 @@ function articleCard(a, index) {
   const unlocked = isUnlocked(a.id)
   const lockIcon = (a.isPaid && a.price && !unlocked) ? '<span class="ml-1">🔒</span>' : ''
   return `
-    <article class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" data-article-id="${a.id}">
+    <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-article-id="${a.id}">
+      <div class="evo-tilt-inner flex flex-col flex-1">
       ${coverHtml}
       <div class="p-4 md:p-5 flex-1 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -99,6 +101,7 @@ function articleCard(a, index) {
             : '<span class="text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">阅读 →</span>'
           }
         </div>
+      </div>
       </div>
     </article>`
 }
@@ -204,7 +207,8 @@ function renderHome() {
   list.innerHTML = `
     <div class="grid gap-4 sm:gap-5 md:grid-cols-2 mt-2">
       ${cards.map((c, i) => `
-        <div class="evo-glass evo-reveal rounded-[var(--evo-radius-lg)] p-5 md:p-6 cursor-pointer hover:bg-[var(--evo-surface-2)] transition-all group relative overflow-hidden border ${c.tone}" data-reveal-delay="${i * 100}" data-nav="${c.view}">
+        <div class="evo-glass evo-tilt-card evo-glow-card evo-filter-item evo-reveal rounded-[var(--evo-radius-lg)] p-5 md:p-6 cursor-pointer hover:bg-[var(--evo-surface-2)] transition-all group relative overflow-hidden border ${c.tone}" data-reveal-delay="${i * 100}" style="animation-delay:${i * 80}ms" data-nav="${c.view}">
+          <div class="evo-tilt-inner">
           <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${c.tone} opacity-10 blur-2xl pointer-events-none"></div>
           <div class="relative">
             <div class="flex items-start justify-between mb-4">
@@ -214,6 +218,7 @@ function renderHome() {
             <h3 class="evo-title text-lg font-semibold mb-1.5">${c.title}</h3>
             <p class="text-xs text-[var(--evo-ink-3)] leading-relaxed mb-4">${c.desc}</p>
             <div class="flex items-center gap-1 text-xs text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">进入 <span>→</span></div>
+          </div>
           </div>
         </div>
       `).join('')}
@@ -378,7 +383,8 @@ function collectionCard(c, index) {
   // 合集是否整体已解锁（免费合集视为已解锁；付费合集看本地是否标记过）
   const unlocked = !c.isPaid || !c.price || (c.articleIds || []).every((id) => isUnlocked(id))
   return `
-    <article class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" data-collection-id="${c.id || ''}">
+    <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-collection-id="${c.id || ''}">
+      <div class="evo-tilt-inner flex flex-col flex-1">
       ${coverHtml}
       <div class="p-4 md:p-5 flex-1 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -391,6 +397,7 @@ function collectionCard(c, index) {
           <span>${unlocked ? '已解锁' : (c.isPaid && c.price ? '需付费' : '免费')}</span>
           <span class="text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">查看 →</span>
         </div>
+      </div>
       </div>
     </article>`
 }

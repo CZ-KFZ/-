@@ -97,12 +97,14 @@ function renderTimeline(items) {
         (item, i) => `
         <div class="pl-8 sm:pl-10 relative evo-reveal pb-8 last:pb-0" data-reveal-delay="${Math.min(i * 80, 400)}">
           <span class="absolute left-0 top-2 w-3.5 h-3.5 rounded-full ${DOT_COLOR[item.dot] || DOT_COLOR.primary} ring-4 ring-[var(--evo-bg)] shadow-lg"></span>
-          <div class="evo-glass rounded-[var(--evo-radius-lg)] p-5 sm:p-6 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all group">
+          <div class="evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-5 sm:p-6 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all group">
+            <div class="evo-tilt-inner">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
               <h3 class="evo-title text-base sm:text-lg group-hover:text-[var(--evo-purple-300)] transition-colors">${item.title}</h3>
               <span class="text-xs sm:text-sm text-[var(--evo-ink-3)] font-mono">${item.period}</span>
             </div>
             <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed">${item.desc}</p>
+            </div>
           </div>
         </div>`
       )
@@ -124,7 +126,7 @@ function renderSkills(skills) {
   box.innerHTML = skills
     .map(
       (s) => `
-      <span class="px-4 py-2 rounded-full evo-glass text-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 ${SKILL_TONE[s.tone] || SKILL_TONE.default}">${s.label}</span>`
+      <span class="evo-tilt-card evo-glow-card inline-flex items-center px-4 py-2 rounded-full evo-glass text-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 ${SKILL_TONE[s.tone] || SKILL_TONE.default}"><span class="evo-tilt-inner">${s.label}</span></span>`
     )
     .join('')
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
