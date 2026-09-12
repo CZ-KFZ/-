@@ -71,7 +71,7 @@ function renderHeader() {
   }).join('')
 
   mount.innerHTML = `
-    <header class="fixed top-0 inset-x-0 z-50 evo-glass-ultra shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+    <header class="fixed top-0 inset-x-0 z-50 bg-transparent">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <a href="index.html" data-dom-id="nav-home-logo" class="flex items-center gap-3 shrink-0">
           <div class="w-8 h-8 rounded-[var(--evo-radius-sm)] bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-cyan)] flex items-center justify-center evo-glow-purple">
