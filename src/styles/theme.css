@@ -453,13 +453,13 @@
 .evo-animate-pulse { animation: evo-pulse 3s ease-in-out infinite; }
 .evo-animate-twinkle { animation: evo-twinkle 4s ease-in-out infinite; }
 .evo-animate-slide-in { animation: evo-slide-in-right 0.3s ease-out; }
-.evo-animate-fade-in { animation: evo-fade-in 0.4s ease-out; }
+.evo-animate-fade-in { animation: evo-fade-in 0.3s ease-out; }
 
 /* 滚动揭示 */
 .evo-reveal {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
 .evo-reveal.is-visible {
