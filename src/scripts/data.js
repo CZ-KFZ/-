@@ -23,7 +23,8 @@ export const PROJECTS = [
     year: '2024',
     desc: '用 3D 扫描技术还原老城区风貌的互动数字平台，让用户在虚拟空间中漫步、聆听口述历史。',
     gradient: 'from-[var(--evo-purple-700)] to-[var(--evo-cyan)]/30',
-    accent: 'purple'
+    accent: 'purple',
+    featured: true
   },
   {
     id: 'mind-garden',
@@ -33,7 +34,8 @@ export const PROJECTS = [
     year: '2023',
     desc: '个人知识管理实验，把 5 年读书笔记组织成 500+ 节点的可视化知识网络。',
     gradient: 'from-[var(--evo-pink)]/40 to-[var(--evo-violet)]/40',
-    accent: 'pink'
+    accent: 'pink',
+    featured: true
   },
   {
     id: 'soundscape',
@@ -73,7 +75,8 @@ export const PROJECTS = [
     year: '2025',
     desc: '基于个人知识库训练的可交互 3D 数字人项目。',
     gradient: 'from-[var(--evo-pink)]/50 via-[var(--evo-violet)]/50 to-[var(--evo-cyan)]/30',
-    accent: 'pink'
+    accent: 'pink',
+    featured: true
   }
 ]
 

@@ -18,6 +18,22 @@
         <p class="text-[var(--evo-ink-2)]">设计、开发、研究与影像实验的集合</p>
       </div>
 
+      <!-- 精选作品轮播 -->
+      <div id="evo-featured-carousel" class="mb-10 sm:mb-12 hidden">
+        <!-- 由 portfolio.js 渲染 -->
+      </div>
+
+      <!-- 搜索栏 -->
+      <div class="max-w-md mx-auto mb-8 evo-reveal" data-reveal-delay="80">
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--evo-ink-3)]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="evo-portfolio-search" type="text" placeholder="搜索作品标题、简介、分类…" class="w-full pl-11 pr-4 py-3 rounded-[var(--evo-radius-md)] bg-[var(--evo-surface-glass)] border border-[var(--evo-border-glow)] text-[var(--evo-ink)] placeholder:text-[var(--evo-ink-3)] focus:outline-none focus:border-[var(--evo-purple-400)] focus:ring-2 focus:ring-[var(--evo-purple-500)]/20 transition-all backdrop-blur-xl" />
+          <button id="evo-search-clear" class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[var(--evo-surface-2)] hover:bg-[var(--evo-purple-500)]/30 text-[var(--evo-ink-3)] hover:text-white flex items-center justify-center transition-all">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
       <!-- 筛选条 -->
       <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-10 evo-reveal" data-reveal-delay="100" id="evo-portfolio-filters">
         <!-- 由 portfolio.js 渲染 -->

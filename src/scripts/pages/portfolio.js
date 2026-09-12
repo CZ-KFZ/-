@@ -9,6 +9,7 @@ import { PROJECTS as MOCK_PROJECTS, PROJECT_FILTERS } from '../data.js'
 
 let currentFilter = 'all'
 let projects = []
+let searchQuery = ''
 
 // 标签配色
 const TAG_TONE = {
@@ -197,8 +198,8 @@ function renderGrid() {
   const empty = document.getElementById('evo-portfolio-empty')
   if (!grid) return
 
-  // 筛选匹配：兼容英文 key（category）和中文显示名（categoryLabel）
-  const list = currentFilter === 'all'
+  // 1. 分类筛选
+  let list = currentFilter === 'all'
     ? projects
     : projects.filter((p) => {
         if (p.category === currentFilter) return true
@@ -207,10 +208,25 @@ function renderGrid() {
         return false
       })
 
+  // 2. 关键词搜索（标题、简介、分类、年份）
+  if (searchQuery.trim()) {
+    const q = searchQuery.trim().toLowerCase()
+    list = list.filter((p) =>
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.desc || '').toLowerCase().includes(q) ||
+      (p.categoryLabel || '').toLowerCase().includes(q) ||
+      (p.category || '').toLowerCase().includes(q) ||
+      String(p.year || '').includes(q)
+    )
+  }
+
   if (!list.length) {
     grid.innerHTML = ''
     grid.classList.add('hidden')
     empty.classList.remove('hidden')
+    empty.querySelector('p:last-child').textContent = searchQuery
+      ? `没有找到「${searchQuery}」相关的作品。`
+      : '这个分类下还没有作品。'
     return
   }
   grid.classList.remove('hidden')
@@ -227,6 +243,133 @@ function renderGrid() {
   })
 
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ------------------------------------------------------------
+// 精选作品轮播
+// ------------------------------------------------------------
+function renderFeaturedCarousel() {
+  const container = document.getElementById('evo-featured-carousel')
+  if (!container) return
+
+  // 取推荐作品（有 featured 标记），没有则取前 5 个
+  let featured = projects.filter((p) => p.featured)
+  if (featured.length < 3) featured = projects.slice(0, Math.min(5, projects.length))
+  if (!featured.length) {
+    container.classList.add('hidden')
+    return
+  }
+  container.classList.remove('hidden')
+
+  const slidesHtml = featured.map((p, i) => {
+    const gradient = ACCENT_GRADIENT[p.accent] || ACCENT_GRADIENT.purple
+    const toneCls = TAG_TONE[p.accent] || TAG_TONE.purple
+    const bg = p.coverImage
+      ? `<img src="${p.coverImage}" alt="${p.title}" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />`
+      : `<div class="absolute inset-0 bg-gradient-to-br ${gradient}"></div>`
+    return `
+      <div class="evo-carousel-slide absolute inset-0 transition-opacity duration-700 ${i === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}" data-slide="${i}">
+        ${bg}
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+          <div class="flex items-center gap-2 mb-3 flex-wrap">
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${p.categoryLabel}</span>
+            <span class="text-xs text-white/70">${p.year}</span>
+          </div>
+          <h3 class="evo-display text-2xl sm:text-4xl text-white mb-2">${p.title}</h3>
+          <p class="text-white/70 text-sm sm:text-base max-w-xl mb-4 line-clamp-2">${p.desc}</p>
+          <button class="evo-featured-open inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] bg-white/15 backdrop-blur-md hover:bg-white/25 text-white text-sm transition-all border border-white/20" data-project-id="${p.id}">
+            查看详情
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>`
+  }).join('')
+
+  const dotsHtml = featured.map((_, i) => `
+    <button class="evo-carousel-dot w-2.5 h-2.5 rounded-full transition-all ${i === 0 ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}" data-dot="${i}"></button>
+  `).join('')
+
+  container.innerHTML = `
+    <div class="relative rounded-[var(--evo-radius-lg)] overflow-hidden evo-glass evo-reveal" style="aspect-ratio: 21/9; min-height: 280px;">
+      ${slidesHtml}
+      <!-- 左右箭头 -->
+      <button class="evo-carousel-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all backdrop-blur-sm z-10" aria-label="上一张">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="evo-carousel-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all backdrop-blur-sm z-10" aria-label="下一张">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <!-- 指示器 -->
+      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        ${dotsHtml}
+      </div>
+    </div>
+  `
+
+  // 轮播逻辑
+  let current = 0
+  let timer = null
+  const slides = container.querySelectorAll('.evo-carousel-slide')
+  const dots = container.querySelectorAll('.evo-carousel-dot')
+  const total = slides.length
+
+  function goTo(idx) {
+    slides[current].classList.add('opacity-0', 'pointer-events-none')
+    slides[current].classList.remove('opacity-100')
+    dots[current].classList.remove('bg-white', 'w-8')
+    dots[current].classList.add('bg-white/40')
+    current = (idx + total) % total
+    slides[current].classList.remove('opacity-0', 'pointer-events-none')
+    slides[current].classList.add('opacity-100')
+    dots[current].classList.add('bg-white', 'w-8')
+    dots[current].classList.remove('bg-white/40')
+  }
+  function next() { goTo(current + 1) }
+  function prev() { goTo(current - 1) }
+  function startAuto() { stopAuto(); timer = setInterval(next, 5000) }
+  function stopAuto() { if (timer) clearInterval(timer) }
+
+  container.querySelector('.evo-carousel-next').addEventListener('click', () => { next(); startAuto() })
+  container.querySelector('.evo-carousel-prev').addEventListener('click', () => { prev(); startAuto() })
+  dots.forEach((d) => d.addEventListener('click', () => { goTo(parseInt(d.dataset.dot)); startAuto() }))
+  container.addEventListener('mouseenter', stopAuto)
+  container.addEventListener('mouseleave', startAuto)
+
+  // 详情弹窗
+  container.querySelectorAll('.evo-featured-open').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const id = btn.dataset.projectId
+      const project = projects.find((p) => p.id === id)
+      if (project) openProjectModal(project)
+    })
+  })
+
+  if (total > 1) startAuto()
+}
+
+// ------------------------------------------------------------
+// 搜索
+// ------------------------------------------------------------
+function initSearch() {
+  const input = document.getElementById('evo-portfolio-search')
+  const clearBtn = document.getElementById('evo-search-clear')
+  if (!input) return
+
+  let debounceTimer = null
+  input.addEventListener('input', () => {
+    searchQuery = input.value
+    clearBtn.classList.toggle('hidden', !searchQuery)
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => renderGrid(), 200)
+  })
+  clearBtn.addEventListener('click', () => {
+    input.value = ''
+    searchQuery = ''
+    clearBtn.classList.add('hidden')
+    renderGrid()
+  })
 }
 
 // 3D 倾斜 + 鼠标光晕
@@ -266,10 +409,12 @@ async function loadData() {
 
 async function init() {
   renderFilters()
+  initSearch()
   // 加载中占位
   const grid = document.getElementById('evo-portfolio-grid')
   if (grid) grid.innerHTML = '<div class="col-span-full text-center py-16 text-[var(--evo-ink-3)]">加载中…</div>'
   await loadData()
+  renderFeaturedCarousel()
   renderGrid()
 }
 
