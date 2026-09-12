@@ -154,12 +154,12 @@ function renderHome() {
   const empty = document.getElementById('evo-articles-empty')
   if (!list) return
 
-  const freeCount = articles.filter((a) => !a.isPaid || !a.price).length
-  const paidCount = articles.filter((a) => a.isPaid && a.price).length
-  // 散文：飞书「分类」字段为「散文」的文章
+  const freeCount = articles.filter((a) => (!a.isPaid || !a.price) && !a.hidden).length
+  const paidCount = articles.filter((a) => a.isPaid && a.price && !a.hidden).length
+  // 碎碎念：飞书「分类」字段为「散文」或「碎碎念」的文章
   const proseCount = articles.filter((a) => {
     const cat = String(a.category || a.categoryLabel || '').toLowerCase()
-    return cat === '散文' || cat.includes('散文')
+    return (cat === '散文' || cat.includes('散文') || cat.includes('碎碎念')) && !a.hidden
   }).length
 
   list.classList.remove('hidden')
@@ -169,7 +169,7 @@ function renderHome() {
     {
       view: 'free',
       icon: '🌿',
-      title: '免费文章',
+      title: '文章',
       desc: '无需付费，直接阅读全部免费内容',
       count: freeCount,
       tone: 'from-[var(--evo-cyan)]/20 to-[var(--evo-purple-500)]/10 border-[var(--evo-cyan)]/30',
@@ -196,7 +196,7 @@ function renderHome() {
     {
       view: 'prose',
       icon: '✒️',
-      title: '散文',
+      title: '碎碎念',
       desc: '随笔、札记、生活感悟与文学性记录',
       count: proseCount,
       tone: 'from-[var(--evo-amber)]/20 to-[var(--evo-orange)]/10 border-[var(--evo-amber)]/30',
@@ -309,7 +309,7 @@ function renderArticleList(view) {
     ? articles.filter((a) => (!a.isPaid || !a.price) && !a.hidden)
     : articles.filter((a) => a.isPaid && a.price && !a.hidden)
 
-  const title = isFree ? '免费文章' : '付费文章'
+  const title = isFree ? '文章' : '付费文章'
   const icon = isFree ? '🌿' : '🔒'
 
   if (!items.length) {
