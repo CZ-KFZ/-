@@ -195,7 +195,15 @@ function renderGrid() {
   const empty = document.getElementById('evo-portfolio-empty')
   if (!grid) return
 
-  const list = currentFilter === 'all' ? projects : projects.filter((p) => p.category === currentFilter)
+  // 筛选匹配：兼容英文 key（category）和中文显示名（categoryLabel）
+  const list = currentFilter === 'all'
+    ? projects
+    : projects.filter((p) => {
+        if (p.category === currentFilter) return true
+        const f = PROJECT_FILTERS.find((x) => x.key === currentFilter)
+        if (f && (p.categoryLabel === f.label || p.category === f.label)) return true
+        return false
+      })
 
   if (!list.length) {
     grid.innerHTML = ''
