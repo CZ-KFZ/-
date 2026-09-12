@@ -348,13 +348,7 @@ function messageEl(msg, index) {
   } else {
     wrap.className = 'flex gap-3 sm:gap-4 evo-animate-fade-in group'
     const sourcesHtml = msg.sources && msg.sources.length ? `<div class="flex flex-wrap gap-2 items-center mt-2"><span class="text-xs text-[var(--evo-ink-3)]">来源：</span>${msg.sources.map((s) => sourceChip(s)).join('')}</div>` : ''
-    wrap.innerHTML = `${avatarHtml()}<div class="max-w-[80%] min-w-0"><div class="evo-glass rounded-2xl rounded-tl-sm px-4 sm:px-5 py-3 text-[var(--evo-ink)] text-sm leading-relaxed break-words evo-msg-content" data-streaming="${msg.streaming ? '1' : '0'}"></div>${sourcesHtml}${messageActionBar(msg, index)}${followUpButtons(msg.followUps)}</div>`
-    const content = wrap.querySelector('.evo-msg-content')
-    if (msg.streaming) {
-      content.innerHTML = msg.html || ''
-    } else {
-      content.innerHTML = msg.html || ''
-    }
+    wrap.innerHTML = `${avatarHtml()}<div class="max-w-[80%] min-w-0"><div class="evo-glass rounded-2xl rounded-tl-sm px-4 sm:px-5 py-3 text-[var(--evo-ink)] text-sm leading-relaxed break-words evo-msg-content">${msg.html || ''}</div>${sourcesHtml}${messageActionBar(msg, index)}${followUpButtons(msg.followUps)}</div>`
   }
   return wrap
 }
