@@ -1,11 +1,10 @@
 // ============================================================
 // 关于我 about.js（CMS 版）
 // 数据源：siteSettings（名片 + 技能 + 社交）+ timeline（成长轨迹）
-// 均优先飞书多维表格，fallback 到 data.js / 内置 mock
+// 数据全部来自飞书多维表格，无假数据
 // ============================================================
 
 import { fetchSiteSettings, fetchTimeline } from '../feishu.js'
-import { TIMELINE as MOCK_TIMELINE, SKILLS as MOCK_SKILLS } from '../data.js'
 
 const DOT_COLOR = {
   primary: 'bg-[var(--evo-primary)]',
@@ -22,26 +21,9 @@ const SKILL_TONE = {
   pink: 'text-[var(--evo-pink)] border border-[var(--evo-pink)]/30'
 }
 
-// 兜底数据
-const DEFAULT_SOCIALS = [
-  { label: '𝕏', title: 'X / Twitter', href: '#' },
-  { label: '✉', title: '邮箱', href: '#' },
-  { label: '◐', title: '个人站点', href: '#' }
-]
-
-const DEFAULT_STATS = [
-  { value: '5+', label: '年设计经验' },
-  { value: '20+', label: '服务客户' },
-  { value: '10+', label: '旅居城市' },
-  { value: '∞', label: '好奇心' }
-]
-
-const DEFAULT_QUOTE = {
-  text: '在混沌中寻找秩序，在秩序中创造混沌。设计是对生活的温柔反抗。',
-  author: '— 阴之体道'
+function emptyState(text) {
+  return `<p class="text-[var(--evo-ink-3)] text-sm py-4">${text}</p>`
 }
-
-const DEFAULT_BIO = '相信设计的力量在于连接人与世界。游走在代码与美学之间，用技术表达创意，用设计温暖生活。'
 
 // ------------------------------------------------------------
 // 渲染：社交链接
@@ -49,8 +31,11 @@ const DEFAULT_BIO = '相信设计的力量在于连接人与世界。游走在�
 function renderSocials(socials) {
   const box = document.getElementById('evo-social')
   if (!box) return
-  const list = socials && socials.length ? socials : DEFAULT_SOCIALS
-  box.innerHTML = list
+  if (!socials || !socials.length) {
+    box.innerHTML = emptyState('（在飞书填写社交链接）')
+    return
+  }
+  box.innerHTML = socials
     .map(
       (s) => `
       <a href="${s.href || '#'}" title="${s.title || ''}" aria-label="${s.title || ''}" target="_blank" rel="noopener noreferrer"
@@ -65,8 +50,11 @@ function renderSocials(socials) {
 function renderStats(stats) {
   const box = document.getElementById('evo-stats')
   if (!box) return
-  const list = stats && stats.length ? stats : DEFAULT_STATS
-  box.innerHTML = list
+  if (!stats || !stats.length) {
+    box.innerHTML = emptyState('（在飞书填写数据统计）')
+    return
+  }
+  box.innerHTML = stats
     .map(
       (s) => `
       <div class="text-center">
@@ -83,9 +71,13 @@ function renderStats(stats) {
 function renderQuote(quote) {
   const textEl = document.getElementById('evo-quote')
   const authorEl = document.getElementById('evo-quote-author')
-  const q = quote || DEFAULT_QUOTE
-  if (textEl) textEl.textContent = q.text || DEFAULT_QUOTE.text
-  if (authorEl) authorEl.textContent = q.author || DEFAULT_QUOTE.author
+  if (!quote || !quote.text) {
+    if (textEl) textEl.textContent = '（在飞书填写个人信条）'
+    if (authorEl) authorEl.textContent = ''
+    return
+  }
+  if (textEl) textEl.textContent = quote.text
+  if (authorEl) authorEl.textContent = quote.author || ''
 }
 
 // ------------------------------------------------------------
@@ -94,10 +86,13 @@ function renderQuote(quote) {
 function renderTimeline(items) {
   const box = document.getElementById('evo-timeline')
   if (!box) return
-  const list = items && items.length ? items : MOCK_TIMELINE
+  if (!items || !items.length) {
+    box.innerHTML = emptyState('（在飞书填写成长轨迹）')
+    return
+  }
   box.innerHTML = `
     <div class="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-[var(--evo-purple-500)]/60 via-[var(--evo-border)] to-transparent"></div>
-    ${list
+    ${items
       .map(
         (item, i) => `
         <div class="pl-8 sm:pl-10 relative evo-reveal pb-8 last:pb-0" data-reveal-delay="${Math.min(i * 80, 400)}">
@@ -122,8 +117,11 @@ function renderTimeline(items) {
 function renderSkills(skills) {
   const box = document.getElementById('evo-skills')
   if (!box) return
-  const list = skills && skills.length ? skills : MOCK_SKILLS
-  box.innerHTML = list
+  if (!skills || !skills.length) {
+    box.innerHTML = emptyState('（在飞书填写技能标签）')
+    return
+  }
+  box.innerHTML = skills
     .map(
       (s) => `
       <span class="px-4 py-2 rounded-full evo-glass text-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 ${SKILL_TONE[s.tone] || SKILL_TONE.default}">${s.label}</span>`
@@ -137,9 +135,8 @@ function renderSkills(skills) {
 // ------------------------------------------------------------
 function renderProfile(settings) {
   if (!settings) {
-    // 没有 settings 时用默认 bio
     const bioEl = document.getElementById('evo-profile-bio')
-    if (bioEl) bioEl.textContent = DEFAULT_BIO
+    if (bioEl) bioEl.textContent = '（在飞书填写个人简介）'
     return
   }
   const nameEl = document.getElementById('evo-profile-name')
@@ -149,7 +146,7 @@ function renderProfile(settings) {
 
   if (nameEl && settings.ownerName) nameEl.textContent = settings.ownerName
   if (identityEl && settings.identity) identityEl.textContent = settings.identity
-  if (bioEl) bioEl.textContent = settings.bio || DEFAULT_BIO
+  if (bioEl) bioEl.textContent = settings.bio || '（在飞书填写个人简介）'
 
   if (avatarEl) {
     if (settings.avatarImage) {
