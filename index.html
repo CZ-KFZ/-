@@ -56,9 +56,9 @@
     <!-- ===================================================
          Hero · 首屏（SpaceEdu 风格：纯黑 + 全屏视频 + 液态玻璃）
          =================================================== -->
-    <section class="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      <!-- 全屏背景视频 -->
-      <div class="absolute inset-0 pointer-events-none" id="evo-hero-bg">
+    <section class="relative z-[auto] min-h-screen flex flex-col items-center justify-center overflow-hidden">
+      <!-- 全屏背景视频（fixed 全局铺满，滚动时始终在背后） -->
+      <div class="fixed inset-0 pointer-events-none -z-10" id="evo-hero-bg">
         <video
           id="evo-hero-video"
           class="absolute inset-0 w-full h-full object-cover object-bottom"
@@ -70,9 +70,9 @@
         >
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_074625_a81f018a-956b-43fb-9aee-4d1508e30e6a.mp4" type="video/mp4" />
         </video>
-        <!-- 轻微黑色叠加，保证文字可读 -->
-        <div class="absolute inset-0 bg-black/40"></div>
       </div>
+      <!-- Hero 专属黑色遮罩：只覆盖首屏，不影响下方内容区 -->
+      <div class="absolute inset-0 bg-black/40 pointer-events-none"></div>
 
       <!-- 居中内容 -->
       <div class="relative z-10 text-center max-w-3xl mx-auto px-6 pt-20 pb-12">
@@ -129,12 +129,14 @@
           </a>
         </div>
       </div>
+      <!-- Hero 底部渐变淡出：从首屏 40% 黑平滑过渡到内容区 30% 黑 -->
+      <div class="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-b from-transparent to-black/30 pointer-events-none z-[5]"></div>
     </section>
 
     <!-- ===================================================
-         精选内容区块
+         精选内容区块（浅半透明黑底，让全局视频清晰透出）
          =================================================== -->
-    <section class="relative px-6 py-20 sm:py-28 bg-black">
+    <section class="relative px-6 py-20 sm:py-28 bg-black/30">
       <div class="max-w-6xl mx-auto">
         <div class="flex items-end justify-between mb-10 evo-reveal">
           <div>
@@ -150,7 +152,7 @@
       </div>
     </section>
 
-    <section class="relative px-6 py-16 sm:py-24 bg-black">
+    <section class="relative px-6 py-16 sm:py-24 bg-black/30">
       <div class="max-w-6xl mx-auto">
         <div class="flex items-end justify-between mb-10 evo-reveal">
           <div>
