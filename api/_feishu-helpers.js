@@ -27,7 +27,8 @@ const TABLE_ENV_MAP = {
   timeline: 'FEISHU_TABLE_TIMELINE',
   settings: 'FEISHU_TABLE_SETTINGS',
   codes: 'FEISHU_TABLE_CODES',
-  collections: 'FEISHU_TABLE_COLLECTIONS'
+  collections: 'FEISHU_TABLE_COLLECTIONS',
+  qa: 'FEISHU_TABLE_QA'
 }
 
 export function requireEnv() {

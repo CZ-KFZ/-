@@ -6,12 +6,12 @@
 // ============================================================
 
 import { CHAT_HISTORY, QUICK_PROMPTS, ECHO_REPLIES } from '../data.js'
-import { fetchProjects, fetchArticles, fetchNotes, fetchSiteSettings } from '../feishu.js'
+import { fetchProjects, fetchArticles, fetchNotes, fetchSiteSettings, fetchQa } from '../feishu.js'
 
 // ------------------------------------------------------------
 // 全局数据
 // ------------------------------------------------------------
-let LIVE_DATA = { loaded: false, projects: [], articles: [], notes: [], settings: null }
+let LIVE_DATA = { loaded: false, projects: [], articles: [], notes: [], settings: null, qa: [] }
 let conversation = []
 let isEchoTyping = false
 let chatStyle = localStorage.getItem('echoverse:chat:style') || 'normal'
@@ -22,16 +22,18 @@ let pinnedConvs = JSON.parse(localStorage.getItem('echoverse:chat:pinned') || '[
 
 async function ensureLiveData() {
   if (LIVE_DATA.loaded) return LIVE_DATA
-  const [projects, articles, notes, settings] = await Promise.all([
+  const [projects, articles, notes, settings, qa] = await Promise.all([
     fetchProjects().catch(() => null),
     fetchArticles().catch(() => null),
     fetchNotes().catch(() => null),
-    fetchSiteSettings().catch(() => null)
+    fetchSiteSettings().catch(() => null),
+    fetchQa().catch(() => null)
   ])
   LIVE_DATA.projects = Array.isArray(projects) ? projects : []
   LIVE_DATA.articles = Array.isArray(articles) ? articles : []
   LIVE_DATA.notes = Array.isArray(notes) ? notes : []
   LIVE_DATA.settings = settings || null
+  LIVE_DATA.qa = Array.isArray(qa) ? qa : []
   LIVE_DATA.loaded = true
   return LIVE_DATA
 }
@@ -168,6 +170,50 @@ function stylePrefix() {
   return ''
 }
 
+// ------------------------------------------------------------
+// QA 问答表匹配
+// 策略：
+//   1. 关键词命中（QA 的关键词出现在用户问题中）→ 强匹配
+//   2. 问题相似度（字符二元组重叠率）≥ 0.5 → 匹配
+// 返回匹配到的 QA 记录，否则 null
+// ------------------------------------------------------------
+function matchQa(text) {
+  const list = LIVE_DATA.qa || []
+  if (!list.length) return null
+  const q = norm(text)
+
+  // 1. 关键词强匹配
+  for (const item of list) {
+    const kws = item.keywords || []
+    if (kws.length && kws.some((k) => q.includes(norm(k)))) {
+      return item
+    }
+  }
+
+  // 2. 问题相似度（二元组重叠）
+  const bigrams = (s) => {
+    const set = new Set()
+    for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2))
+    return set
+  }
+  const qBigrams = bigrams(q)
+  if (!qBigrams.size) return null
+
+  let best = null
+  let bestScore = 0
+  for (const item of list) {
+    const itemQ = norm(item.question)
+    if (!itemQ) continue
+    const iBigrams = bigrams(itemQ)
+    if (!iBigrams.size) continue
+    let overlap = 0
+    for (const b of qBigrams) if (iBigrams.has(b)) overlap++
+    const score = overlap / Math.min(qBigrams.size, iBigrams.size)
+    if (score > bestScore) { bestScore = score; best = item }
+  }
+  return bestScore >= 0.5 ? best : null
+}
+
 // 生成回复时，把风格要求融入（通过在内容前加风格引导标记，回复生成器会读取）
 function applyStyle(html) {
   if (!html) return html
@@ -176,6 +222,22 @@ function applyStyle(html) {
     return html.replace(/<\/p>\s*$/, ' ～</p>')
   }
   return html
+}
+
+// 将飞书 QA 表中的纯文本答案转为 HTML
+// 支持：换行 → <br>、**粗体**、- 列表项
+function formatAnswerHtml(text) {
+  if (!text) return '<p>（暂无答案）</p>'
+  let html = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
+  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, (m) => `<ul class="list-disc pl-5 my-2">${m}</ul>`)
+  html = html.replace(/\n/g, '<br>')
+  html = html.replace(/<\/ul>\s*<br>\s*<ul[^>]*>/g, '')
+  return `<p>${html}</p>`
 }
 
 // ============================================================
@@ -274,6 +336,17 @@ function generateTimelineReply() {
 
 function matchReply(text) {
   const t = text || '', lower = t.toLowerCase()
+
+  // 优先匹配飞书 QA 问答表（用户预设的问答对）
+  const qaMatch = matchQa(t)
+  if (qaMatch) {
+    return {
+      html: applyStyle(formatAnswerHtml(qaMatch.answer)),
+      sources: [{ label: qaMatch.category || '问答库', tone: 'green' }],
+      followUps: []
+    }
+  }
+
   if (includesAny(t, ['你是谁', '我是谁', '介绍一下', '自我介绍', '她是谁', '关于她', '简介', '身份'])) return generateAboutReply(t)
   if (includesAny(t, ['最近在做', '最近做什么', '近况', '最近忙', '现在在做', '经历', '时间线', '职业'])) return generateTimelineReply()
   if (includesAny(t, ['作品', '项目', 'portfolio', '作品集', '设计', '代表作', '代表性']) || searchItems(LIVE_DATA.projects, t).length > 0) return generateProjectsReply(t)

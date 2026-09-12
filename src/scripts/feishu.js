@@ -352,6 +352,32 @@ export async function fetchCollections() {
 }
 
 // ------------------------------------------------------------
+// 解析飞书记录为 QA 问答对结构
+// 飞书字段约定：问题 / 答案 / 关键词（可选，用于辅助匹配）/ 分类（可选）
+// ------------------------------------------------------------
+function normalizeQa(record) {
+  const f = record.fields || {}
+  const keywordsRaw = f['关键词'] || []
+  const keywords = (Array.isArray(keywordsRaw) ? keywordsRaw : [keywordsRaw])
+    .map((k) => (typeof k === 'string' ? k : k.text || k.name || ''))
+    .filter(Boolean)
+
+  return {
+    id: record.record_id,
+    question: f['问题'] || '',
+    answer: f['答案'] || '',
+    keywords,
+    category: extractOption(f['分类'], '')
+  }
+}
+
+export async function fetchQa() {
+  const records = await fetchFromFeishu('qa')
+  if (!records) return null
+  return records.map(normalizeQa)
+}
+
+// ------------------------------------------------------------
 // 兑换码：后端校验 + 原子标记已用
 // 入参：
 //   { code, articleId, articleTitle }            → 单篇兑换（type 默认 article）

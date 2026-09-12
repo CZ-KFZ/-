@@ -73,7 +73,7 @@ export default async function handler(req, res) {
   // 单表查询：?type=articles
   const tableId = getTableId(type)
   if (!tableId) {
-    const validTypes = ['articles', 'projects', 'notes', 'timeline', 'settings', 'codes', 'collections']
+    const validTypes = ['articles', 'projects', 'notes', 'timeline', 'settings', 'codes', 'collections', 'qa']
     if (!validTypes.includes(type)) {
       return res.status(400).json({ error: `未知的数据类型: ${type}` })
     }
