@@ -59,12 +59,14 @@ function parseCodeList(text) {
       // JSON 解析失败，降级到分隔符模式
     }
   }
-  // 2) 分隔符模式：优先 |，其次换行，最后逗号
+  // 2) 分隔符模式：优先 |，其次换行，再次分号，最后逗号
   let parts
   if (trimmed.includes('|')) {
     parts = trimmed.split('|')
   } else if (trimmed.includes('\n')) {
     parts = trimmed.split(/\r?\n/)
+  } else if (trimmed.includes(';')) {
+    parts = trimmed.split(';')
   } else {
     parts = trimmed.split(',')
   }
