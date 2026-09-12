@@ -62,7 +62,8 @@ function projectCard(p, index) {
   const videoBadge = p.video ? `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-pink)]/20 text-[var(--evo-pink)] text-xs">▶ 视频</span>` : ''
 
   return `
-    <article class="group evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] transition-all hover:-translate-y-1 cursor-pointer evo-reveal" data-reveal-delay="${Math.min(index * 80, 400)}" data-project-id="${p.id}">
+    <article class="group evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] transition-all hover:-translate-y-1 cursor-pointer evo-reveal" style="animation-delay:${Math.min(index * 60, 360)}ms" data-reveal-delay="${Math.min(index * 80, 400)}" data-project-id="${p.id}">
+      <div class="evo-tilt-inner">
       ${cover}
       <div class="p-5 sm:p-6">
         <div class="flex items-center gap-2 mb-3 flex-wrap">
@@ -73,6 +74,7 @@ function projectCard(p, index) {
         <h3 class="evo-title text-lg sm:text-xl mb-2">${p.title}</h3>
         <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed">${p.desc}</p>
         ${p.demoUrl ? `<div class="inline-flex items-center gap-1 mt-3 text-sm text-[var(--evo-purple-300)] hover:text-[var(--evo-purple-200)] transition-colors">访问链接 →</div>` : ''}
+      </div>
       </div>
     </article>`
 }
@@ -221,9 +223,32 @@ function renderGrid() {
       const project = projects.find((p) => p.id === id)
       if (project) openProjectModal(project)
     })
+    bindTiltEffect(card)
   })
 
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// 3D 倾斜 + 鼠标光晕
+function bindTiltEffect(card) {
+  let raf = null
+  card.addEventListener('mousemove', (e) => {
+    if (raf) return
+    raf = requestAnimationFrame(() => {
+      const rect = card.getBoundingClientRect()
+      const px = (e.clientX - rect.left) / rect.width
+      const py = (e.clientY - rect.top) / rect.height
+      const tiltX = (py - 0.5) * -10  // 上下倾斜
+      const tiltY = (px - 0.5) * 10   // 左右倾斜
+      card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(0)`
+      card.style.setProperty('--mouse-x', `${px * 100}%`)
+      card.style.setProperty('--mouse-y', `${py * 100}%`)
+      raf = null
+    })
+  })
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = ''
+  })
 }
 
 // ------------------------------------------------------------
