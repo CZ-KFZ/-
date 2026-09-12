@@ -89,9 +89,18 @@ function applySettings(settings) {
   const doppelName = (settings.ownerName && settings.ownerName !== '阴之体道')
     ? settings.ownerName
     : 'Echo'
-  setText('evo-home-avatar-char', char)
   setText('evo-home-doppelganger-name', doppelName)
   setText('evo-home-doppelganger-name-2', doppelName)
+
+  // 头像：优先用飞书后台的头像图片，和「关于我」页保持一致；没有则用首字母
+  const avatarInner = document.getElementById('evo-home-avatar-inner')
+  const avatarCharEl = document.getElementById('evo-home-avatar-char')
+  if (settings.avatarImage && avatarInner) {
+    avatarInner.innerHTML = `<img src="${settings.avatarImage}" alt="${settings.ownerName || '头像'}" class="w-full h-full object-cover" />`
+  } else if (avatarCharEl) {
+    avatarCharEl.textContent = char
+  }
+
   if (settings.identity || settings.bio) {
     const desc = document.getElementById('evo-home-hero-desc')
     if (desc) desc.textContent = settings.bio || settings.identity || ''
