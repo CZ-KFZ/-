@@ -12,21 +12,40 @@
   <div id="evo-header"></div>
 
   <main class="pt-16">
-    <section class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
+    <section class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+
+      <!-- 背景光晕 -->
+      <div class="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div class="absolute top-20 -left-32 w-96 h-96 bg-[var(--evo-purple-600)]/20 rounded-full blur-[120px]"></div>
+        <div class="absolute top-1/3 -right-32 w-80 h-80 bg-[var(--evo-cyan)]/10 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-0 left-1/3 w-72 h-72 bg-[var(--evo-pink)]/10 rounded-full blur-[100px]"></div>
+      </div>
+
       <!-- 名片 -->
-      <div class="evo-glass rounded-[var(--evo-radius-lg)] p-6 sm:p-8 md:p-12 mb-8 sm:mb-10 evo-reveal">
-        <div class="flex flex-col md:flex-row items-center gap-6 sm:gap-8">
+      <div class="evo-glass rounded-[var(--evo-radius-xl)] p-6 sm:p-8 md:p-10 mb-8 sm:mb-10 evo-reveal relative overflow-hidden border border-[var(--evo-border-glow)]/30">
+        <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-[var(--evo-purple-500)]/20 to-transparent blur-3xl pointer-events-none"></div>
+        <div class="flex flex-col md:flex-row items-center gap-6 sm:gap-8 relative">
           <div id="evo-profile-avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full evo-gradient-border evo-glow-purple flex items-center justify-center shrink-0 overflow-hidden">
             <div class="w-full h-full rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] via-[var(--evo-violet)] to-[var(--evo-pink)] flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">阴</div>
           </div>
           <div class="text-center md:text-left flex-1 min-w-0">
-            <h1 id="evo-profile-name" class="evo-display text-2xl sm:text-3xl md:text-4xl mb-2">阴之体道</h1>
-            <p id="evo-profile-identity" class="text-[var(--evo-ink-2)] mb-3">独立设计师 / 创意程序员 / 数字游民</p>
-            <p id="evo-profile-bio" class="text-[var(--evo-ink-2)] text-sm leading-relaxed mb-4 hidden md:block opacity-80"></p>
-            <div class="flex items-center justify-center md:justify-start gap-3 sm:gap-4" id="evo-social">
-              <!-- 由 about.js 渲染 -->
-            </div>
+            <h1 id="evo-profile-name" class="evo-display text-2xl sm:text-3xl md:text-4xl mb-2 bg-gradient-to-r from-[var(--evo-purple-300)] via-[var(--evo-ink)] to-[var(--evo-cyan)] bg-clip-text text-transparent">阴之体道</h1>
+            <p id="evo-profile-identity" class="text-[var(--evo-ink-2)] mb-3 text-sm sm:text-base">独立设计师 / 创意程序员 / 数字游民</p>
+            <p id="evo-profile-bio" class="text-[var(--evo-ink-2)] text-sm leading-relaxed mb-4 opacity-80 max-w-xl mx-auto md:mx-0"></p>
+            <div class="flex items-center justify-center md:justify-start gap-3" id="evo-social"></div>
           </div>
+        </div>
+
+        <!-- 数据统计 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-8 border-t border-[var(--evo-border)]" id="evo-stats"></div>
+      </div>
+
+      <!-- 个人信条 -->
+      <div class="mb-10 sm:mb-12 evo-reveal" data-reveal-delay="100">
+        <div class="evo-glass rounded-[var(--evo-radius-lg)] p-6 sm:p-8 border-l-4 border-l-[var(--evo-purple-500)] relative">
+          <svg class="absolute top-4 right-4 text-[var(--evo-surface-2)]" width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+          <p id="evo-quote" class="text-lg sm:text-xl text-[var(--evo-ink)] leading-relaxed font-light relative z-10"></p>
+          <p id="evo-quote-author" class="mt-4 text-sm text-[var(--evo-ink-3)] relative z-10"></p>
         </div>
       </div>
 
@@ -35,20 +54,17 @@
         <h2 class="evo-title text-xl sm:text-2xl mb-6 sm:mb-8 flex items-center gap-3 evo-reveal">
           <span class="w-1.5 h-6 rounded-full bg-gradient-to-b from-[var(--evo-purple-500)] to-[var(--evo-cyan)] evo-glow-purple"></span>成长轨迹
         </h2>
-        <div class="relative border-l border-[var(--evo-border)] ml-3 space-y-8 sm:space-y-10" id="evo-timeline">
-          <!-- 由 about.js 渲染 -->
-        </div>
+        <div class="relative" id="evo-timeline"></div>
       </div>
 
       <!-- 技能标签 -->
-      <div>
+      <div class="mb-10 sm:mb-12">
         <h2 class="evo-title text-xl sm:text-2xl mb-6 flex items-center gap-3 evo-reveal">
           <span class="w-1.5 h-6 rounded-full bg-gradient-to-b from-[var(--evo-purple-500)] to-[var(--evo-cyan)] evo-glow-purple"></span>技能标签
         </h2>
-        <div class="flex flex-wrap gap-3 evo-reveal" data-reveal-delay="100" id="evo-skills">
-          <!-- 由 about.js 渲染 -->
-        </div>
+        <div class="flex flex-wrap gap-3 evo-reveal" data-reveal-delay="100" id="evo-skills"></div>
       </div>
+
     </section>
   </main>
 
