@@ -228,12 +228,40 @@ async function loadAllData() {
   return { projects, articles, notes, settings }
 }
 
+// ------------------------------------------------------------
+// 本地缓存：头像等站点设置存 localStorage，二次访问瞬间显示
+// ------------------------------------------------------------
+const CACHE_KEY = 'echoverse:home:settings'
+
+function loadCachedSettings() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function saveCachedSettings(settings) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(settings))
+  } catch {
+    // ignore
+  }
+}
+
 async function init() {
   buildStarfield()
   setupParallax()
 
+  // 先显示缓存的头像（瞬间出现），后台再拉取最新数据
+  const cached = loadCachedSettings()
+  if (cached) applySettings(cached)
+
   const { projects, articles, notes, settings } = await loadAllData()
   applySettings(settings)
+  // 缓存最新设置，下次打开秒显
+  saveCachedSettings(settings)
   applyCounts(projects, articles, notes)
   setText('evo-home-count-owner', settings.ownerName || '—')
   renderFeaturedProjects(projects)
