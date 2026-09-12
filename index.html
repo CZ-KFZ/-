@@ -17,8 +17,10 @@
          Hero · 首屏
          =================================================== -->
     <section class="relative min-h-[calc(100vh-64px)] flex flex-col items-center justify-center overflow-hidden px-6 py-16">
-      <!-- 背景层：星云光晕 + 轨道环 + 星空 -->
+      <!-- 背景层：霓虹星云图 + 光晕 + 轨道环 -->
       <div class="absolute inset-0 pointer-events-none" id="evo-hero-bg">
+        <img src="/hero-bg.jpg" alt="" class="absolute inset-0 w-full h-full object-cover opacity-60" />
+        <div class="absolute inset-0 bg-gradient-to-b from-[var(--evo-bg)]/40 via-transparent to-[var(--evo-bg)]/80"></div>
         <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[var(--evo-purple-600)] opacity-20 blur-[120px] evo-animate-pulse"></div>
         <div class="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-[var(--evo-cyan)] opacity-10 blur-[100px] evo-animate-pulse" style="animation-delay: 2s;"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-[var(--evo-border-glow)] opacity-30 evo-animate-orbit" style="animation-duration: 60s;"></div>
