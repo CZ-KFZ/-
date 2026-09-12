@@ -318,7 +318,7 @@ function injectGlobalBg() {
     >
       <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_074625_a81f018a-956b-43fb-9aee-4d1508e30e6a.mp4" type="video/mp4" />
     </video>
-    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="absolute inset-0 bg-black/5"></div>
   `
   // 放到 body 最前面，确保在内容之下
   document.body.insertBefore(bg, document.body.firstChild)
