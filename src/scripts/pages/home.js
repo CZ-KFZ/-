@@ -148,11 +148,14 @@ function renderFeaturedProjects(projects) {
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
-// 最近文章（按日期/原顺序取前 4 条）
+// 最近文章（推荐优先，取前 4 条）
 function renderRecentArticles(articles) {
   const host = document.getElementById('evo-home-recent')
   if (!host) return
-  const list = articles.slice(0, 4)
+  const items = [...articles]
+  // 推荐的在前，其余按原顺序
+  items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
+  const list = items.slice(0, 4)
   if (!list.length) {
     host.innerHTML = '<div class="text-center py-12 text-[var(--evo-ink-3)]">暂无文章，稍后回来看看吧。</div>'
     return

@@ -134,7 +134,11 @@ export function normalizeArticle(record) {
     excerpt: f['摘要'] || '',
     content: f['正文'] || '',
     coverImage: cover ? cover.url : null,
-    featured: f['推荐'] || false,
+    // 推荐字段：兼容复选框(true/false)、单选(是/否)、数字(1/0)
+    featured: (() => {
+      const raw = f['推荐'] ?? f['是否推荐'] ?? f['首页推荐'] ?? false
+      return raw === true || raw === 1 || /是|推荐|true|yes/i.test(String(raw))
+    })(),
     // 付费相关
     isPaid,
     price,
@@ -154,6 +158,9 @@ function normalizeProject(record) {
   const f = record.fields || {}
   const cover = parseAttachment(f['封面'])
   const video = parseAttachment(f['视频'])
+  // 推荐字段：兼容复选框(true/false)、单选(是/否)、数字(1/0)
+  const featuredRaw = f['推荐'] ?? f['是否推荐'] ?? f['首页推荐'] ?? false
+  const featured = featuredRaw === true || featuredRaw === 1 || /是|推荐|true|yes/i.test(String(featuredRaw))
   return {
     id: record.record_id,
     title: f['标题'] || '',
@@ -164,7 +171,8 @@ function normalizeProject(record) {
     accent: extractOption(f['主题色'], 'purple'),
     coverImage: cover ? cover.url : null,
     video: video ? video.url : null,
-    demoUrl: f['Demo链接'] || f['访问链接'] || f['链接'] || null
+    demoUrl: f['Demo链接'] || f['访问链接'] || f['链接'] || null,
+    featured
   }
 }
 
