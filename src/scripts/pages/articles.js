@@ -7,9 +7,27 @@
 //   三级：点文章 → 弹详情（付费文章含支付解锁流程）
 // ============================================================
 
-import { fetchArticles, fetchCollections, redeemCode } from '../feishu.js'
+import { fetchFeishuMulti, normalizeArticle, normalizeCollection, redeemCode } from '../feishu.js'
 import { ARTICLES as MOCK_ARTICLES } from '../data.js'
 import { parseMarkdown } from '../markdown.js'
+
+// localStorage 缓存（5 分钟过期，二次访问秒开）
+const CACHE_KEY = 'ev_articles_cache_v1'
+const CACHE_TTL = 5 * 60 * 1000
+
+function getCached() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const { ts, data } = JSON.parse(raw)
+    if (Date.now() - ts > CACHE_TTL) return null
+    return data
+  } catch { return null }
+}
+
+function setCached(data) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })) } catch {}
+}
 
 // 当前视图：home 文章首页 / free 免费列表 / paid 付费列表 / collections 合集列表 / collection 单个合集详情 / search 搜索结果
 let currentView = 'home'
@@ -918,15 +936,22 @@ function openArticleModal(article, fromCollection) {
 }
 
 async function loadData() {
-  // 并行拉文章 + 合集
-  const [raw, rawCollections] = await Promise.all([
-    fetchArticles(),
-    fetchCollections()
-  ])
-  if (raw && raw.length) {
-    articles = raw
+  // 先读缓存，有缓存直接用（秒开）
+  const cached = getCached()
+  if (cached) {
+    articles = cached.articles
+    collections = cached.collections
+    return
+  }
+
+  // 无缓存：一次请求拉 articles + collections
+  const data = await fetchFeishuMulti(['articles', 'collections'])
+  const rawArticles = data.articles
+  const rawCollections = data.collections
+
+  if (rawArticles && rawArticles.length) {
+    articles = rawArticles.map(normalizeArticle)
   } else {
-    // mock fallback 时补付费字段默认免费
     articles = MOCK_ARTICLES.map((a) => ({
       ...a,
       coverImage: null,
@@ -938,8 +963,10 @@ async function loadData() {
       contentFormat: 'plain'
     }))
   }
-  // 合集数据：拉到就用，拉不到就空数组（合集卡片会显示占位）
-  collections = (rawCollections && rawCollections.length) ? rawCollections : []
+  collections = (rawCollections && rawCollections.length) ? rawCollections.map(normalizeCollection) : []
+
+  // 写入缓存
+  setCached({ articles, collections })
 }
 
 async function init() {

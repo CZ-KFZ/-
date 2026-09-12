@@ -28,6 +28,26 @@ async function fetchFromFeishu(type) {
   }
 }
 
+// 多表合并查询：一次请求拉多个表，减少 serverless 冷启动
+// 返回 { articles: [...], collections: [...] } 格式
+export async function fetchFeishuMulti(typeList) {
+  if (!typeList || !typeList.length) return {}
+  const url = isDev
+    ? `/api/feishu?types=${typeList.join(',')}`
+    : `https://${window.location.hostname}/api/feishu?types=${typeList.join(',')}`
+
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return {}
+    const data = await res.json()
+    if (data.fallback || !data.success) return {}
+    return data.data || {}
+  } catch (err) {
+    console.warn('[EchoVerse] 多表拉取失败：', err.message)
+    return {}
+  }
+}
+
 // ------------------------------------------------------------
 // 解析单选字段：飞书单选返回 { text: "选项名" }，多选返回 [{ text }]
 // 这里统一提取出选项名字符串
@@ -87,7 +107,7 @@ function parseAttachment(fieldValue) {
 // 解析飞书记录为文章结构
 // 飞书字段约定：标题/分类/分类显示名/日期/阅读时长/摘要/封面/正文/推荐
 // ------------------------------------------------------------
-function normalizeArticle(record) {
+export function normalizeArticle(record) {
   const f = record.fields || {}
   const cover = parseAttachment(f['封面'])
   // 是否付费：字段「是否付费」单选，只要不是「免费」或明确「付费」都算付费
@@ -279,7 +299,7 @@ export async function fetchSiteSettings() {
 // 飞书字段约定：合集名/合集简介/合集封面/是否付费/合集售价/购买链接/包含文章（多向关联）
 // 「包含文章」多向关联字段返回 [{ record_id, text }] 数组，提取 record_id 列表
 // ------------------------------------------------------------
-function normalizeCollection(record) {
+export function normalizeCollection(record) {
   const f = record.fields || {}
   const cover = parseAttachment(f['合集封面'])
 

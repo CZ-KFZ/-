@@ -44,7 +44,15 @@ export function getTableId(type) {
   return process.env[envName] || null
 }
 
+// token 缓存（飞书 token 有效期约 2 小时，提前 5 分钟过期）
+let cachedToken = null
+let tokenExpiry = 0
+
 export async function getToken(appId, appSecret) {
+  const now = Date.now()
+  if (cachedToken && now < tokenExpiry) {
+    return cachedToken
+  }
   const res = await fetch(`${FEISHU_BASE}/auth/v3/tenant_access_token/internal`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -54,7 +62,11 @@ export async function getToken(appId, appSecret) {
   if (!parsed.ok) throw new Error(`获取 token ${parsed.error}`)
   const data = parsed.data
   if (data.code !== 0) throw new Error(`获取 token 失败: ${data.msg}`)
-  return data.tenant_access_token
+  cachedToken = data.tenant_access_token
+  // 飞书返回的 expire 单位是秒，提前 5 分钟过期更安全
+  const expireSec = data.expire || 7200
+  tokenExpiry = now + (expireSec - 300) * 1000
+  return cachedToken
 }
 
 export async function listRecords(token, appToken, tableId) {
