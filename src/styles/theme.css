@@ -599,12 +599,12 @@
 
 /* ============================================================
    赞赏浮动按钮（Donate FAB）
-   固定在屏幕左侧，顶部导航下方，桌面端显示图标+文字，移动端仅图标
+   固定在屏幕右下角，避开 hero 和内容区，桌面端显示图标+文字，移动端仅图标
    ============================================================ */
 .evo-donate-fab {
   position: fixed;
-  left: 16px;
-  top: 84px;
+  right: 16px;
+  bottom: 24px;
   z-index: 45;
   display: inline-flex;
   align-items: center;
@@ -625,7 +625,7 @@
   animation: evo-donate-pulse 3.5s ease-in-out infinite;
 }
 .evo-donate-fab:hover {
-  transform: translateX(4px) scale(1.05);
+  transform: translateY(-4px) scale(1.05);
   border-color: var(--evo-border-glow-strong);
   box-shadow: var(--evo-float-shadow), var(--evo-glow-purple-strong);
   color: var(--evo-purple-300);
@@ -650,11 +650,11 @@
   50% { box-shadow: var(--evo-float-shadow), 0 0 36px rgba(168, 85, 247, 0.45); }
 }
 
-/* 移动端：仅显示图标，更紧凑，避免遮挡内容 */
+/* 移动端：仅显示图标，右下角更紧凑 */
 @media (max-width: 640px) {
   .evo-donate-fab {
-    left: 10px;
-    top: 76px;
+    right: 12px;
+    bottom: 16px;
     padding: 8px;
     gap: 0;
   }
