@@ -17,14 +17,28 @@ let searchQuery = ''
 function renderFilters() {
   const bar = document.getElementById('evo-portfolio-filters')
   if (!bar) return
-  bar.innerHTML = PROJECT_FILTERS.map(
-    (f) => `
-      <button data-filter="${f.key}" class="px-4 py-2 rounded-full text-sm transition-all ${
-        f.key === currentFilter
-          ? 'bg-[var(--evo-primary)] text-white'
-          : 'border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:border-[var(--evo-purple-400)]'
-      }">${f.label}</button>`
-  ).join('')
+  // 统计每个分类下的作品数（用于角标显示）
+  const countFor = (key) => {
+    if (key === 'all') return projects.length
+    return projects.filter((p) => (p.tags || []).includes(key) || (p.category || '') === key).length
+  }
+  bar.innerHTML = PROJECT_FILTERS.map((f) => {
+    const isActive = f.key === currentFilter
+    const count = countFor(f.key)
+    const base = 'relative px-4 py-2 rounded-full text-sm font-medium transition-all inline-flex items-center gap-1.5'
+    const activeCls =
+      'bg-gradient-to-r from-[var(--evo-purple-500)] to-[var(--evo-cyan)] text-white shadow-[0_0_20px_rgba(168,85,247,0.45),0_4px_14px_rgba(6,182,212,0.25)] border border-[var(--evo-purple-300)]/40'
+    const idleCls =
+      'border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:border-[var(--evo-purple-400)]/60 hover:bg-[var(--evo-surface-2)]/50'
+    const badgeCls = isActive
+      ? 'ml-0.5 px-1.5 py-0.5 rounded-full bg-white/25 text-[10px] leading-none'
+      : 'ml-0.5 px-1.5 py-0.5 rounded-full bg-[var(--evo-surface-2)]/60 text-[var(--evo-ink-3)] text-[10px] leading-none'
+    return `
+      <button data-filter="${f.key}" class="${base} ${isActive ? activeCls : idleCls}">
+        <span>${f.label}</span>
+        <span class="${badgeCls}">${count}</span>
+      </button>`
+  }).join('')
 
   bar.querySelectorAll('[data-filter]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -146,6 +160,7 @@ async function init() {
       </div>
     </div>`).join('')
   await loadData()
+  renderFilters() // 数据加载后重新渲染筛选条，刷新分类角标的数量
   renderGrid()
 }
 
