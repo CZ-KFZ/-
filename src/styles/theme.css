@@ -527,6 +527,34 @@
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ============================================================
+   骨架屏（Skeleton）
+   ============================================================ */
+.evo-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--evo-surface) 0%,
+    var(--evo-surface-2) 50%,
+    var(--evo-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: evo-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--evo-radius-md);
+}
+.evo-skeleton-text {
+  height: 12px;
+  border-radius: var(--evo-radius-sm);
+}
+.evo-skeleton-text-sm { height: 10px; }
+.evo-skeleton-text-lg { height: 16px; }
+.evo-skeleton-title { height: 18px; width: 60%; border-radius: var(--evo-radius-sm); }
+.evo-skeleton-line { height: 10px; border-radius: var(--evo-radius-sm); }
+.evo-skeleton-cover { aspect-ratio: 16/9; border-radius: var(--evo-radius-lg) var(--evo-radius-lg) 0 0; }
+.evo-skeleton-badge { height: 20px; width: 64px; border-radius: var(--evo-radius-sm); }
+.evo-skeleton-thumb { aspect-ratio: 16/10; border-radius: var(--evo-radius-md); }
+.evo-skeleton-avatar { width: 48px; height: 48px; border-radius: 50%; }
+.evo-skeleton-carousel { aspect-ratio: 21/9; border-radius: var(--evo-radius-lg); }
+
 /* 图标占位 */
 [data-icon] {
   display: inline-flex;

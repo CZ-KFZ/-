@@ -979,7 +979,20 @@ async function loadData() {
 
 async function init() {
   const list = document.getElementById('evo-articles-list')
-  if (list) list.innerHTML = '<div class="text-center py-16 text-[var(--evo-ink-3)]">加载中…</div>'
+  if (list) list.innerHTML = Array.from({ length: 6 }, () => `
+    <div class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden flex flex-col">
+      <div class="evo-skeleton evo-skeleton-cover"></div>
+      <div class="p-4 md:p-5 flex flex-col gap-3">
+        <div class="flex gap-2">
+          <div class="evo-skeleton evo-skeleton-badge"></div>
+          <div class="evo-skeleton evo-skeleton-badge" style="width:40px"></div>
+        </div>
+        <div class="evo-skeleton evo-skeleton-title"></div>
+        <div class="evo-skeleton evo-skeleton-line" style="width:100%"></div>
+        <div class="evo-skeleton evo-skeleton-line" style="width:80%"></div>
+        <div class="evo-skeleton evo-skeleton-line" style="width:60%"></div>
+      </div>
+    </div>`).join('')
   // 隐藏旧的筛选栏（如果 HTML 里还有的话）
   const filtersBar = document.getElementById('evo-articles-filters')
   if (filtersBar) filtersBar.style.display = 'none'

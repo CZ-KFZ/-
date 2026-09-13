@@ -152,7 +152,19 @@ async function init() {
   renderFilters()
   initSearch()
   const grid = document.getElementById('evo-portfolio-grid')
-  if (grid) grid.innerHTML = '<div class="col-span-full text-center py-16 text-[var(--evo-ink-3)]">加载中…</div>'
+  if (grid) grid.innerHTML = Array.from({ length: 6 }, () => `
+    <div class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden flex flex-col">
+      <div class="evo-skeleton h-40 sm:h-48"></div>
+      <div class="p-5 sm:p-6 flex flex-col gap-3">
+        <div class="flex gap-2">
+          <div class="evo-skeleton evo-skeleton-badge"></div>
+          <div class="evo-skeleton evo-skeleton-badge" style="width:36px"></div>
+        </div>
+        <div class="evo-skeleton evo-skeleton-title"></div>
+        <div class="evo-skeleton evo-skeleton-line" style="width:100%"></div>
+        <div class="evo-skeleton evo-skeleton-line" style="width:70%"></div>
+      </div>
+    </div>`).join('')
   await loadData()
   renderGrid()
 }
