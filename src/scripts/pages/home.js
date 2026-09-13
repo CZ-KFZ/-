@@ -419,6 +419,63 @@ function renderAboutSection(settings, projects, articles, notes) {
 }
 
 // ------------------------------------------------------------
+// "此刻在做"区块：展示当前正在进行的事（Now page 概念）
+// 数据来源：settings.nowItems（飞书可配），否则用默认活动列表
+// ------------------------------------------------------------
+const NOW_DEFAULT_ITEMS = [
+  { icon: '✍️', label: '正在写', text: '一篇关于数字分身与创作脉络的长文' },
+  { icon: '📖', label: '正在读', text: '《思考，快与慢》Daniel Kahneman' },
+  { icon: '🔧', label: '正在做', text: 'EchoVerse 空间站持续迭代中' },
+  { icon: '🎨', label: '正在学', text: 'WebGL 创意编程与生成艺术' }
+]
+
+// 每张卡片的强调色（按位置循环，跟技能标签同源）
+const NOW_TONES = [
+  'text-[var(--evo-purple-300)]',
+  'text-[var(--evo-cyan)]',
+  'text-[var(--evo-pink)]',
+  'text-[var(--evo-violet)]'
+]
+
+function renderNowSection(settings) {
+  const host = document.getElementById('evo-home-now-items')
+  if (!host) return
+
+  // 飞书配置优先，否则用默认
+  const items = (settings.nowItems && settings.nowItems.length)
+    ? settings.nowItems.map((n) => ({
+        icon: n.icon || '·',
+        label: n.label || '',
+        text: n.text || ''
+      }))
+    : NOW_DEFAULT_ITEMS
+
+  host.innerHTML = items.map((item, i) => {
+    const tone = NOW_TONES[i % NOW_TONES.length]
+    return `
+      <div class="evo-glass evo-tilt-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" data-reveal-delay="${i * 80}">
+        <div class="evo-tilt-inner">
+          <div class="text-2xl mb-3">${item.icon}</div>
+          <p class="text-xs ${tone} mb-1.5 tracking-wide">${item.label}</p>
+          <p class="text-sm text-white/75 leading-relaxed">${item.text}</p>
+        </div>
+      </div>`
+  }).join('')
+
+  // 绑定 3D 倾斜
+  host.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
+
+  // 最后更新时间：用飞书配置的日期，否则显示今天
+  const updatedEl = document.getElementById('evo-home-now-updated')
+  if (updatedEl) {
+    const dateStr = settings.nowUpdated || new Date().toISOString().slice(0, 10)
+    updatedEl.textContent = `最后更新于 ${dateStr}`
+  }
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ------------------------------------------------------------
 // 数字递增动画：元素进入视口时从 0 滚到目标值（ease-out-cubic）
 // ------------------------------------------------------------
 function animateStatsOnScroll(stats) {
@@ -530,6 +587,8 @@ async function init() {
   setupSubscribeForm()
   // "我是谁"叙事区块：承接 Hero 的人格化叙事
   renderAboutSection(settings, projects, articles, notes)
+  // "此刻在做"区块：展示当前正在进行的事
+  renderNowSection(settings)
 }
 
 if (document.readyState === 'loading') {
