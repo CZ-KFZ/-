@@ -117,27 +117,6 @@ function renderGrid() {
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
-// 搜索
-function initSearch() {
-  const input = document.getElementById('evo-portfolio-search')
-  const clearBtn = document.getElementById('evo-search-clear')
-  if (!input) return
-
-  let debounceTimer = null
-  input.addEventListener('input', () => {
-    searchQuery = input.value
-    clearBtn.classList.toggle('hidden', !searchQuery)
-    clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => renderGrid(), 200)
-  })
-  clearBtn.addEventListener('click', () => {
-    input.value = ''
-    searchQuery = ''
-    clearBtn.classList.add('hidden')
-    renderGrid()
-  })
-}
-
 // 加载数据：飞书优先 → fallback
 async function loadData() {
   const raw = await fetchProjects()
@@ -150,7 +129,8 @@ async function loadData() {
 
 async function init() {
   renderFilters()
-  initSearch()
+  // 页面级搜索已统一走 header 全局搜索（evo-search-trigger）
+  // searchQuery 状态保留：用于 header 全局搜索跳转后渲染结果
   const grid = document.getElementById('evo-portfolio-grid')
   if (grid) grid.innerHTML = Array.from({ length: 6 }, () => `
     <div class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden flex flex-col">

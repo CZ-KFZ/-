@@ -36,7 +36,6 @@ let currentCollectionId = null
 let collections = []
 let articles = []
 let searchQuery = ''
-let searchDebounceTimer = null
 
 const CAT_TONE = {
   '道': 'bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)]',
@@ -1084,36 +1083,8 @@ async function init() {
   const filtersBar = document.getElementById('evo-articles-filters')
   if (filtersBar) filtersBar.style.display = 'none'
 
-  // 绑定搜索框
-  const searchInput = document.getElementById('evo-articles-search')
-  const searchClear = document.getElementById('evo-articles-search-clear')
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const val = e.target.value
-      if (searchClear) searchClear.classList.toggle('hidden', !val)
-      clearTimeout(searchDebounceTimer)
-      searchDebounceTimer = setTimeout(() => {
-        searchQuery = val
-        if (val.trim()) {
-          navigate('search')
-        } else {
-          // 清空搜索 → 回到文章首页
-          navigate('home')
-        }
-      }, 200)
-    })
-  }
-  if (searchClear) {
-    searchClear.addEventListener('click', () => {
-      if (searchInput) {
-        searchInput.value = ''
-        searchQuery = ''
-        searchClear.classList.add('hidden')
-        navigate('home')
-        searchInput.focus()
-      }
-    })
-  }
+  // 页面级搜索已统一走 header 全局搜索（evo-search-trigger）
+  // searchQuery 状态保留：用于 header 全局搜索跳转后渲染结果
 
   await loadData()
   // 哈希路由：#collection=<id> → 直接进合集详情
