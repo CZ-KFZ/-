@@ -878,7 +878,12 @@ function openArticleModal(article, fromCollection) {
   modal.id = 'evo-article-modal'
   modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm'
   modal.innerHTML = `
-    <div class="evo-glass max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-[var(--evo-radius-lg)] p-6 md:p-10 relative" onclick="event.stopPropagation()" id="evo-article-scroll">
+    <div class="evo-glass max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-[var(--evo-radius-lg)] relative" onclick="event.stopPropagation()" id="evo-article-scroll">
+      <!-- 阅读进度条 -->
+      <div class="sticky top-0 left-0 right-0 h-0.5 bg-[var(--evo-border)]/30 z-[105] rounded-t-[var(--evo-radius-lg)] overflow-hidden">
+        <div id="evo-read-progress" class="h-full bg-gradient-to-r from-[var(--evo-purple-500)] to-[var(--evo-cyan)] transition-[width] duration-75 ease-out" style="width:0%"></div>
+      </div>
+      <div class="p-6 md:p-10">
       <button class="fixed top-4 right-4 z-[110] w-10 h-10 rounded-full bg-[var(--evo-surface-2)]/90 backdrop-blur border border-[var(--evo-border)] hover:bg-[var(--evo-purple-500)]/40 text-[var(--evo-ink-2)] hover:text-white transition-all flex items-center justify-center shadow-lg" id="evo-article-close" aria-label="关闭">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -897,6 +902,7 @@ function openArticleModal(article, fromCollection) {
         ${bodyHtml}
       </div>
       ${navHtml}
+      </div>
     </div>
     <!-- 返回顶部按钮 -->
     <button id="evo-back-to-top" class="fixed bottom-6 right-6 z-[110] w-11 h-11 rounded-full bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-purple-700)] border-2 border-[var(--evo-purple-300)]/60 text-white hover:from-[var(--evo-cyan)] hover:to-[var(--evo-purple-500)] hover:border-white/60 transition-all flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.5)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] opacity-0 pointer-events-none" aria-label="返回顶部">
@@ -915,18 +921,28 @@ function openArticleModal(article, fromCollection) {
   document.addEventListener('keydown', escHandler)
   document.body.appendChild(modal)
 
-  // 返回顶部按钮：监听弹窗滚动
+  // 返回顶部按钮 + 阅读进度条：监听弹窗滚动
   const scrollContainer = modal.querySelector('#evo-article-scroll')
   const backTopBtn = modal.querySelector('#evo-back-to-top')
-  if (scrollContainer && backTopBtn) {
+  const progressBar = modal.querySelector('#evo-read-progress')
+  if (scrollContainer) {
     scrollContainer.addEventListener('scroll', () => {
-      if (scrollContainer.scrollTop > 300) {
-        backTopBtn.classList.remove('opacity-0', 'pointer-events-none')
-      } else {
-        backTopBtn.classList.add('opacity-0', 'pointer-events-none')
+      // 阅读进度条
+      if (progressBar) {
+        const max = scrollContainer.scrollHeight - scrollContainer.clientHeight
+        const pct = max > 0 ? Math.min(100, (scrollContainer.scrollTop / max) * 100) : 0
+        progressBar.style.width = pct + '%'
+      }
+      // 返回顶部按钮
+      if (backTopBtn) {
+        if (scrollContainer.scrollTop > 300) {
+          backTopBtn.classList.remove('opacity-0', 'pointer-events-none')
+        } else {
+          backTopBtn.classList.add('opacity-0', 'pointer-events-none')
+        }
       }
     })
-    backTopBtn.addEventListener('click', (e) => {
+    if (backTopBtn) backTopBtn.addEventListener('click', (e) => {
       e.stopPropagation()
       scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
     })
