@@ -897,8 +897,8 @@ function openArticleModal(article, fromCollection) {
       ${navHtml}
     </div>
     <!-- 返回顶部按钮 -->
-    <button id="evo-back-to-top" class="fixed bottom-6 right-6 z-[110] w-11 h-11 rounded-full bg-[var(--evo-surface-2)]/90 backdrop-blur border border-[var(--evo-border)] hover:bg-[var(--evo-purple-500)]/40 text-[var(--evo-ink-2)] hover:text-white transition-all flex items-center justify-center shadow-lg opacity-0 pointer-events-none" aria-label="返回顶部">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    <button id="evo-back-to-top" class="fixed bottom-6 right-6 z-[110] w-11 h-11 rounded-full bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-purple-700)] border-2 border-[var(--evo-purple-300)]/60 text-white hover:from-[var(--evo-cyan)] hover:to-[var(--evo-purple-500)] hover:border-white/60 transition-all flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.5)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] opacity-0 pointer-events-none" aria-label="返回顶部">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
     </button>
   `
   // 点遮罩关闭
