@@ -858,23 +858,17 @@ function openArticleModal(article, fromCollection) {
   const nextArticleFinal = currentIdx >= 0 && currentIdx < navList.length - 1 ? navList[currentIdx + 1] : null
 
   const navHtml = (prevArticleFinal || nextArticleFinal) ? `
-    <div class="mt-8 pt-6 border-t border-[var(--evo-border)] grid grid-cols-2 gap-3">
+    <div class="mt-6 pt-4 border-t border-[var(--evo-border)] flex items-center justify-between gap-2">
       ${prevArticleFinal ? `
-        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-left hover:bg-[var(--evo-purple-500)]/20 hover:border-[var(--evo-purple-400)]/40 border border-[var(--evo-border)] transition-all group" id="evo-article-prev">
-          <div class="text-xs text-[var(--evo-purple-300)] mb-1 flex items-center gap-1 font-semibold">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            上一篇
-          </div>
-          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors line-clamp-2">${prevArticleFinal.title}</div>
+        <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--evo-purple-500)]/15 border border-[var(--evo-purple-400)]/30 text-[var(--evo-purple-300)] hover:bg-[var(--evo-purple-500)]/30 hover:border-[var(--evo-purple-400)]/60 hover:text-white text-xs transition-all" id="evo-article-prev">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          ${prevArticleFinal.title}
         </button>
       ` : '<div></div>'}
       ${nextArticleFinal ? `
-        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-right hover:bg-[var(--evo-purple-500)]/20 hover:border-[var(--evo-purple-400)]/40 border border-[var(--evo-border)] transition-all group" id="evo-article-next">
-          <div class="text-xs text-[var(--evo-purple-300)] mb-1 flex items-center justify-end gap-1 font-semibold">
-            下一篇
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors line-clamp-2">${nextArticleFinal.title}</div>
+        <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--evo-purple-500)]/15 border border-[var(--evo-purple-400)]/30 text-[var(--evo-purple-300)] hover:bg-[var(--evo-purple-500)]/30 hover:border-[var(--evo-purple-400)]/60 hover:text-white text-xs transition-all" id="evo-article-next">
+          ${nextArticleFinal.title}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       ` : '<div></div>'}
     </div>
