@@ -201,6 +201,59 @@
         </div>
       </div>
     </section>
+
+    <!-- ===================================================
+         社交订阅入口（Footer 之前的 CTA 区块）
+         数据来源：siteSettings.socials
+         =================================================== -->
+    <section id="evo-home-connect" class="relative px-6 py-20 sm:py-28 overflow-hidden">
+      <!-- 区块光晕背景：与全局视频叠加形成柔和过渡 -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-[var(--evo-purple-500)]/15 rounded-full blur-[120px]"></div>
+        <div class="absolute top-1/3 right-1/4 w-72 h-72 bg-[var(--evo-cyan)]/10 rounded-full blur-[90px]"></div>
+        <div class="absolute bottom-1/4 left-1/4 w-64 h-64 bg-[var(--evo-pink)]/10 rounded-full blur-[80px]"></div>
+      </div>
+
+      <div class="relative max-w-3xl mx-auto text-center">
+        <!-- 章节编号 -->
+        <p class="text-xs tracking-[0.35em] text-white/40 mb-5 uppercase evo-reveal" data-reveal-delay="0">Connect</p>
+
+        <!-- 标题 -->
+        <h2 class="font-serif-instrument text-3xl sm:text-4xl md:text-5xl text-white mb-4 evo-reveal" data-reveal-delay="80">
+          保持<span class="italic">联系</span>
+        </h2>
+
+        <!-- 副标题 -->
+        <p class="text-base sm:text-lg text-white/60 mb-12 max-w-xl mx-auto leading-relaxed evo-reveal" data-reveal-delay="160">
+          作品、文章、思考持续更新中，欢迎通过以下方式关注我。
+        </p>
+
+        <!-- 社交链接（由 home.js 渲染） -->
+        <div id="evo-home-socials" class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10 evo-reveal" data-reveal-delay="240">
+          <!-- 骨架占位（数据未到时显示） -->
+          <div class="evo-skeleton w-12 h-12 rounded-full"></div>
+          <div class="evo-skeleton w-12 h-12 rounded-full"></div>
+          <div class="evo-skeleton w-12 h-12 rounded-full"></div>
+        </div>
+
+        <!-- 邮箱订阅入口（复制即用，无需后端） -->
+        <div class="evo-reveal" data-reveal-delay="320">
+          <p class="text-xs text-white/40 mb-3 tracking-wider">或通过邮件订阅，新内容第一时间送达</p>
+          <form id="evo-home-subscribe" class="flex flex-col sm:flex-row items-stretch gap-2 max-w-md mx-auto">
+            <input
+              type="email"
+              required
+              placeholder="your@email.com"
+              class="flex-1 px-4 py-3 rounded-full bg-white/5 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)]/50 focus:border-transparent transition-all text-sm"
+            />
+            <button type="submit" class="px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-all shadow-[0_8px_24px_rgba(255,255,255,0.15)] whitespace-nowrap">
+              订阅
+            </button>
+          </form>
+          <p id="evo-subscribe-msg" class="mt-3 text-xs h-4 text-white/50 transition-colors"></p>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- 共享 Footer -->

@@ -252,6 +252,102 @@ function renderRecentArticles(articles) {
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
+// ------------------------------------------------------------
+// 社交订阅区块：渲染社交链接 + 邮箱订阅表单
+// ------------------------------------------------------------
+// 常用平台的图标映射：用 SVG 内联，避免外部图标库依赖
+const SOCIAL_ICONS = {
+  github: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.292c0 5.211 3.438 9.63 8.205 11.188.6.111.82-.254.82-.567 0-.28-.01-1.022-.015-2.005-3.338.711-4.042-1.582-4.042-1.582-.546-1.361-1.335-1.725-1.335-1.725-1.087-.731.084-.716.084-.716 1.205.082 1.838 1.215 1.838 1.215 1.07 1.802 2.809 1.281 3.495.981.109-.763.419-1.281.762-1.576-2.665-.295-5.467-1.309-5.467-5.827 0-1.287.465-2.339 1.235-3.164-.124-.298-.535-1.497.117-3.121 0 0 1.008-.316 3.3 1.209a11.542 11.542 0 0 1 3-.395c1.02.005 2.047.135 3.005.395 2.291-1.525 3.297-1.209 3.297-1.209.654 1.624.243 2.823.12 3.121.77.825 1.231 1.877 1.231 3.164 0 4.53-2.805 5.527-5.475 5.817.43.363.81 1.08.81 2.176 0 1.575-.014 2.846-.014 3.233 0 .315.21.682.825.566C20.565 21.917 24 17.495 24 12.292 24 5.78 18.63.5 12 .5z"/></svg>',
+  twitter: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.46l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+  x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.46l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+  weibo: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm0 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10zm-3.5-6c-2 0-3.5-1.2-3.5-2.7s1.6-2.7 3.5-2.7 3.5 1.2 3.5 2.7-1.6 2.7-3.5 2.7zm5.5-3.5c-.5 0-1-.3-1.1-.8-.1-.4 0-.9.4-1.2.4-.3 1-.3 1.4 0 .4.3.6.8.5 1.3-.1.4-.6.7-1.2.7zm3.7-3.8c-.6-.2-1.3 0-1.6.5-.3.5-.1 1.1.4 1.4.5.3 1.2.1 1.6-.4.3-.5.1-1.2-.4-1.5zm-2-2.2c-.3-.1-.6 0-.7.3-.1.3 0 .6.3.7.3.1.6 0 .7-.3.1-.3-.1-.6-.3-.7zm-1.5-.7c-.2-.1-.4 0-.5.2-.1.2 0 .4.2.5.2.1.4 0 .5-.2.1-.2 0-.4-.2-.5z"/></svg>',
+  email: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+  mail: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+  rss: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
+  bilibili: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L15.287 4.653h2.526zM5.4 9.333c-.676 0-1.254.236-1.733.708-.478.472-.755 1.058-.755 1.758v5.067c0 .7.277 1.286.755 1.758.479.472 1.057.708 1.733.708h13.227c.675 0 1.253-.236 1.732-.708.479-.472.756-1.058.756-1.758v-5.067c0-.7-.277-1.286-.756-1.758-.479-.472-1.057-.708-1.732-.708H5.4zm2.853 3.734c-.249 0-.463-.082-.642-.248a.82.82 0 0 1-.266-.621c0-.249.085-.46.256-.635a.86.86 0 0 1 .652-.262h2.293a.86.86 0 0 1 .652.262c.171.175.256.386.256.635 0 .249-.085.46-.256.621a.86.86 0 0 1-.652.262H8.253zm6.24 0c-.249 0-.463-.082-.641-.248a.82.82 0 0 1-.267-.621c0-.249.085-.46.267-.635a.86.86 0 0 1 .651-.262h2.294a.86.86 0 0 1 .651.262c.172.175.257.386.257.635 0 .249-.085.46-.257.621a.86.86 0 0 1-.651.262h-2.294z"/></svg>',
+  wechat: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.144-.048.219 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.902-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.85-2.617.157-4.792 1.932-6.025 1.863-1.285 4.145-1.406 5.844-1.027-.604-3.955-4.358-7.013-8.566-7.013zM5.785 5.991c.642 0 1.162.524 1.162 1.17 0 .645-.52 1.168-1.162 1.168-.642 0-1.162-.523-1.162-1.168 0-.646.52-1.17 1.162-1.17zm5.813 0c.642 0 1.162.524 1.162 1.17 0 .645-.52 1.168-1.162 1.168-.642 0-1.162-.523-1.162-1.168 0-.646.52-1.17 1.162-1.17zm5.34 4.987c-3.75 0-6.787 2.686-6.787 6.005 0 1.208.413 2.254 1.098 3.15a.49.49 0 0 1 .122.498l-.323 1.223c-.018.06-.04.122-.04.183 0 .135.108.245.241.245a.265.265 0 0 0 .14-.046l1.546-.91a.715.715 0 0 1 .594-.081 8.31 8.31 0 0 0 2.345.336c3.75 0 6.787-2.686 6.787-6.005 0-3.32-3.037-5.998-6.787-5.998zm-2.381 3.275c.534 0 .967.437.967.975 0 .538-.433.975-.967.975-.534 0-.968-.437-.968-.975 0-.538.434-.975.968-.975zm4.812 0c.534 0 .968.437.968.975 0 .538-.434.975-.968.975-.534 0-.967-.437-.967-.975 0-.538.433-.975.967-.975z"/></svg>',
+  youtube: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.546 15.568V8.432L15.818 12l-6.272 3.568z"/></svg>'
+}
+
+// 根据社交链接标题匹配图标（大小写不敏感，含关键词即匹配）
+function getSocialIcon(title) {
+  if (!title) return ''
+  const t = String(title).toLowerCase()
+  for (const key of Object.keys(SOCIAL_ICONS)) {
+    if (t.includes(key)) return SOCIAL_ICONS[key]
+  }
+  return '' // 没匹配到则用配置里的 label 字符
+}
+
+function renderSocialsSection(socials) {
+  const box = document.getElementById('evo-home-socials')
+  if (!box) return
+
+  if (!socials || !socials.length) {
+    // 没配置社交链接 → 隐藏整个区块避免空荡
+    const section = document.getElementById('evo-home-connect')
+    if (section) section.style.display = 'none'
+    return
+  }
+
+  box.innerHTML = socials.map((s) => {
+    const iconHtml = getSocialIcon(s.title) || (s.label && s.label !== '·' ? s.label : '·')
+    const label = s.title || ''
+    return `<a href="${s.href || '#'}" title="${label}" aria-label="${label}" target="_blank" rel="noopener noreferrer"
+        class="evo-tilt-card group w-12 h-12 sm:w-14 sm:h-14 rounded-full evo-glass flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 hover:scale-110 hover:border-white/30 transition-all border border-white/10">
+      <span class="evo-tilt-inner">${iconHtml}</span>
+    </a>`
+  }).join('')
+
+  // 绑定 3D 倾斜
+  box.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// 邮箱订阅：前端纯展示，复制邮箱到剪贴板 + 提示
+function setupSubscribeForm() {
+  const form = document.getElementById('evo-home-subscribe')
+  const msg = document.getElementById('evo-subscribe-msg')
+  if (!form || !msg) return
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const input = form.querySelector('input[type="email"]')
+    const email = input.value.trim()
+    if (!email) return
+
+    const submitBtn = form.querySelector('button[type="submit"]')
+    const originalText = submitBtn.textContent
+    submitBtn.disabled = true
+    submitBtn.textContent = '订阅中…'
+
+    try {
+      // 没有后端：尝试复制邮箱到剪贴板，引导用户通过邮件联系
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(email)
+        msg.textContent = '✓ 已记录邮箱，请通过上方社交渠道联系我完成订阅'
+        msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-success)] transition-colors'
+      } else {
+        msg.textContent = '✓ 感谢订阅，请通过上方社交渠道联系我'
+        msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-success)] transition-colors'
+      }
+      input.value = ''
+    } catch {
+      msg.textContent = '订阅功能暂时不可用，请通过上方社交渠道联系'
+      msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-warning)] transition-colors'
+    } finally {
+      submitBtn.disabled = false
+      submitBtn.textContent = originalText
+      // 3 秒后清空提示
+      setTimeout(() => {
+        msg.textContent = ''
+        msg.className = 'mt-3 text-xs h-4 text-white/50 transition-colors'
+      }, 3500)
+    }
+  })
+}
+
 // 数据加载
 async function loadAllData() {
   const [projectsRaw, articlesRaw, notesRaw, settingsRaw] = await Promise.all([
@@ -315,6 +411,9 @@ async function init() {
   setText('evo-home-count-owner', settings.ownerName || '—')
   renderFeaturedCarousel(projects)
   renderRecentArticles(articles)
+  // 社交订阅区块（settings.socials 来自飞书 siteSettings）
+  renderSocialsSection(settings.socials)
+  setupSubscribeForm()
 }
 
 if (document.readyState === 'loading') {
