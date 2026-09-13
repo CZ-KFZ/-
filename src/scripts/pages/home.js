@@ -388,10 +388,58 @@ function renderAboutSection(settings, projects, articles, notes) {
     }).join('')
   }
 
-  // 数据条：直接从已加载的数据算
-  setText('evo-home-stat-articles', (articles && articles.length) || 0)
-  setText('evo-home-stat-collections', (notes && notes.length) || 0)
-  setText('evo-home-stat-projects', (projects && projects.length) || 0)
+  // 数据条：直接从已加载的数据算，进入视口时触发递增动画
+  const stats = [
+    { id: 'evo-home-stat-articles', value: (articles && articles.length) || 0 },
+    { id: 'evo-home-stat-collections', value: (notes && notes.length) || 0 },
+    { id: 'evo-home-stat-projects', value: (projects && projects.length) || 0 }
+  ]
+  // 先把所有数字置 0，避免 IntersectionObserver 触发前显示终值
+  stats.forEach((s) => setText(s.id, '0'))
+  animateStatsOnScroll(stats)
+}
+
+// ------------------------------------------------------------
+// 数字递增动画：元素进入视口时从 0 滚到目标值（ease-out-cubic）
+// ------------------------------------------------------------
+function animateStatsOnScroll(stats) {
+  const container = document.querySelector('#evo-home-about-skills')?.parentElement
+  // 不支持 IO 或用户禁用动画 → 直接显示终值
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!container || !('IntersectionObserver' in window) || reduceMotion) {
+    stats.forEach((s) => setText(s.id, String(s.value)))
+    return
+  }
+  const triggered = { done: false }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting && !triggered.done) {
+        triggered.done = true
+        stats.forEach((s) => animateCount(s.id, s.value))
+        io.disconnect()
+      }
+    })
+  }, { threshold: 0.3 })
+  io.observe(container)
+}
+
+// 从 0 滚到 target 的 ease-out 动画，时长 1.2s
+function animateCount(id, target) {
+  const el = document.getElementById(id)
+  if (!el) return
+  if (target <= 0) { el.textContent = '0'; return }
+  const duration = 1200
+  const start = performance.now()
+  const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3)
+  const tick = (now) => {
+    const elapsed = now - start
+    const t = Math.min(1, elapsed / duration)
+    const v = Math.round(target * easeOutCubic(t))
+    el.textContent = String(v)
+    if (t < 1) requestAnimationFrame(tick)
+    else el.textContent = String(target)
+  }
+  requestAnimationFrame(tick)
 }
 
 // 数据加载
