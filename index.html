@@ -45,7 +45,7 @@
     .font-serif-instrument {
       font-family: 'Instrument Serif', serif;
     }
-    body { background: #000; }
+    body { background: #000; overflow-x: hidden; }
     /* Marquee 滚动字幕：两组内容无缝循环 */
     .evo-marquee-track {
       animation: evo-marquee 30s linear infinite;
@@ -401,58 +401,6 @@
     </section>
 
     <!-- ===================================================
-         推荐语区块：读者/合作者的引用，社会证明建立信任
-         =================================================== -->
-    <section class="relative px-6 py-20 sm:py-28 bg-black/15 overflow-hidden">
-      <!-- 光晕点缀 -->
-      <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-[var(--evo-purple-500)]/10 blur-[110px] rounded-full pointer-events-none"></div>
-      <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[var(--evo-cyan)]/8 blur-[90px] rounded-full pointer-events-none"></div>
-
-      <div class="relative max-w-5xl mx-auto">
-        <div class="mb-10 evo-reveal">
-          <p class="text-xs tracking-[0.35em] text-white/40 mb-2 uppercase" data-reveal-delay="0">05 — Voices</p>
-          <h2 class="font-serif-instrument text-3xl sm:text-4xl text-white">他们<span class="italic">说</span></h2>
-        </div>
-        <div id="evo-home-testimonials" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <!-- 由 home.js 渲染 -->
-          <div class="evo-glass rounded-[var(--evo-radius-lg)] p-6 space-y-4">
-            <div class="evo-skeleton evo-skeleton-line" style="width:90%"></div>
-            <div class="evo-skeleton evo-skeleton-line" style="width:70%"></div>
-            <div class="flex items-center gap-3 mt-4">
-              <div class="evo-skeleton w-10 h-10 rounded-full"></div>
-              <div class="space-y-2 flex-1">
-                <div class="evo-skeleton evo-skeleton-badge" style="width:50%"></div>
-                <div class="evo-skeleton evo-skeleton-line" style="width:40%"></div>
-              </div>
-            </div>
-          </div>
-          <div class="evo-glass rounded-[var(--evo-radius-lg)] p-6 space-y-4">
-            <div class="evo-skeleton evo-skeleton-line" style="width:85%"></div>
-            <div class="evo-skeleton evo-skeleton-line" style="width:65%"></div>
-            <div class="flex items-center gap-3 mt-4">
-              <div class="evo-skeleton w-10 h-10 rounded-full"></div>
-              <div class="space-y-2 flex-1">
-                <div class="evo-skeleton evo-skeleton-badge" style="width:45%"></div>
-                <div class="evo-skeleton evo-skeleton-line" style="width:35%"></div>
-              </div>
-            </div>
-          </div>
-          <div class="hidden lg:block evo-glass rounded-[var(--evo-radius-lg)] p-6 space-y-4">
-            <div class="evo-skeleton evo-skeleton-line" style="width:88%"></div>
-            <div class="evo-skeleton evo-skeleton-line" style="width:72%"></div>
-            <div class="flex items-center gap-3 mt-4">
-              <div class="evo-skeleton w-10 h-10 rounded-full"></div>
-              <div class="space-y-2 flex-1">
-                <div class="evo-skeleton evo-skeleton-badge" style="width:48%"></div>
-                <div class="evo-skeleton evo-skeleton-line" style="width:38%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================================================
          社交订阅入口（Footer 之前的 CTA 区块）
          数据来源：siteSettings.socials
          =================================================== -->
@@ -466,7 +414,7 @@
 
       <div class="relative max-w-3xl mx-auto text-center">
         <!-- 章节编号 -->
-        <p class="text-xs tracking-[0.35em] text-white/40 mb-2 uppercase evo-reveal" data-reveal-delay="0">06 — Connect</p>
+        <p class="text-xs tracking-[0.35em] text-white/40 mb-2 uppercase evo-reveal" data-reveal-delay="0">05 — Connect</p>
 
         <!-- 标题 -->
         <h2 class="font-serif-instrument text-3xl sm:text-4xl md:text-5xl text-white mb-4 evo-reveal" data-reveal-delay="80">
