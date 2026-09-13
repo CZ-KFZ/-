@@ -8,7 +8,7 @@ export const NAV_ITEMS = [
   { href: 'index.html', key: 'home', label: '首页' },
   { href: 'chat.html', key: 'chat', label: '对话' },
   { href: 'portfolio.html', key: 'portfolio', label: '作品集' },
-  { href: 'garden.html', key: 'garden', label: '数字花园' },
+  { href: 'garden.html', key: 'garden', label: '精选合集' },
   { href: 'articles.html', key: 'articles', label: '文章' },
   { href: 'about.html', key: 'about', label: '关于我' }
 ]

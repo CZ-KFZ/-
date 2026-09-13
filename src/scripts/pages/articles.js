@@ -1016,8 +1016,14 @@ async function init() {
   }
 
   await loadData()
-  // 默认渲染文章首页（一级）
-  renderHome()
+  // 哈希路由：#collection=<id> → 直接进合集详情
+  const hash = window.location.hash
+  const m = hash.match(/collection=([^&]+)/)
+  if (m && m[1]) {
+    navigate('collection', m[1])
+  } else {
+    renderHome()
+  }
 }
 
 if (document.readyState === 'loading') {
