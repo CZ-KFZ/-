@@ -844,15 +844,18 @@ function openArticleModal(article, fromCollection) {
     : ''
 
   // 上一篇 / 下一篇
-  const visibleArticles = articles.filter((a) => !a.hidden)
-  const currentIdx = visibleArticles.findIndex((a) => a.id === article.id)
-  const prevArticle = currentIdx > 0 ? visibleArticles[currentIdx - 1] : null
-  const nextArticle = currentIdx >= 0 && currentIdx < visibleArticles.length - 1 ? visibleArticles[currentIdx + 1] : null
-  // 保底：如果文章不在列表里（如合集内文章），取列表首尾
-  const fallbackPrev = currentIdx < 0 && visibleArticles.length > 1 ? visibleArticles[visibleArticles.length - 1] : null
-  const fallbackNext = currentIdx < 0 && visibleArticles.length > 1 ? visibleArticles[0] : null
-  const prevArticleFinal = prevArticle || fallbackPrev
-  const nextArticleFinal = nextArticle || fallbackNext
+  // 来自合集时用合集内文章顺序，否则用全局文章列表
+  let navList
+  if (fromCollection && fromCollection.articleIds) {
+    navList = (fromCollection.articleIds)
+      .map((id) => articles.find((a) => a.id === id))
+      .filter(Boolean)
+  } else {
+    navList = articles.filter((a) => !a.hidden)
+  }
+  const currentIdx = navList.findIndex((a) => a.id === article.id)
+  const prevArticleFinal = currentIdx > 0 ? navList[currentIdx - 1] : null
+  const nextArticleFinal = currentIdx >= 0 && currentIdx < navList.length - 1 ? navList[currentIdx + 1] : null
 
   const navHtml = (prevArticleFinal || nextArticleFinal) ? `
     <div class="mt-8 pt-6 border-t border-[var(--evo-border)] grid grid-cols-2 gap-3">
