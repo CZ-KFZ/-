@@ -149,26 +149,112 @@ function setupDrawer() {
 // ------------------------------------------------------------
 // Footer 注入
 // ------------------------------------------------------------
+// 站点导航链接
+const FOOTER_NAV = [
+  { label: '首页', href: 'index.html' },
+  { label: '作品集', href: 'portfolio.html' },
+  { label: '文章', href: 'articles.html' },
+  { label: '精选合集', href: 'garden.html' },
+  { label: '关于', href: 'about.html' },
+  { label: '对话', href: 'chat.html' }
+]
+
+// Footer 常用社交图标（精简版，与 home.js 的社交订阅区块分工不同）
+const FOOTER_SOCIAL_ICONS = {
+  github: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.292c0 5.211 3.438 9.63 8.205 11.188.6.111.82-.254.82-.567 0-.28-.01-1.022-.015-2.005-3.338.711-4.042-1.582-4.042-1.582-.546-1.361-1.335-1.725-1.335-1.725-1.087-.731.084-.716.084-.716 1.205.082 1.838 1.215 1.838 1.215 1.07 1.802 2.809 1.281 3.495.981.109-.763.419-1.281.762-1.576-2.665-.295-5.467-1.309-5.467-5.827 0-1.287.465-2.339 1.235-3.164-.124-.298-.535-1.497.117-3.121 0 0 1.008-.316 3.3 1.209a11.542 11.542 0 0 1 3-.395c1.02.005 2.047.135 3.005.395 2.291-1.525 3.297-1.209 3.297-1.209.654 1.624.243 2.823.12 3.121.77.825 1.231 1.877 1.231 3.164 0 4.53-2.805 5.527-5.475 5.817.43.363.81 1.08.81 2.176 0 1.575-.014 2.846-.014 3.233 0 .315.21.682.825.566C20.565 21.917 24 17.495 24 12.292 24 5.78 18.63.5 12 .5z"/></svg>',
+  weibo: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm0 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10zm-3.5-6c-2 0-3.5-1.2-3.5-2.7s1.6-2.7 3.5-2.7 3.5 1.2 3.5 2.7-1.6 2.7-3.5 2.7zm5.5-3.5c-.5 0-1-.3-1.1-.8-.1-.4 0-.9.4-1.2.4-.3 1-.3 1.4 0 .4.3.6.8.5 1.3-.1.4-.6.7-1.2.7zm3.7-3.8c-.6-.2-1.3 0-1.6.5-.3.5-.1 1.1.4 1.4.5.3 1.2.1 1.6-.4.3-.5.1-1.2-.4-1.5z"/></svg>',
+  email: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+  rss: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>'
+}
+
+// 默认社交入口（飞书未配置时显示，确保 footer 始终饱满）
+const FOOTER_DEFAULT_SOCIALS = [
+  { label: 'GitHub', href: 'https://github.com', iconKey: 'github' },
+  { label: '微博', href: 'https://weibo.com', iconKey: 'weibo' },
+  { label: '邮箱', href: 'mailto:hello@echoverse.com', iconKey: 'email' },
+  { label: 'RSS', href: '/feed.xml', iconKey: 'rss' }
+]
+
 function renderFooter() {
   const mount = document.getElementById('evo-footer')
   if (!mount) return
+  const year = new Date().getFullYear()
+  const navHtml = FOOTER_NAV.map(
+    (n) =>
+      `<a href="${n.href}" class="text-[var(--evo-ink-3)] hover:text-[var(--evo-ink)] transition-colors">${n.label}</a>`
+  ).join('')
+  const socialsHtml = FOOTER_DEFAULT_SOCIALS.map((s) => {
+    const icon = FOOTER_SOCIAL_ICONS[s.iconKey] || ''
+    return `<a href="${s.href}" target="_blank" rel="noopener" aria-label="${s.label}" class="w-9 h-9 rounded-full border border-[var(--evo-border)] text-[var(--evo-ink-3)] hover:text-[var(--evo-ink)] hover:border-[var(--evo-purple-400)]/60 hover:bg-[var(--evo-surface-2)]/50 flex items-center justify-center transition-all">${icon}</a>`
+  }).join('')
   mount.innerHTML = `
-    <footer class="relative border-t border-[var(--evo-border-glow)] py-12 mt-20 overflow-hidden">
+    <footer class="relative border-t border-[var(--evo-border-glow)] py-12 sm:py-16 mt-20 overflow-hidden">
       <div class="absolute inset-0 pointer-events-none">
         <div class="absolute bottom-0 left-1/4 w-96 h-32 bg-[var(--evo-purple-500)]/10 blur-[100px] rounded-full"></div>
         <div class="absolute bottom-0 right-1/4 w-80 h-24 bg-[var(--evo-cyan)]/10 blur-[80px] rounded-full"></div>
       </div>
-      <div class="relative max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[var(--evo-ink-3)] text-sm">
-        <div class="flex items-center gap-2">
-          <span class="w-6 h-6 rounded-[var(--evo-radius-sm)] bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-cyan)] flex items-center justify-center">
-            <span class="evo-title text-[10px] text-white font-bold">E</span>
-          </span>
-          <span class="evo-title">EchoVerse</span>
+      <div class="relative max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 sm:gap-8">
+          <!-- 左列：品牌 -->
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-[var(--evo-radius-sm)] bg-gradient-to-br from-[var(--evo-purple-500)] to-[var(--evo-cyan)] flex items-center justify-center">
+                <span class="evo-title text-[11px] text-white font-bold">E</span>
+              </span>
+              <span class="evo-title text-[var(--evo-ink)]">EchoVerse</span>
+            </div>
+            <p class="text-sm text-[var(--evo-ink-3)] leading-relaxed max-w-xs">阴之体道 · 一个数字化的私人空间站，记录设计、技术与思考。</p>
+          </div>
+          <!-- 中列：站点导航 -->
+          <div class="flex flex-col gap-2.5">
+            <h4 class="text-xs tracking-[0.2em] text-[var(--evo-ink-3)] uppercase mb-1">导航</h4>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+              ${navHtml}
+            </div>
+          </div>
+          <!-- 右列：社交链接 -->
+          <div class="flex flex-col gap-3">
+            <h4 class="text-xs tracking-[0.2em] text-[var(--evo-ink-3)] uppercase mb-1">保持联系</h4>
+            <div class="flex flex-wrap gap-2">
+              ${socialsHtml}
+            </div>
+          </div>
         </div>
-        <span>© 2026 阴之体道 · 个人数字化空间站</span>
+        <!-- 底部版权 -->
+        <div class="mt-10 sm:mt-12 pt-6 border-t border-[var(--evo-border)]/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--evo-ink-3)]">
+          <span>© ${year} 阴之体道 · EchoVerse</span>
+          <span class="text-[var(--evo-ink-3)]/70">用 ❤️ 与代码构建</span>
+        </div>
       </div>
     </footer>
   `
+  // 异步用飞书配置的社交链接替换默认入口（如果配了的话）
+  enrichFooterSocials()
+}
+
+// 飞书配了社交链接则覆盖默认入口
+async function enrichFooterSocials() {
+  try {
+    const { fetchSiteSettings } = await import('./feishu.js')
+    const settings = await fetchSiteSettings()
+    if (!settings || !Array.isArray(settings.socials) || !settings.socials.length) return
+    const container = document.querySelector('#evo-footer .flex.flex-wrap.gap-2')
+    if (!container) return
+    const html = settings.socials
+      .map((s) => {
+        const label = s.label || s.title || '链接'
+        const t = String(label).toLowerCase()
+        let icon = ''
+        for (const key of Object.keys(FOOTER_SOCIAL_ICONS)) {
+          if (t.includes(key)) { icon = FOOTER_SOCIAL_ICONS[key]; break }
+        }
+        return `<a href="${s.url || s.link || '#'}" target="_blank" rel="noopener" aria-label="${label}" title="${label}" class="w-9 h-9 rounded-full border border-[var(--evo-border)] text-[var(--evo-ink-3)] hover:text-[var(--evo-ink)] hover:border-[var(--evo-purple-400)]/60 hover:bg-[var(--evo-surface-2)]/50 flex items-center justify-center transition-all">${icon || label.charAt(0)}</a>`
+      })
+      .join('')
+    container.innerHTML = html
+  } catch (e) {
+    // 静默失败，保留默认入口
+  }
 }
 
 // ------------------------------------------------------------
