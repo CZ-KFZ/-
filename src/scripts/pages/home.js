@@ -211,9 +211,14 @@ function renderRecentArticles(articles) {
   const host = document.getElementById('evo-home-recent')
   if (!host) return
   const items = articles.filter((a) => !a.hidden)
-  items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
-  const list = items.slice(0, 4)
-  if (!list.length) {
+  // featured 优先，然后按日期倒序
+  items.sort((a, b) => {
+    if ((b.featured ? 1 : 0) !== (a.featured ? 1 : 0)) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0)
+    return (b.date || '').localeCompare(a.date || '')
+  })
+  // 第一篇做大卡（精选/最近），其余 3 篇做小条目
+  const [feature, ...rest] = items.slice(0, 4)
+  if (!feature) {
     host.innerHTML = '<div class="text-center py-12 text-white/30">暂无文章，稍后回来看看吧。</div>'
     return
   }
@@ -228,27 +233,41 @@ function renderRecentArticles(articles) {
     life: 'bg-[var(--evo-pink)]/20 text-[var(--evo-pink)]',
     thought: 'bg-[var(--evo-violet)]/30 text-[var(--evo-violet)]'
   }
-  host.innerHTML = list.map((a, i) => {
-    const tone = CAT_TONE[a.category] || CAT_TONE.design
-    const cover = a.coverImage
-      ? `<div class="hidden sm:block w-36 md:w-44 aspect-[16/10] rounded-[var(--evo-radius-md)] overflow-hidden shrink-0"><img src="${a.coverImage}" alt="${a.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
-      : ''
-    return `
-      <a href="articles.html" class="group evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-5 sm:p-5 flex gap-5 items-start hover:bg-[var(--evo-surface-2)] transition-all evo-reveal evo-filter-item" data-reveal-delay="${Math.min(i * 80, 400)}" style="animation-delay:${Math.min(i * 60, 360)}ms">
-        <div class="evo-tilt-inner w-full flex gap-5 items-start">
-        ${cover}
+  const toneOf = (a) => CAT_TONE[a.category] || CAT_TONE.design
+
+  // —— 第一篇：大卡（带封面、完整摘要、3D 倾斜）
+  const fTone = toneOf(feature)
+  const fCover = feature.coverImage
+    ? `<div class="shrink-0 w-full md:w-64 aspect-[16/10] rounded-[var(--evo-radius-md)] overflow-hidden"><img src="${feature.coverImage}" alt="${feature.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
+    : ''
+  const featureHtml = `
+    <a href="articles.html" class="group evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-6 sm:p-8 flex flex-col md:flex-row gap-6 hover:bg-[var(--evo-surface-2)] transition-all evo-reveal evo-filter-item" data-reveal-delay="0">
+      <div class="evo-tilt-inner w-full flex flex-col md:flex-row gap-6">
+        ${fCover}
         <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-center gap-2 mb-3">
-            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${tone} text-xs">${a.categoryLabel || a.category}</span>
-            <span class="text-xs text-[var(--evo-ink-3)]">${a.date || ''}</span>
-            ${a.readTime ? `<span class="text-xs text-[var(--evo-ink-3)]">${a.readTime}</span>` : ''}
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${fTone} text-xs">${feature.categoryLabel || feature.category}</span>
+            <span class="text-xs text-[var(--evo-ink-3)]">${feature.date || ''}</span>
+            ${feature.readTime ? `<span class="text-xs text-[var(--evo-ink-3)]">${feature.readTime}</span>` : ''}
           </div>
-          <h3 class="evo-title text-lg mb-2 group-hover:text-[var(--evo-cyan)] transition-colors">${a.title}</h3>
-          <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-2">${a.excerpt || ''}</p>
+          <h3 class="evo-title text-xl sm:text-2xl mb-3 group-hover:text-[var(--evo-cyan)] transition-colors leading-snug">${feature.title}</h3>
+          <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3">${feature.excerpt || ''}</p>
         </div>
-        </div>
+      </div>
+    </a>`
+
+  // —— 其余：小条目（无封面、单行标题、紧凑元信息）
+  const restHtml = rest.map((a, i) => {
+    const tone = toneOf(a)
+    return `
+      <a href="articles.html" class="group evo-glass rounded-[var(--evo-radius-md)] p-4 flex items-center gap-3 hover:bg-[var(--evo-surface-2)] hover:-translate-y-0.5 transition-all evo-reveal evo-filter-item" data-reveal-delay="${Math.min((i + 1) * 80, 400)}">
+        <span class="px-2 py-0.5 rounded-[var(--evo-radius-sm)] ${tone} text-[11px] shrink-0">${a.categoryLabel || a.category}</span>
+        <span class="evo-title text-sm flex-1 min-w-0 truncate group-hover:text-[var(--evo-cyan)] transition-colors">${a.title}</span>
+        <span class="text-xs text-[var(--evo-ink-3)] shrink-0 hidden sm:inline">${(a.date || '').replace(/\.*/, '')}</span>
       </a>`
   }).join('')
+
+  host.innerHTML = featureHtml + restHtml
   host.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
