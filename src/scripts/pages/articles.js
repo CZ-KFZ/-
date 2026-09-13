@@ -843,11 +843,40 @@ function openArticleModal(article, fromCollection) {
     ? `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)] text-[11px] ml-2 align-middle">✓ 已解锁</span>`
     : ''
 
+  // 上一篇 / 下一篇
+  const visibleArticles = articles.filter((a) => !a.hidden)
+  const currentIdx = visibleArticles.findIndex((a) => a.id === article.id)
+  const prevArticle = currentIdx > 0 ? visibleArticles[currentIdx - 1] : null
+  const nextArticle = currentIdx >= 0 && currentIdx < visibleArticles.length - 1 ? visibleArticles[currentIdx + 1] : null
+
+  const navHtml = (prevArticle || nextArticle) ? `
+    <div class="mt-8 pt-6 border-t border-[var(--evo-border)] grid grid-cols-2 gap-3">
+      ${prevArticle ? `
+        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-left hover:bg-[var(--evo-surface-2)] transition-all group" id="evo-article-prev">
+          <div class="text-xs text-[var(--evo-ink-3)] mb-1 flex items-center gap-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            上一篇
+          </div>
+          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-purple-300)] transition-colors line-clamp-2">${prevArticle.title}</div>
+        </button>
+      ` : '<div></div>'}
+      ${nextArticle ? `
+        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-right hover:bg-[var(--evo-surface-2)] transition-all group" id="evo-article-next">
+          <div class="text-xs text-[var(--evo-ink-3)] mb-1 flex items-center justify-end gap-1">
+            下一篇
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-purple-300)] transition-colors line-clamp-2">${nextArticle.title}</div>
+        </button>
+      ` : '<div></div>'}
+    </div>
+  ` : ''
+
   const modal = document.createElement('div')
   modal.id = 'evo-article-modal'
   modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm'
   modal.innerHTML = `
-    <div class="evo-glass max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-[var(--evo-radius-lg)] p-6 md:p-10 relative" onclick="event.stopPropagation()">
+    <div class="evo-glass max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-[var(--evo-radius-lg)] p-6 md:p-10 relative" onclick="event.stopPropagation()" id="evo-article-scroll">
       <button class="fixed top-4 right-4 z-[110] w-10 h-10 rounded-full bg-[var(--evo-surface-2)]/90 backdrop-blur border border-[var(--evo-border)] hover:bg-[var(--evo-purple-500)]/40 text-[var(--evo-ink-2)] hover:text-white transition-all flex items-center justify-center shadow-lg" id="evo-article-close" aria-label="关闭">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -865,7 +894,12 @@ function openArticleModal(article, fromCollection) {
       <div id="evo-article-body">
         ${bodyHtml}
       </div>
+      ${navHtml}
     </div>
+    <!-- 返回顶部按钮 -->
+    <button id="evo-back-to-top" class="fixed bottom-6 right-6 z-[110] w-11 h-11 rounded-full bg-[var(--evo-surface-2)]/90 backdrop-blur border border-[var(--evo-border)] hover:bg-[var(--evo-purple-500)]/40 text-[var(--evo-ink-2)] hover:text-white transition-all flex items-center justify-center shadow-lg opacity-0 pointer-events-none" aria-label="返回顶部">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
   `
   // 点遮罩关闭
   modal.addEventListener('click', () => modal.remove())
@@ -878,6 +912,41 @@ function openArticleModal(article, fromCollection) {
   }
   document.addEventListener('keydown', escHandler)
   document.body.appendChild(modal)
+
+  // 返回顶部按钮：监听弹窗滚动
+  const scrollContainer = modal.querySelector('#evo-article-scroll')
+  const backTopBtn = modal.querySelector('#evo-back-to-top')
+  if (scrollContainer && backTopBtn) {
+    scrollContainer.addEventListener('scroll', () => {
+      if (scrollContainer.scrollTop > 300) {
+        backTopBtn.classList.remove('opacity-0', 'pointer-events-none')
+      } else {
+        backTopBtn.classList.add('opacity-0', 'pointer-events-none')
+      }
+    })
+    backTopBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
+
+  // 上一篇 / 下一篇
+  const prevBtn = modal.querySelector('#evo-article-prev')
+  const nextBtn = modal.querySelector('#evo-article-next')
+  if (prevBtn && prevArticle) {
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      modal.remove()
+      openArticleModal(prevArticle, fromCollection)
+    })
+  }
+  if (nextBtn && nextArticle) {
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      modal.remove()
+      openArticleModal(nextArticle, fromCollection)
+    })
+  }
 
   // 绑定：兑换码输入（如果渲染了）
   const input = modal.querySelector('#evo-redeem-input')
