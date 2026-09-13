@@ -133,6 +133,7 @@ function renderFeaturedCarousel(projects) {
             <span class="text-xs text-white/70">${p.year || ''}</span>
           </div>
           <h3 class="font-serif-instrument text-2xl sm:text-4xl text-white mb-2">${p.title}</h3>
+          ${p.outcome ? `<div class="flex items-center gap-2 mb-2"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs font-medium"><span aria-hidden="true">↗</span>${p.outcome}</span></div>` : ''}
           <p class="text-white/70 text-sm sm:text-base max-w-xl mb-4 line-clamp-2">${p.desc || ''}</p>
           <button class="evo-featured-open inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] bg-white/15 backdrop-blur-md hover:bg-white/25 text-white text-sm transition-all border border-white/20" data-project-id="${p.id}">
             查看详情
@@ -250,7 +251,8 @@ function renderRecentArticles(articles) {
             <span class="text-xs text-[var(--evo-ink-3)]">${feature.date || ''}</span>
             ${feature.readTime ? `<span class="text-xs text-[var(--evo-ink-3)]">${feature.readTime}</span>` : ''}
           </div>
-          <h3 class="evo-title text-xl sm:text-2xl mb-3 group-hover:text-[var(--evo-cyan)] transition-colors leading-snug">${feature.title}</h3>
+          <h3 class="evo-title text-xl sm:text-2xl mb-2 group-hover:text-[var(--evo-cyan)] transition-colors leading-snug">${feature.title}</h3>
+          ${feature.outcome ? `<div class="flex items-center gap-2 mb-3"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)] text-xs font-medium"><span aria-hidden="true">↗</span>${feature.outcome}</span></div>` : '<div class="mb-3"></div>'}
           <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3">${feature.excerpt || ''}</p>
         </div>
       </div>
