@@ -6,6 +6,7 @@
 import '../styles/theme.css'
 import { NAV_ITEMS } from './data.js'
 import { bindAllTiltCards } from './effects.js'
+import { initGlobalSearch } from './search.js'
 
 // ============================================================
 // 赞赏（Donation）配置
@@ -82,6 +83,9 @@ function renderHeader() {
         </a>
         <nav class="hidden md:flex items-center gap-8">${navLinks}</nav>
         <div class="flex items-center gap-2">
+          <button id="evo-search-trigger" aria-label="搜索" class="w-10 h-10 rounded-[var(--evo-radius-md)] evo-glass flex items-center justify-center text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </button>
           <a href="chat.html" data-dom-id="cta-header-chat" class="hidden sm:inline-flex px-4 py-2 rounded-[var(--evo-radius-md)] bg-gradient-to-r from-[var(--evo-purple-500)] to-[var(--evo-cyan)] text-white text-sm font-medium hover:opacity-90 transition-all evo-glow-purple">对话</a>
           <button id="evo-menu-btn" aria-label="打开菜单" class="md:hidden w-10 h-10 rounded-[var(--evo-radius-md)] evo-glass flex items-center justify-center text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
@@ -110,6 +114,7 @@ function renderHeader() {
     </aside>
   `
   setupDrawer()
+  initGlobalSearch()
 }
 
 // ------------------------------------------------------------
