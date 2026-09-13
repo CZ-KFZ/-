@@ -137,6 +137,53 @@
     </section>
 
     <!-- ===================================================
+         "我是谁"叙事区块（Hero 之后、精选作品之前）
+         建立人格化叙事，承接 Hero 的"数字分身"概念
+         =================================================== -->
+    <section class="relative px-6 py-20 sm:py-28 bg-black/15">
+      <!-- 左侧光晕点缀 -->
+      <div class="absolute top-1/2 -left-32 w-80 h-80 bg-[var(--evo-purple-500)]/12 blur-[120px] rounded-full pointer-events-none"></div>
+      <div class="absolute top-1/4 right-0 w-72 h-72 bg-[var(--evo-cyan)]/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+      <div class="relative max-w-4xl mx-auto">
+        <!-- 章节编号 -->
+        <p class="text-xs tracking-[0.35em] text-white/40 mb-2 uppercase evo-reveal" data-reveal-delay="0">00 — About</p>
+
+        <!-- 身份 eyebrow -->
+        <p id="evo-home-about-identity" class="text-sm sm:text-base text-[var(--evo-cyan)] mb-3 evo-reveal" data-reveal-delay="80"></p>
+
+        <!-- 大标题 -->
+        <h2 class="font-serif-instrument text-3xl sm:text-4xl md:text-5xl text-white mb-6 evo-reveal" data-reveal-delay="160">
+          我是<span class="italic">谁</span>
+        </h2>
+
+        <!-- 叙事段落 -->
+        <p id="evo-home-about-bio" class="text-base sm:text-lg text-white/70 leading-relaxed mb-8 max-w-2xl evo-reveal" data-reveal-delay="240"></p>
+
+        <!-- 技能/身份标签流 -->
+        <div id="evo-home-about-skills" class="flex flex-wrap gap-2 mb-10 evo-reveal" data-reveal-delay="320"></div>
+
+        <!-- 社会证明数据条 -->
+        <div class="flex flex-wrap items-center gap-6 sm:gap-10 evo-reveal" data-reveal-delay="400">
+          <div class="flex items-baseline gap-2">
+            <span id="evo-home-stat-articles" class="font-serif-instrument text-2xl sm:text-3xl text-white">—</span>
+            <span class="text-xs sm:text-sm text-white/50">篇文章</span>
+          </div>
+          <div class="w-px h-6 bg-[var(--evo-border)]"></div>
+          <div class="flex items-baseline gap-2">
+            <span id="evo-home-stat-collections" class="font-serif-instrument text-2xl sm:text-3xl text-white">—</span>
+            <span class="text-xs sm:text-sm text-white/50">个合集</span>
+          </div>
+          <div class="w-px h-6 bg-[var(--evo-border)]"></div>
+          <div class="flex items-baseline gap-2">
+            <span id="evo-home-stat-projects" class="font-serif-instrument text-2xl sm:text-3xl text-white">—</span>
+            <span class="text-xs sm:text-sm text-white/50">件作品</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================
          精选内容区块（浅半透明黑底，让全局视频清晰透出）
          =================================================== -->
     <section class="relative px-6 py-20 sm:py-28 bg-black/15">

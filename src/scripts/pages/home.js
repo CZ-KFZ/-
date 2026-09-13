@@ -351,6 +351,49 @@ function setupSubscribeForm() {
   })
 }
 
+// ------------------------------------------------------------
+// "我是谁"叙事区块：身份描述 + 简介 + 技能标签 + 数据条
+// ------------------------------------------------------------
+const ABOUT_DEFAULT_BIO = '我是阴之体道，一个把设计、技术与生活思考编织成知识网络的创作者。这里记录我在数字分身时代的探索——从代码到文字，从作品到对话，慢慢长成一座可被探索的空间站。'
+const ABOUT_DEFAULT_IDENTITY = '设计师 · 开发者 · 数字游民'
+const ABOUT_DEFAULT_SKILLS = ['设计', '前端开发', '写作', '产品思考', '影像实验']
+
+// 技能标签的配色（按位置循环）
+const SKILL_TONES = [
+  'bg-[var(--evo-purple-500)]/15 text-[var(--evo-purple-300)] border-[var(--evo-purple-400)]/30',
+  'bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)] border-[var(--evo-cyan)]/30',
+  'bg-[var(--evo-pink)]/15 text-[var(--evo-pink)] border-[var(--evo-pink)]/30',
+  'bg-[var(--evo-violet)]/15 text-[var(--evo-violet)] border-[var(--evo-violet)]/30',
+  'bg-[var(--evo-purple-700)]/15 text-[var(--evo-purple-400)] border-[var(--evo-purple-700)]/30'
+]
+
+function renderAboutSection(settings, projects, articles, notes) {
+  // 身份描述（eyebrow）
+  const identityEl = document.getElementById('evo-home-about-identity')
+  if (identityEl) identityEl.textContent = settings.identity || ABOUT_DEFAULT_IDENTITY
+
+  // 叙事段落：飞书配置的 bio 大于 20 字时用，否则用默认叙事
+  const bioEl = document.getElementById('evo-home-about-bio')
+  if (bioEl) bioEl.textContent = settings.bio && settings.bio.length > 20 ? settings.bio : ABOUT_DEFAULT_BIO
+
+  // 技能标签：飞书配置的 skills 优先，否则用默认
+  const skillsEl = document.getElementById('evo-home-about-skills')
+  if (skillsEl) {
+    const skills = (settings.skills && settings.skills.length)
+      ? settings.skills.map((s) => (typeof s === 'string' ? s : s.label)).filter(Boolean)
+      : ABOUT_DEFAULT_SKILLS
+    skillsEl.innerHTML = skills.map((label, i) => {
+      const tone = SKILL_TONES[i % SKILL_TONES.length]
+      return `<span class="px-3 py-1 rounded-full text-xs sm:text-sm border ${tone} transition-colors">${label}</span>`
+    }).join('')
+  }
+
+  // 数据条：直接从已加载的数据算
+  setText('evo-home-stat-articles', (articles && articles.length) || 0)
+  setText('evo-home-stat-collections', (notes && notes.length) || 0)
+  setText('evo-home-stat-projects', (projects && projects.length) || 0)
+}
+
 // 数据加载
 async function loadAllData() {
   const [projectsRaw, articlesRaw, notesRaw, settingsRaw] = await Promise.all([
@@ -418,6 +461,8 @@ async function init() {
   // 社交订阅区块（settings.socials 来自飞书 siteSettings）
   renderSocialsSection(settings.socials)
   setupSubscribeForm()
+  // "我是谁"叙事区块：承接 Hero 的人格化叙事
+  renderAboutSection(settings, projects, articles, notes)
 }
 
 if (document.readyState === 'loading') {
