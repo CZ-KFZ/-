@@ -233,7 +233,7 @@ function renderRecentArticles(articles) {
       ? `<div class="hidden sm:block w-36 md:w-44 aspect-[16/10] rounded-[var(--evo-radius-md)] overflow-hidden shrink-0"><img src="${a.coverImage}" alt="${a.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
       : ''
     return `
-      <a href="articles.html" class="group evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-4 sm:p-5 flex gap-5 items-start hover:bg-[var(--evo-surface-2)] transition-all evo-reveal evo-filter-item" data-reveal-delay="${Math.min(i * 80, 400)}" style="animation-delay:${Math.min(i * 60, 360)}ms">
+      <a href="articles.html" class="group evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-5 sm:p-5 flex gap-5 items-start hover:bg-[var(--evo-surface-2)] transition-all evo-reveal evo-filter-item" data-reveal-delay="${Math.min(i * 80, 400)}" style="animation-delay:${Math.min(i * 60, 360)}ms">
         <div class="evo-tilt-inner w-full flex gap-5 items-start">
         ${cover}
         <div class="flex-1 min-w-0">

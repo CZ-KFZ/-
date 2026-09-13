@@ -87,7 +87,7 @@ function articleCard(a, index) {
     <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-article-id="${a.id}">
       <div class="evo-tilt-inner flex flex-col flex-1">
       ${coverHtml}
-      <div class="p-4 md:p-5 flex-1 flex flex-col">
+      <div class="p-5 md:p-5 flex-1 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 mb-3">
           <span class="px-1.5 py-0.5 rounded-[var(--evo-radius-sm)] ${toneCls} text-[11px]">${a.categoryLabel || a.category}</span>
           ${paidBadgeHtml(a)}
@@ -205,7 +205,7 @@ function renderHome() {
   ]
 
   list.innerHTML = `
-    <div class="grid gap-4 sm:gap-5 md:grid-cols-2 mt-2">
+    <div class="grid gap-5 sm:gap-5 md:grid-cols-2 mt-2">
       ${cards.map((c, i) => `
         <div class="evo-glass evo-tilt-card evo-glow-card evo-filter-item evo-reveal rounded-[var(--evo-radius-lg)] p-5 md:p-6 cursor-pointer hover:bg-[var(--evo-surface-2)] transition-all group relative overflow-hidden border ${c.tone}" data-reveal-delay="${i * 100}" style="animation-delay:${i * 80}ms" data-nav="${c.view}">
           <div class="evo-tilt-inner">
@@ -280,7 +280,7 @@ function renderSearchResults() {
       <h2 class="evo-title text-2xl sm:text-3xl mb-2">🔍 搜索结果</h2>
       <p class="text-sm text-[var(--evo-ink-3)]">关键词「${searchQuery}」共找到 ${items.length} 篇文章</p>
     </div>
-    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-5 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${items.map((a, i) => articleCard(a, i)).join('')}
     </div>
   `
@@ -341,7 +341,7 @@ function renderArticleList(view) {
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
       <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇文章</p>
     </div>
-    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-5 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${items.map((a, i) => articleCard(a, i)).join('')}
     </div>
   `
@@ -387,7 +387,7 @@ function collectionCard(c, index) {
     <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-collection-id="${c.id || ''}">
       <div class="evo-tilt-inner flex flex-col flex-1">
       ${coverHtml}
-      <div class="p-4 md:p-5 flex-1 flex flex-col">
+      <div class="p-5 md:p-5 flex-1 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 mb-3">
           ${collectionBadgeHtml(c)}
           ${articleCount ? `<span class="text-xs text-[var(--evo-ink-3)]">${articleCount} 篇文章</span>` : ''}
@@ -442,7 +442,7 @@ function renderCollections() {
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">📚 合集</h2>
       <p class="text-sm text-[var(--evo-ink-3)]">${collections.length} 个合集，每个合集独立定价</p>
     </div>
-    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-5 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${collections.map((c, i) => collectionCard(c, i)).join('')}
     </div>
   `
@@ -548,7 +548,7 @@ function renderCollectionDetail(collectionId) {
     </div>
     ${lockedPanelHtml}
     ${showArticleList ? (items.length ? `
-      <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-5 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         ${items.map((a, i) => articleCard(a, i)).join('')}
       </div>
     ` : `
@@ -680,7 +680,7 @@ function renderProse() {
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
       <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇散文</p>
     </div>
-    <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-5 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${items.map((a, i) => articleCard(a, i)).join('')}
     </div>
   `
@@ -982,7 +982,7 @@ async function init() {
   if (list) list.innerHTML = Array.from({ length: 6 }, () => `
     <div class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden flex flex-col">
       <div class="evo-skeleton evo-skeleton-cover"></div>
-      <div class="p-4 md:p-5 flex flex-col gap-3">
+      <div class="p-5 md:p-5 flex flex-col gap-3">
         <div class="flex gap-2">
           <div class="evo-skeleton evo-skeleton-badge"></div>
           <div class="evo-skeleton evo-skeleton-badge" style="width:40px"></div>

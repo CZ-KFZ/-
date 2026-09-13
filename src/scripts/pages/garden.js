@@ -133,7 +133,7 @@ async function init() {
   if (box) box.innerHTML = Array.from({ length: 6 }, () => `
     <div class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden flex flex-col">
       <div class="evo-skeleton evo-skeleton-cover"></div>
-      <div class="p-4 md:p-5 flex flex-col gap-3">
+      <div class="p-5 md:p-5 flex flex-col gap-3">
         <div class="flex gap-2">
           <div class="evo-skeleton evo-skeleton-badge"></div>
           <div class="evo-skeleton evo-skeleton-badge" style="width:40px"></div>
