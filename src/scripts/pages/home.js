@@ -478,6 +478,122 @@ function renderNowSection(settings) {
 }
 
 // ------------------------------------------------------------
+// 工具栈区块：展示日常使用的设计/开发/写作工具
+// 数据来源：settings.tools（飞书可配），否则用默认工具列表
+// ------------------------------------------------------------
+const TOOLS_DEFAULT = [
+  { icon: '🎨', name: 'Figma', desc: '界面设计与原型' },
+  { icon: '💻', name: 'VS Code', desc: '前端开发主力编辑器' },
+  { icon: '✍️', name: '飞书文档', desc: '写作与知识沉淀' },
+  { icon: '🤖', name: 'Cursor', desc: 'AI 辅助编程' },
+  { icon: '📐', name: 'Framer', desc: '交互原型与动效' },
+  { icon: '🎵', name: 'Spotify', desc: '专注时的背景音乐' },
+  { icon: '📷', name: 'Lightroom', desc: '影像调色与处理' },
+  { icon: '🧠', name: 'Notion', desc: '想法收集与整理' }
+]
+
+// 工具卡片强调色（按位置循环）
+const TOOL_TONES = [
+  'text-[var(--evo-purple-300)]',
+  'text-[var(--evo-cyan)]',
+  'text-[var(--evo-pink)]',
+  'text-[var(--evo-violet)]'
+]
+
+function renderToolsSection(settings) {
+  const host = document.getElementById('evo-home-tools')
+  if (!host) return
+
+  // 飞书配置优先，否则用默认
+  const tools = (settings.tools && settings.tools.length)
+    ? settings.tools.map((t) => ({
+        icon: t.icon || '·',
+        name: t.name || '',
+        desc: t.desc || ''
+      }))
+    : TOOLS_DEFAULT
+
+  host.innerHTML = tools.map((tool, i) => {
+    const tone = TOOL_TONES[i % TOOL_TONES.length]
+    return `
+      <div class="evo-glass evo-tilt-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" data-reveal-delay="${(i % 4) * 80}">
+        <div class="evo-tilt-inner">
+          <div class="text-2xl mb-2">${tool.icon}</div>
+          <p class="text-sm font-medium ${tone} mb-1">${tool.name}</p>
+          <p class="text-xs text-white/55 leading-relaxed">${tool.desc}</p>
+        </div>
+      </div>`
+  }).join('')
+
+  // 绑定 3D 倾斜
+  host.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ------------------------------------------------------------
+// 推荐语区块：读者/合作者的引用，社会证明建立信任
+// 数据来源：settings.testimonials（飞书可配），否则用默认引用
+// ------------------------------------------------------------
+const TESTIMONIALS_DEFAULT = [
+  {
+    quote: '读他的文章像在和一个有温度的思考者对话，每个观点都带着实践的重量。',
+    name: '林小南',
+    title: '产品设计师',
+    avatar: ''
+  },
+  {
+    quote: '作品集里能看到从概念到落地的完整链路，这种把想法做透的能力很少见。',
+    name: '陈舟',
+    title: '独立开发者',
+    avatar: ''
+  },
+  {
+    quote: '他的数字分身回答了我所有关于他创作脉络的问题，像是走进了一座会说话的空间站。',
+    name: '苏白',
+    title: '内容创作者',
+    avatar: ''
+  }
+]
+
+function renderTestimonialsSection(settings) {
+  const host = document.getElementById('evo-home-testimonials')
+  if (!host) return
+
+  // 飞书配置优先，否则用默认
+  const items = (settings.testimonials && settings.testimonials.length)
+    ? settings.testimonials
+    : TESTIMONIALS_DEFAULT
+
+  host.innerHTML = items.map((t, i) => {
+    // 头像：有图用图，否则取名字首字
+    const initial = (t.name || '?').slice(0, 1)
+    const avatar = t.avatar
+      ? `<img src="${t.avatar}" alt="${t.name || ''}" class="w-10 h-10 rounded-full object-cover" />`
+      : `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--evo-purple-400)] to-[var(--evo-cyan)] flex items-center justify-center text-white text-sm font-medium">${initial}</div>`
+    return `
+      <figure class="evo-glass evo-tilt-card rounded-[var(--evo-radius-lg)] p-6 hover:bg-[var(--evo-surface-2)] transition-all evo-reveal evo-filter-item" data-reveal-delay="${(i % 3) * 100}">
+        <div class="evo-tilt-inner">
+          <div class="text-3xl text-[var(--evo-purple-400)]/50 font-serif-instrument leading-none mb-3">"</div>
+          <blockquote class="text-sm sm:text-base text-white/75 leading-relaxed mb-5">${t.quote || ''}</blockquote>
+          <figcaption class="flex items-center gap-3">
+            ${avatar}
+            <div>
+              <div class="text-sm font-medium text-white">${t.name || ''}</div>
+              <div class="text-xs text-white/50">${t.title || ''}</div>
+            </div>
+          </figcaption>
+        </div>
+      </figure>`
+  }).join('')
+
+  // 绑定 3D 倾斜
+  host.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ------------------------------------------------------------
 // 数字递增动画：元素进入视口时从 0 滚到目标值（ease-out-cubic）
 // ------------------------------------------------------------
 function animateStatsOnScroll(stats) {
@@ -584,6 +700,8 @@ async function init() {
   setText('evo-home-count-owner', settings.identity || '认识幕后的我')
   renderFeaturedCarousel(projects)
   renderRecentArticles(articles)
+  // 推荐语区块：社会证明建立信任
+  renderTestimonialsSection(settings)
   // 社交订阅区块（settings.socials 来自飞书 siteSettings）
   renderSocialsSection(settings.socials)
   setupSubscribeForm()
@@ -591,6 +709,8 @@ async function init() {
   renderAboutSection(settings, projects, articles, notes)
   // "此刻在做"区块：展示当前正在进行的事
   renderNowSection(settings)
+  // 工具栈区块：展示日常使用的工具
+  renderToolsSection(settings)
 }
 
 if (document.readyState === 'loading') {
