@@ -848,25 +848,30 @@ function openArticleModal(article, fromCollection) {
   const currentIdx = visibleArticles.findIndex((a) => a.id === article.id)
   const prevArticle = currentIdx > 0 ? visibleArticles[currentIdx - 1] : null
   const nextArticle = currentIdx >= 0 && currentIdx < visibleArticles.length - 1 ? visibleArticles[currentIdx + 1] : null
+  // 保底：如果文章不在列表里（如合集内文章），取列表首尾
+  const fallbackPrev = currentIdx < 0 && visibleArticles.length > 1 ? visibleArticles[visibleArticles.length - 1] : null
+  const fallbackNext = currentIdx < 0 && visibleArticles.length > 1 ? visibleArticles[0] : null
+  const prevArticleFinal = prevArticle || fallbackPrev
+  const nextArticleFinal = nextArticle || fallbackNext
 
-  const navHtml = (prevArticle || nextArticle) ? `
+  const navHtml = (prevArticleFinal || nextArticleFinal) ? `
     <div class="mt-8 pt-6 border-t border-[var(--evo-border)] grid grid-cols-2 gap-3">
-      ${prevArticle ? `
-        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-left hover:bg-[var(--evo-surface-2)] transition-all group" id="evo-article-prev">
-          <div class="text-xs text-[var(--evo-ink-3)] mb-1 flex items-center gap-1">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      ${prevArticleFinal ? `
+        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-left hover:bg-[var(--evo-purple-500)]/20 hover:border-[var(--evo-purple-400)]/40 border border-[var(--evo-border)] transition-all group" id="evo-article-prev">
+          <div class="text-xs text-[var(--evo-purple-300)] mb-1 flex items-center gap-1 font-semibold">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             上一篇
           </div>
-          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-purple-300)] transition-colors line-clamp-2">${prevArticle.title}</div>
+          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors line-clamp-2">${prevArticleFinal.title}</div>
         </button>
       ` : '<div></div>'}
-      ${nextArticle ? `
-        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-right hover:bg-[var(--evo-surface-2)] transition-all group" id="evo-article-next">
-          <div class="text-xs text-[var(--evo-ink-3)] mb-1 flex items-center justify-end gap-1">
+      ${nextArticleFinal ? `
+        <button class="evo-glass rounded-[var(--evo-radius-md)] p-4 text-right hover:bg-[var(--evo-purple-500)]/20 hover:border-[var(--evo-purple-400)]/40 border border-[var(--evo-border)] transition-all group" id="evo-article-next">
+          <div class="text-xs text-[var(--evo-purple-300)] mb-1 flex items-center justify-end gap-1 font-semibold">
             下一篇
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
-          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-purple-300)] transition-colors line-clamp-2">${nextArticle.title}</div>
+          <div class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors line-clamp-2">${nextArticleFinal.title}</div>
         </button>
       ` : '<div></div>'}
     </div>
@@ -933,18 +938,18 @@ function openArticleModal(article, fromCollection) {
   // 上一篇 / 下一篇
   const prevBtn = modal.querySelector('#evo-article-prev')
   const nextBtn = modal.querySelector('#evo-article-next')
-  if (prevBtn && prevArticle) {
+  if (prevBtn && prevArticleFinal) {
     prevBtn.addEventListener('click', (e) => {
       e.stopPropagation()
       modal.remove()
-      openArticleModal(prevArticle, fromCollection)
+      openArticleModal(prevArticleFinal, fromCollection)
     })
   }
-  if (nextBtn && nextArticle) {
+  if (nextBtn && nextArticleFinal) {
     nextBtn.addEventListener('click', (e) => {
       e.stopPropagation()
       modal.remove()
-      openArticleModal(nextArticle, fromCollection)
+      openArticleModal(nextArticleFinal, fromCollection)
     })
   }
 
