@@ -94,9 +94,10 @@ function applySettings(settings) {
 
 // 统计数
 function applyCounts(projects, articles, notes) {
-  setText('evo-home-count-projects', `${projects.length} 个项目`)
-  setText('evo-home-count-articles', `${articles.length} 篇长文`)
-  setText('evo-home-count-notes', `${notes.length} 条笔记`)
+  // 描述性文案 + 数据：比"N 个项目"更有质感
+  setText('evo-home-count-projects', `${projects.length} 件作品 · 创造的过程`)
+  setText('evo-home-count-articles', `${articles.length} 篇 · 设计、技术与思考`)
+  setText('evo-home-count-notes', `${notes.length} 个 · 系列文章打包`)
 }
 
 // ------------------------------------------------------------
@@ -410,7 +411,8 @@ async function init() {
   applySettings(settings)
   saveCachedSettings(settings)
   applyCounts(projects, articles, notes)
-  setText('evo-home-count-owner', settings.ownerName || '—')
+  // "关于我"卡片副标：用身份描述比纯名字更有吸引力，没配身份描述时回退到"认识幕后的我"
+  setText('evo-home-count-owner', settings.identity || '认识幕后的我')
   renderFeaturedCarousel(projects)
   renderRecentArticles(articles)
   // 社交订阅区块（settings.socials 来自飞书 siteSettings）
