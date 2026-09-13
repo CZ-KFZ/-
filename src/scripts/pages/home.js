@@ -283,10 +283,12 @@ function renderSocialsSection(socials) {
   const box = document.getElementById('evo-home-socials')
   if (!box) return
 
+  // 社交链接为空：只隐藏社交图标行，保留区块本身和邮箱订阅表单
   if (!socials || !socials.length) {
-    // 没配置社交链接 → 隐藏整个区块避免空荡
-    const section = document.getElementById('evo-home-connect')
-    if (section) section.style.display = 'none'
+    box.style.display = 'none'
+    // 同时隐藏"或通过邮件订阅"那行引导文字，因为没有了社交渠道做对比
+    const subscribeHint = document.querySelector('#evo-home-subscribe')?.previousElementSibling
+    if (subscribeHint) subscribeHint.style.display = 'none'
     return
   }
 
