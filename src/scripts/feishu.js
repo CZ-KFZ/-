@@ -227,8 +227,77 @@ function normalizeTimeline(record) {
 // 解析站点设置
 // 飞书字段约定：姓名/头像首字/头像图片/身份描述/简介/技能标签/社交链接
 // ------------------------------------------------------------
+
+// 解析社交链接：兼容飞书各种字段类型
+// 1) 超链接字段：{ link, text } 或 [{ link, text }]
+// 2) 富文本字段：[{ text, type:'url', link }]
+// 3) 多行文本字段：每行 "名称 链接" 或 "名称: 链接" 或纯链接
+// 4) 复杂对象数组：[{ '图标字符','名称','链接' }]（早期约定）
+// 5) 单条超链接/字符串
+// 字段名优先「社交链接」，否则模糊匹配含"社交/链接/social"的字段
+function parseSocials(f) {
+  // 找字段：精确 + 模糊
+  let raw = f['社交链接']
+  if (raw == null) {
+    const keys = Object.keys(f)
+    for (const k of keys) {
+      if (/社交|链接|social/i.test(k)) { raw = f[k]; break }
+    }
+  }
+  if (raw == null) return []
+
+  // 统一成数组
+  const arr = Array.isArray(raw) ? raw : [raw]
+  const out = []
+  for (const item of arr) {
+    if (item == null) continue
+    // 纯字符串：可能是 "名称 链接" / "名称: 链接" / 纯链接
+    if (typeof item === 'string') {
+      const s = item.trim()
+      if (!s) continue
+      // 多行？拆开
+      const lines = s.split(/\n+/).map((l) => l.trim()).filter(Boolean)
+      for (const line of lines) {
+        out.push(parseSocialLine(line))
+      }
+      continue
+    }
+    // 对象：优先取 link/url 字段做 href，text/name 做标题
+    if (typeof item === 'object') {
+      const href = item.link || item.url || item.href || item['链接'] || ''
+      const title = item.text || item.name || item.title || item['名称'] || ''
+      const label = item.icon || item['图标字符'] || item['图标'] || ''
+      if (href || title) {
+        out.push({ label: label || '·', title: title || href, href: href || '#' })
+      }
+    }
+  }
+  return out
+}
+
+// 解析一行社交文本：「名称 链接」/「名称: 链接」/「名称 - 链接」/纯链接
+function parseSocialLine(line) {
+  // 含冒号/破折号分隔
+  const m = line.match(/^([^\s:：\-—]+)[\s:：\-—]+(.+)$/)
+  if (m) {
+    const name = m[1].trim()
+    const href = m[2].trim()
+    return { label: '·', title: name, href }
+  }
+  // 纯链接
+  return { label: '·', title: line, href: line }
+}
+
 function normalizeSettings(record) {
   const f = record.fields || {}
+
+  // 调试日志：开发环境或 ?debug=1 时输出全部字段名和值
+  const debugOn = isDev || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1')
+  if (debugOn) {
+    console.log('[EchoVerse] normalizeSettings fields keys =', Object.keys(f))
+    console.log('[EchoVerse] normalizeSettings fields =', f)
+  }
+
   const avatar = parseAttachment(f['头像图片'])
   const skillsRaw = f['技能标签'] || []
   const skills = (Array.isArray(skillsRaw) ? skillsRaw : [skillsRaw]).map((s) => {
@@ -236,15 +305,10 @@ function normalizeSettings(record) {
     return { label, tone: 'default' }
   }).filter((s) => s.label)
 
-  const socialsRaw = f['社交链接'] || []
-  const socials = (Array.isArray(socialsRaw) ? socialsRaw : [socialsRaw]).map((s) => {
-    if (typeof s === 'string') return { label: '·', title: s, href: s }
-    return {
-      label: s['图标字符'] || '·',
-      title: s['名称'] || '',
-      href: s['链接'] || '#'
-    }
-  })
+  const socials = parseSocials(f)
+  if (debugOn) {
+    console.log('[EchoVerse] 解析后的 socials =', socials)
+  }
 
   // 「此刻在做」：兼容两种字段结构
   // 1) 多行文本「此刻在做」，每行格式「图标 标签：内容」

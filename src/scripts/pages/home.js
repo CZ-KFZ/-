@@ -305,8 +305,12 @@ function renderSocialsSection(socials) {
   const box = document.getElementById('evo-home-socials')
   if (!box) return
 
+  // 调试日志：让你在浏览器 console 看清社交链接数据
+  console.log('[EchoVerse] socials from feishu =', socials)
+
   // 社交链接为空：只隐藏社交图标行，保留区块本身和邮箱订阅表单
   if (!socials || !socials.length) {
+    console.warn('[EchoVerse] socials 为空，隐藏社交图标行。请检查飞书 settings 表的「社交链接」字段')
     box.style.display = 'none'
     // 同时隐藏"或通过邮件订阅"那行引导文字，因为没有了社交渠道做对比
     const subscribeHint = document.querySelector('#evo-home-subscribe')?.previousElementSibling
