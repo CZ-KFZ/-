@@ -675,3 +675,440 @@
   }
   .evo-reveal { opacity: 1; transform: none; }
 }
+
+/* ============================================================
+   作品集 Landing Page（evo-pl-*）
+   适配 3D Creator 风格：巨型渐变标题 + 磁吸肖像 + 滚动跑马灯
+   + 字符级文字动画 + 堆叠缩放卡片
+   ============================================================ */
+.evo-portfolio-main {
+  overflow-x: clip;
+}
+
+/* 巨型渐变标题文字（用于 hero / section heading） */
+.evo-pl-hero-heading,
+.evo-pl-section-heading,
+.evo-pl-services-heading {
+  background: linear-gradient(180deg, #646973 0%, #BBCCD7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-align: center;
+}
+.evo-pl-hero-heading {
+  font-size: clamp(3.5rem, 16vw, 11rem);
+  white-space: nowrap;
+  width: 100%;
+}
+.evo-pl-section-heading,
+.evo-pl-services-heading {
+  font-size: clamp(3rem, 12vw, 10rem);
+}
+
+/* ---------- 01 · HERO ---------- */
+.evo-pl-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+  padding-top: 5rem; /* 给固定 header 留位 */
+}
+.evo-pl-hero-nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+}
+@media (min-width: 768px) {
+  .evo-pl-hero-nav { padding: 1.5rem 2.5rem; }
+}
+.evo-pl-navlink {
+  color: #D7E2EA;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.875rem;
+  transition: opacity 0.2s ease;
+}
+@media (min-width: 768px) {
+  .evo-pl-navlink { font-size: 1.125rem; }
+}
+@media (min-width: 1024px) {
+  .evo-pl-navlink { font-size: 1.4rem; }
+}
+.evo-pl-navlink:hover { opacity: 0.7; }
+
+.evo-pl-hero-heading-wrap {
+  margin-top: 1rem;
+}
+@media (min-width: 768px) {
+  .evo-pl-hero-heading-wrap { margin-top: -1.25rem; }
+}
+
+.evo-pl-hero-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+  padding-bottom: 1.75rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  position: relative;
+  z-index: 5;
+}
+@media (min-width: 768px) {
+  .evo-pl-hero-bottom { padding-bottom: 2.5rem; }
+}
+.evo-pl-hero-tagline {
+  color: #D7E2EA;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  font-size: clamp(0.75rem, 1.4vw, 1.5rem);
+  max-width: 160px;
+}
+@media (min-width: 640px) { .evo-pl-hero-tagline { max-width: 220px; } }
+@media (min-width: 768px) { .evo-pl-hero-tagline { max-width: 260px; } }
+
+/* 磁吸肖像 */
+.evo-pl-hero-portrait {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+@media (min-width: 640px) {
+  .evo-pl-hero-portrait {
+    top: auto;
+    transform: translateX(-50%);
+    bottom: 0;
+  }
+}
+.evo-pl-magnet {
+  width: 280px;
+  will-change: transform;
+  transition: transform 0.6s ease-in-out;
+}
+@media (min-width: 640px) { .evo-pl-magnet { width: 360px; } }
+@media (min-width: 768px) { .evo-pl-magnet { width: 440px; } }
+@media (min-width: 1024px) { .evo-pl-magnet { width: 520px; } }
+.evo-pl-portrait-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 1.5rem;
+  filter: drop-shadow(0 20px 60px rgba(124, 58, 237, 0.35));
+}
+
+/* 渐变胶囊按钮（联系我） */
+.evo-pl-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: linear-gradient(123deg, #18011F 7%, #B600A8 37%, #7621B0 72%, #BE4C00 100%);
+  box-shadow: 0 4px 4px rgba(181, 1, 167, 0.25), inset 4px 4px 12px #7721B1;
+  outline: 2px solid #fff;
+  outline-offset: -3px;
+  color: #fff;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 2rem;
+  font-size: 0.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+@media (min-width: 640px) { .evo-pl-contact-btn { padding: 0.875rem 2.5rem; font-size: 0.875rem; } }
+@media (min-width: 768px) { .evo-pl-contact-btn { padding: 1rem 3rem; font-size: 1rem; } }
+.evo-pl-contact-btn:hover { transform: translateY(-2px); }
+
+/* 幽灵描边按钮（查看作品 / 了解更多） */
+.evo-pl-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 2px solid #D7E2EA;
+  color: #D7E2EA;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 2rem;
+  font-size: 0.875rem;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+@media (min-width: 768px) { .evo-pl-ghost-btn { padding: 0.875rem 2.5rem; font-size: 1rem; } }
+.evo-pl-ghost-btn:hover { background: rgba(215, 226, 234, 0.1); }
+
+/* ---------- 02 · MARQUEE ---------- */
+.evo-pl-marquee {
+  padding: 4rem 0 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+@media (min-width: 768px) { .evo-pl-marquee { padding-top: 8rem; } }
+.evo-pl-marquee-row {
+  display: flex;
+  gap: 0.75rem;
+  will-change: transform;
+  width: max-content;
+}
+.evo-pl-marquee-tile {
+  position: relative;
+  width: 300px;
+  height: 200px;
+  border-radius: 1rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .evo-pl-marquee-tile { width: 420px; height: 270px; }
+}
+.evo-pl-marquee-img,
+.evo-pl-marquee-gradient {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.evo-pl-marquee-gradient {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.evo-pl-marquee-label {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  max-width: calc(100% - 1.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 03 · ABOUT ---------- */
+.evo-pl-about {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  padding: 5rem 1.25rem;
+  text-align: center;
+}
+@media (min-width: 640px) { .evo-pl-about { gap: 3.5rem; padding: 5rem 2rem; } }
+@media (min-width: 768px) { .evo-pl-about { gap: 4rem; padding: 5rem 2.5rem; } }
+.evo-pl-animated-text {
+  color: #D7E2EA;
+  font-weight: 500;
+  line-height: 1.7;
+  max-width: 560px;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+}
+.evo-pl-char {
+  display: inline-block;
+  opacity: 0.2;
+  transition: opacity 0.1s linear;
+}
+
+/* ---------- 04 · SERVICES ---------- */
+.evo-pl-services {
+  background: #fff;
+  color: #0C0C0C;
+  border-radius: 2.5rem 2.5rem 0 0;
+  padding: 5rem 1.25rem;
+}
+@media (min-width: 640px) { .evo-pl-services { border-radius: 3.125rem 3.125rem 0 0; padding: 6rem 2rem; } }
+@media (min-width: 768px) { .evo-pl-services { border-radius: 3.75rem 3.75rem 0 0; padding: 8rem 2.5rem; } }
+.evo-pl-services-heading {
+  background: linear-gradient(180deg, #646973 0%, #0C0C0C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  margin-bottom: 4rem;
+}
+@media (min-width: 768px) { .evo-pl-services-heading { margin-bottom: 5rem; } }
+.evo-pl-services-list {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+.evo-pl-service-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 2rem 0;
+  border-bottom: 1px solid rgba(12, 12, 12, 0.15);
+}
+@media (min-width: 768px) { .evo-pl-service-item { padding: 2.5rem 0; } }
+.evo-pl-service-num {
+  font-weight: 900;
+  font-size: clamp(3rem, 10vw, 9rem);
+  color: #0C0C0C;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.evo-pl-service-body { flex: 1; min-width: 0; }
+.evo-pl-service-name {
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: clamp(1rem, 2.2vw, 2.1rem);
+  color: #0C0C0C;
+  margin-bottom: 0.5rem;
+}
+.evo-pl-service-desc {
+  font-weight: 300;
+  line-height: 1.6;
+  max-width: 42rem;
+  font-size: clamp(0.85rem, 1.6vw, 1.25rem);
+  color: rgba(12, 12, 12, 0.6);
+}
+
+/* ---------- 05 · PROJECTS 堆叠 ---------- */
+.evo-pl-projects {
+  background: #0a0a0f;
+  border-radius: 2.5rem 2.5rem 0 0;
+  margin-top: -2.5rem;
+  position: relative;
+  z-index: 10;
+  padding: 5rem 1.25rem 5rem;
+}
+@media (min-width: 640px) { .evo-pl-projects { border-radius: 3.125rem 3.125rem 0 0; margin-top: -3rem; padding: 5rem 2rem; } }
+@media (min-width: 768px) { .evo-pl-projects { border-radius: 3.75rem 3.75rem 0 0; margin-top: -3.5rem; padding: 5rem 2.5rem; } }
+
+.evo-pl-stack {
+  display: flex;
+  flex-direction: column;
+  margin: 3rem 0;
+}
+.evo-pl-stack-card {
+  position: sticky;
+  top: 6rem;
+  transform-origin: top center;
+  will-change: transform;
+  cursor: pointer;
+}
+@media (min-width: 768px) { .evo-pl-stack-card { top: 8rem; } }
+.evo-pl-stack-inner {
+  border: 2px solid #D7E2EA;
+  background: #0a0a0f;
+  border-radius: 2.5rem;
+  padding: 1rem;
+  overflow: hidden;
+}
+@media (min-width: 640px) { .evo-pl-stack-inner { border-radius: 3.125rem; padding: 1.5rem; } }
+@media (min-width: 768px) { .evo-pl-stack-inner { border-radius: 3.75rem; padding: 2rem; } }
+.evo-pl-stack-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.evo-pl-stack-num {
+  font-weight: 900;
+  font-size: clamp(3rem, 10vw, 9rem);
+  line-height: 1;
+  background: linear-gradient(180deg, #646973 0%, #BBCCD7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.evo-pl-stack-meta { flex: 1; min-width: 0; }
+.evo-pl-stack-cat {
+  display: inline-block;
+  color: #D7E2EA;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+.evo-pl-stack-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  line-height: 1.2;
+}
+.evo-pl-stack-btn { flex-shrink: 0; }
+.evo-pl-stack-grid {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  gap: 0.75rem;
+}
+.evo-pl-stack-col1 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.evo-pl-stack-col1 > *:nth-child(1) { height: clamp(130px, 16vw, 230px); }
+.evo-pl-stack-col1 > *:nth-child(2) { height: clamp(160px, 22vw, 340px); }
+.evo-pl-stack-col2 > * { height: 100%; min-height: clamp(300px, 38vw, 580px); }
+.evo-pl-stack-img,
+.evo-pl-stack-gradient {
+  width: 100%;
+  object-fit: cover;
+  border-radius: 2.5rem;
+  display: block;
+}
+@media (min-width: 640px) {
+  .evo-pl-stack-img, .evo-pl-stack-gradient { border-radius: 3.125rem; }
+}
+@media (min-width: 768px) {
+  .evo-pl-stack-img, .evo-pl-stack-gradient { border-radius: 3.75rem; }
+}
+.evo-pl-stack-gradient {
+  background: linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan));
+}
+
+/* ---------- ARCHIVE 全部作品 ---------- */
+.evo-pl-archive {
+  margin-top: 4rem;
+  border-top: 1px solid rgba(215, 226, 234, 0.15);
+  padding-top: 3rem;
+}
+.evo-pl-archive-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+.evo-pl-archive-title {
+  color: #D7E2EA;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  text-align: center;
+}
+
+/* 移动端：portrait 不挡 tagline */
+@media (max-width: 639px) {
+  .evo-pl-hero-tagline { position: relative; z-index: 6; }
+  .evo-pl-hero-portrait { z-index: 4; opacity: 0.85; }
+}
+
+/* reduced-motion：磁吸归零、堆叠不缩放 */
+@media (prefers-reduced-motion: reduce) {
+  .evo-pl-magnet { transition: none; transform: none; }
+  .evo-pl-stack-card { transform: none !important; opacity: 1 !important; }
+  .evo-pl-char { opacity: 1 !important; }
+  .evo-pl-marquee-row { transform: none !important; }
+}
+

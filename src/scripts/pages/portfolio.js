@@ -1,8 +1,8 @@
 // ============================================================
-// 作品集 portfolio.js（CMS 版）
+// 作品集 portfolio.js（Landing Page 版）
 // 数据源：优先飞书多维表格；为空或未配置时回退到 data.js
-// 功能：分类筛选 + 搜索 + 3D 倾斜卡片 + 详情弹窗 + 筛选动画 + 滚动渐入
-// 轮播已移至首页
+// 结构：Hero(磁吸肖像) → Marquee(滚动跑马灯) → About(字符级动画)
+//       → Services(分类列表) → Projects(堆叠缩放卡片) + Archive(筛选网格)
 // ============================================================
 
 import { fetchProjects } from '../feishu.js'
@@ -13,11 +13,280 @@ import { bindTiltEffect } from '../effects.js'
 let currentFilter = 'all'
 let projects = []
 let searchQuery = ''
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches
 
+// ============================================================
+// 工具：取作品封面图，没有则用渐变占位
+// ============================================================
+function projectCoverStyle(p) {
+  const gradient = ACCENT_GRADIENT[p.accent] || ACCENT_GRADIENT.purple
+  if (p.coverImage) {
+    return { bg: '', img: p.coverImage, gradient }
+  }
+  return { bg: `linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))`, img: '', gradient }
+}
+
+// ============================================================
+// 01 · HERO 磁吸肖像
+// 鼠标靠近时肖像被"吸引"产生位移，远离时回弹
+// ============================================================
+function setupHeroMagnet() {
+  if (prefersReducedMotion || isCoarsePointer) return
+  const magnet = document.getElementById('evo-pl-magnet')
+  if (!magnet) return
+  const STRENGTH = 3
+  const PADDING = 150
+  let raf = 0
+  let targetX = 0, targetY = 0
+  let curX = 0, curY = 0
+
+  function onMove(e) {
+    const rect = magnet.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    const dx = e.clientX - cx
+    const dy = e.clientY - cy
+    // 鼠标在 PADDING 范围内才激活
+    if (Math.abs(dx) < rect.width / 2 + PADDING && Math.abs(dy) < rect.height / 2 + PADDING) {
+      targetX = dx / STRENGTH
+      targetY = dy / STRENGTH
+      magnet.style.transition = 'transform 0.3s ease-out'
+    } else {
+      targetX = 0
+      targetY = 0
+      magnet.style.transition = 'transform 0.6s ease-in-out'
+    }
+    if (!raf) raf = requestAnimationFrame(tick)
+  }
+
+  function tick() {
+    // 缓动逼近
+    curX += (targetX - curX) * 0.18
+    curY += (targetY - curY) * 0.18
+    magnet.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`
+    if (Math.abs(targetX - curX) > 0.1 || Math.abs(targetY - curY) > 0.1) {
+      raf = requestAnimationFrame(tick)
+    } else {
+      raf = 0
+    }
+  }
+
+  window.addEventListener('mousemove', onMove, { passive: true })
+  // 离开窗口归位
+  window.addEventListener('mouseout', (e) => {
+    if (!e.relatedTarget) {
+      targetX = 0; targetY = 0
+      magnet.style.transition = 'transform 0.6s ease-in-out'
+      if (!raf) raf = requestAnimationFrame(tick)
+    }
+  })
+}
+
+// ============================================================
+// 02 · MARQUEE 滚动跑马灯
+// 两行作品封面，随页面滚动横向位移（一行右移，一行左移）
+// ============================================================
+function renderMarquee() {
+  const row1 = document.getElementById('evo-pl-marquee-row-1')
+  const row2 = document.getElementById('evo-pl-marquee-row-2')
+  if (!row1 || !row2) return
+
+  // 用项目数据生成封面瓦片；不足则循环
+  const source = projects.length ? projects : MOCK_PROJECTS
+  const half = Math.ceil(source.length / 2) || 3
+  const set1 = source.slice(0, half)
+  const set2 = source.slice(half)
+
+  const buildTile = (p, idx) => {
+    const cover = projectCoverStyle(p)
+    const imgHtml = cover.img
+      ? `<img src="${cover.img}" alt="${p.title}" loading="lazy" class="evo-pl-marquee-img" />`
+      : `<div class="evo-pl-marquee-gradient" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}"></div>`
+    return `<div class="evo-pl-marquee-tile">${imgHtml}<span class="evo-pl-marquee-label">${p.title || ''}</span></div>`
+  }
+
+  // 三倍化以无缝滚动
+  const triple = (arr) => [...arr, ...arr, ...arr].map(buildTile).join('')
+  row1.innerHTML = triple(set1.length ? set1 : source)
+  row2.innerHTML = triple(set2.length ? set2 : source.slice(0, 3))
+}
+
+function setupMarqueeScroll() {
+  if (prefersReducedMotion) return
+  const section = document.getElementById('evo-pl-marquee')
+  const row1 = document.getElementById('evo-pl-marquee-row-1')
+  const row2 = document.getElementById('evo-pl-marquee-row-2')
+  if (!section || !row1 || !row2) return
+
+  let raf = 0
+  function update() {
+    raf = 0
+    const rect = section.getBoundingClientRect()
+    // 滚动进度：section 顶部从视口底到视口顶的过程中 0→1
+    const progress = (window.innerHeight - rect.top) / (window.innerHeight + rect.height)
+    const offset = progress * 600 // 位移幅度
+    row1.style.transform = `translateX(${offset - 200}px)`
+    row2.style.transform = `translateX(${-(offset - 200)}px)`
+  }
+  function onScroll() {
+    if (!raf) raf = requestAnimationFrame(update)
+  }
+  window.addEventListener('scroll', onScroll, { passive: true })
+  update()
+}
+
+// ============================================================
+// 03 · ABOUT 字符级滚动揭示
+// 段落里每个字符随滚动进度从 opacity 0.2 → 1
+// ============================================================
+function setupAboutText() {
+  if (prefersReducedMotion) return
+  const el = document.getElementById('evo-pl-about-text')
+  if (!el) return
+  const text = el.textContent.trim()
+  // 包成 span，保留空格
+  el.innerHTML = text.split('').map((ch) => {
+    if (ch === ' ' || ch === '\n') return ch
+    return `<span class="evo-pl-char">${ch}</span>`
+  }).join('')
+
+  const chars = el.querySelectorAll('.evo-pl-char')
+  let raf = 0
+  function update() {
+    raf = 0
+    const rect = el.getBoundingClientRect()
+    // 段落从视口 80% 进入到 20% 退出时的进度 0→1
+    const start = window.innerHeight * 0.8
+    const end = window.innerHeight * 0.2
+    const progress = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
+    const total = chars.length
+    chars.forEach((c, i) => {
+      const charProgress = total > 1 ? i / (total - 1) : 1
+      // 字符在该进度点之前则完全显示，否则按差值渐显
+      const local = Math.max(0, Math.min(1, (progress - charProgress) * 3 + 0.2))
+      c.style.opacity = (0.2 + local * 0.8).toFixed(3)
+    })
+  }
+  function onScroll() {
+    if (!raf) raf = requestAnimationFrame(update)
+  }
+  window.addEventListener('scroll', onScroll, { passive: true })
+  update()
+}
+
+// ============================================================
+// 04 · SERVICES 分类列表
+// 用 PROJECT_FILTERS 作为"服务项"，统计每类作品数
+// ============================================================
+function renderServices() {
+  const list = document.getElementById('evo-pl-services-list')
+  if (!list) return
+
+  const items = PROJECT_FILTERS.filter((f) => f.key !== 'all').map((f, i) => {
+    const count = projects.filter((p) => (p.tags || []).includes(f.key) || (p.category || '') === f.key).length
+    const num = String(i + 1).padStart(2, '0')
+    return `
+      <div class="evo-pl-service-item evo-reveal" data-reveal-delay="${i * 100}">
+        <span class="evo-pl-service-num">${num}</span>
+        <div class="evo-pl-service-body">
+          <h3 class="evo-pl-service-name">${f.label}</h3>
+          <p class="evo-pl-service-desc">该分类下 ${count} 个作品 — 点击下方筛选查看</p>
+        </div>
+      </div>`
+  }).join('')
+  list.innerHTML = items
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ============================================================
+// 05 · PROJECTS 堆叠缩放卡片
+// 多张卡片 sticky 堆叠，滚动时下方卡片缩放变小
+// ============================================================
+function renderStackCards() {
+  const stack = document.getElementById('evo-pl-stack')
+  if (!stack) return
+
+  // 取前 3 个作品（或 featured）做堆叠
+  const featured = projects.length
+    ? projects.filter((p) => p.featured).slice(0, 3)
+    : []
+  const list = (featured.length ? featured : projects.length ? projects.slice(0, 3) : MOCK_PROJECTS.slice(0, 3))
+
+  const total = list.length
+  stack.innerHTML = list.map((p, i) => {
+    const cover = projectCoverStyle(p)
+    const num = String(i + 1).padStart(2, '0')
+    const targetScale = 1 - (total - 1 - i) * 0.03
+    const imgHtml = cover.img
+      ? `<img src="${cover.img}" alt="${p.title}" loading="lazy" class="evo-pl-stack-img" />`
+      : `<div class="evo-pl-stack-gradient" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}"></div>`
+    return `
+      <div class="evo-pl-stack-card" data-stack-index="${i}" data-target-scale="${targetScale}" style="top:${i * 28}px" data-project-id="${p.id}">
+        <div class="evo-pl-stack-inner">
+          <div class="evo-pl-stack-head">
+            <span class="evo-pl-stack-num">${num}</span>
+            <div class="evo-pl-stack-meta">
+              <span class="evo-pl-stack-cat">${p.categoryLabel || p.category || ''}</span>
+              <h3 class="evo-pl-stack-title">${p.title}</h3>
+            </div>
+            <button class="evo-pl-ghost-btn evo-pl-stack-btn" type="button">查看作品</button>
+          </div>
+          <div class="evo-pl-stack-grid">
+            <div class="evo-pl-stack-col1">${imgHtml}${imgHtml}</div>
+            <div class="evo-pl-stack-col2">${imgHtml}</div>
+          </div>
+        </div>
+      </div>`
+  }).join('')
+
+  // 绑定点击 → 打开详情弹窗
+  stack.querySelectorAll('[data-project-id]').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      // 不要点"查看作品"按钮也触发，按钮自己有逻辑
+      const id = card.dataset.projectId
+      const project = projects.find((p) => p.id === id) || MOCK_PROJECTS.find((p) => p.id === id)
+      if (project) openProjectModal(project)
+    })
+  })
+}
+
+function setupStackScroll() {
+  if (prefersReducedMotion) return
+  const stack = document.getElementById('evo-pl-stack')
+  if (!stack) return
+  const cards = stack.querySelectorAll('.evo-pl-stack-card')
+  if (!cards.length) return
+
+  let raf = 0
+  function update() {
+    raf = 0
+    const stackRect = stack.getBoundingClientRect()
+    cards.forEach((card, i) => {
+      const targetScale = parseFloat(card.dataset.targetScale || '1')
+      const cardRect = card.getBoundingClientRect()
+      // 该卡片相对栈顶的进度
+      const progress = Math.max(0, Math.min(1, (stackRect.top * -1 + window.innerHeight * 0.5 - cardRect.top + stackRect.top) / 300))
+      // 后面的卡片随滚动放大到 1，前面的卡片随滚动缩小到 targetScale
+      let scale = targetScale + (1 - targetScale) * (1 - progress)
+      scale = Math.max(targetScale, Math.min(1, scale))
+      card.style.transform = `scale(${scale.toFixed(3)})`
+      card.style.opacity = (0.7 + 0.3 * (1 - Math.abs(scale - 1) * 4)).toFixed(3)
+    })
+  }
+  function onScroll() {
+    if (!raf) raf = requestAnimationFrame(update)
+  }
+  window.addEventListener('scroll', onScroll, { passive: true })
+  update()
+}
+
+// ============================================================
+// ARCHIVE 筛选 + 网格（保留原有能力）
+// ============================================================
 function renderFilters() {
   const bar = document.getElementById('evo-portfolio-filters')
   if (!bar) return
-  // 统计每个分类下的作品数（用于角标显示）
   const countFor = (key) => {
     if (key === 'all') return projects.length
     return projects.filter((p) => (p.tags || []).includes(key) || (p.category || '') === key).length
@@ -84,7 +353,6 @@ function renderGrid() {
   const empty = document.getElementById('evo-portfolio-empty')
   if (!grid) return
 
-  // 1. 分类筛选
   let list = currentFilter === 'all'
     ? projects
     : projects.filter((p) => {
@@ -94,7 +362,6 @@ function renderGrid() {
         return false
       })
 
-  // 2. 关键词搜索（标题、简介、分类、年份）
   if (searchQuery.trim()) {
     const q = searchQuery.trim().toLowerCase()
     list = list.filter((p) =>
@@ -131,7 +398,9 @@ function renderGrid() {
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
-// 加载数据：飞书优先 → fallback
+// ============================================================
+// 数据加载
+// ============================================================
 async function loadData() {
   const raw = await fetchProjects()
   if (raw && raw.length) {
@@ -141,10 +410,11 @@ async function loadData() {
   projects = MOCK_PROJECTS.map((p) => ({ ...p, coverImage: null, video: null, demoUrl: null }))
 }
 
+// ============================================================
+// 初始化
+// ============================================================
 async function init() {
-  renderFilters()
-  // 页面级搜索已统一走 header 全局搜索（evo-search-trigger）
-  // searchQuery 状态保留：用于 header 全局搜索跳转后渲染结果
+  // 先渲染骨架占位
   const grid = document.getElementById('evo-portfolio-grid')
   if (grid) grid.innerHTML = Array.from({ length: 6 }, () => `
     <div class="evo-glass rounded-[var(--evo-radius-lg)] overflow-hidden flex flex-col">
@@ -159,9 +429,28 @@ async function init() {
         <div class="evo-skeleton evo-skeleton-line" style="width:70%"></div>
       </div>
     </div>`).join('')
+
+  // Landing 部分先渲染（用 mock），数据到了再刷新
+  renderMarquee()
+  renderServices()
+
   await loadData()
-  renderFilters() // 数据加载后重新渲染筛选条，刷新分类角标的数量
+
+  // 数据到了刷新所有 landing 区块
+  renderMarquee()
+  renderServices()
+  renderStackCards()
+  renderFilters()
   renderGrid()
+
+  // 启动动画交互（数据渲染完后再绑定，避免空节点）
+  setupHeroMagnet()
+  setupMarqueeScroll()
+  setupAboutText()
+  setupStackScroll()
+
+  // 补刷 reveal
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
 if (document.readyState === 'loading') {

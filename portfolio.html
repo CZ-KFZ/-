@@ -8,32 +8,88 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>作品集 · EchoVerse</title>
 </head>
-<body class="min-h-screen antialiased">
+<body class="min-h-screen antialiased evo-portfolio-landing">
   <div id="evo-header"></div>
 
-  <main class="pt-16">
-    <section class="max-w-7xl mx-auto px-5 sm:px-6 py-10 sm:py-12">
-      <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-12 evo-reveal">
-        <h1 class="evo-display text-3xl sm:text-4xl md:text-5xl mb-4">作品集</h1>
-        <p class="text-[var(--evo-ink-2)]">设计、开发、研究与影像实验的集合</p>
+  <main class="evo-portfolio-main">
+
+    <!-- 01 · HERO -->
+    <section class="evo-pl-hero" id="evo-pl-hero">
+      <div class="evo-pl-hero-nav evo-reveal" data-reveal-delay="0">
+        <a href="#evo-pl-about" class="evo-pl-navlink">关于</a>
+        <a href="#evo-pl-services" class="evo-pl-navlink">分类</a>
+        <a href="#evo-pl-projects" class="evo-pl-navlink">作品</a>
+        <a href="index.html#evo-home-subscribe" class="evo-pl-navlink">联系</a>
       </div>
 
-      <!-- 筛选条 -->
-      <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-10 evo-reveal" data-reveal-delay="100" id="evo-portfolio-filters">
-        <!-- 由 portfolio.js 渲染 -->
+      <div class="evo-pl-hero-heading-wrap overflow-hidden">
+        <h1 class="evo-pl-hero-heading evo-reveal" data-reveal-delay="150">作品集</h1>
       </div>
 
-      <!-- 作品网格 -->
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6" id="evo-portfolio-grid">
-        <!-- 由 portfolio.js 渲染 -->
+      <div class="evo-pl-hero-bottom">
+        <p class="evo-pl-hero-tagline evo-reveal" data-reveal-delay="350">
+          一个以创造为驱动的人，打磨 striking 且难以忘怀的项目
+        </p>
+        <a href="index.html#evo-home-subscribe" class="evo-pl-contact-btn evo-reveal" data-reveal-delay="500">联系我</a>
       </div>
 
-      <!-- 空状态 -->
-      <div id="evo-portfolio-empty" class="hidden text-center py-16 text-[var(--evo-ink-3)]">
-        <p class="text-lg mb-2">🌫️</p>
-        <p>这个分类下还没有作品。</p>
+      <!-- 磁吸肖像 -->
+      <div class="evo-pl-hero-portrait" id="evo-pl-portrait-wrap">
+        <div class="evo-pl-magnet" id="evo-pl-magnet">
+          <img
+            src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=A%20cosmic%20creator%20avatar%20portrait%2C%20ethereal%20figure%20with%20glowing%20purple%20and%20cyan%20nebula%20energy%2C%20abstract%20digital%20art%20persona%2C%20dark%20background%2C%20mystical%20atmosphere&image_size=portrait_4_3"
+            alt="创作者肖像"
+            class="evo-pl-portrait-img"
+            loading="eager"
+          />
+        </div>
       </div>
     </section>
+
+    <!-- 02 · MARQUEE 滚动跑马灯 -->
+    <section class="evo-pl-marquee" id="evo-pl-marquee">
+      <div class="evo-pl-marquee-row" id="evo-pl-marquee-row-1"></div>
+      <div class="evo-pl-marquee-row" id="evo-pl-marquee-row-2"></div>
+    </section>
+
+    <!-- 03 · ABOUT -->
+    <section class="evo-pl-about" id="evo-pl-about">
+      <h2 class="evo-pl-section-heading evo-reveal">关于作品集</h2>
+      <p class="evo-pl-animated-text" id="evo-pl-about-text">
+        五年设计、开发与研究的积淀，专注交互装置、Web 应用与创意编程。每一个项目都是一次实验，旨在让数字体验有温度、有记忆点。让我们一起创造些不一样的东西。
+      </p>
+      <a href="about.html" class="evo-pl-ghost-btn evo-reveal" data-reveal-delay="200">了解更多</a>
+    </section>
+
+    <!-- 04 · SERVICES 分类 -->
+    <section class="evo-pl-services" id="evo-pl-services">
+      <h2 class="evo-pl-services-heading evo-reveal">分类</h2>
+      <div class="evo-pl-services-list" id="evo-pl-services-list">
+        <!-- 由 portfolio.js 渲染 -->
+      </div>
+    </section>
+
+    <!-- 05 · PROJECTS 堆叠卡片 -->
+    <section class="evo-pl-projects" id="evo-pl-projects">
+      <h2 class="evo-pl-section-heading evo-reveal">精选作品</h2>
+      <div class="evo-pl-stack" id="evo-pl-stack">
+        <!-- 由 portfolio.js 渲染堆叠卡片 -->
+      </div>
+
+      <!-- 全部作品网格（保留筛选 + 详情弹窗能力） -->
+      <div class="evo-pl-archive">
+        <div class="evo-pl-archive-head">
+          <h3 class="evo-pl-archive-title evo-reveal">全部作品</h3>
+          <div class="flex flex-wrap justify-center gap-2 sm:gap-3 evo-reveal" data-reveal-delay="100" id="evo-portfolio-filters"></div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" id="evo-portfolio-grid"></div>
+        <div id="evo-portfolio-empty" class="hidden text-center py-16 text-[var(--evo-ink-3)]">
+          <p class="text-lg mb-2">🌫️</p>
+          <p>这个分类下还没有作品。</p>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <div id="evo-footer"></div>
