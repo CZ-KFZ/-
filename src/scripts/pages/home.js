@@ -444,13 +444,20 @@ function renderNowSection(settings) {
   if (!host) return
 
   // 飞书配置优先，否则用默认
-  const items = (settings.nowItems && settings.nowItems.length)
+  const feishuItems = (settings.nowItems && settings.nowItems.length)
     ? settings.nowItems.map((n) => ({
         icon: n.icon || '·',
         label: n.label || '',
         text: n.text || ''
       }))
-    : NOW_DEFAULT_ITEMS
+    : null
+
+  // 调试日志：让你在浏览器 console 看清 now 数据来源
+  console.log('[EchoVerse] nowItems from feishu =', settings.nowItems)
+  console.log('[EchoVerse] nowUpdated =', settings.nowUpdated)
+  console.log('[EchoVerse] nowItems 是否用默认 =', !feishuItems)
+
+  const items = feishuItems || NOW_DEFAULT_ITEMS
 
   host.innerHTML = items.map((item, i) => {
     const tone = NOW_TONES[i % NOW_TONES.length]

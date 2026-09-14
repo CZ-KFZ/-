@@ -276,29 +276,85 @@ function normalizeSettings(record) {
 
 // 解析「此刻在做」：兼容两种字段结构
 // 1) 多行文本「此刻在做」：每行「图标 标签：内容」
-// 2) 多个独立字段「正在写」「正在读」「正在做」「正在学」
-// 宽容格式：可省略图标、可省略标签、用全角冒号也行
+// 2) 多个独立字段「✍️正在写」「📖正在读」「🔧正在做」「🎨正在学」
+// 字段名含 emoji 前缀（与飞书表头完全一致）
+// 宽松匹配：若精确 key 不命中，按中文后缀模糊匹配（应对 emoji 变体差异）
 const NOW_FIELD_DEFS = [
-  { key: '正在写', icon: '✍️', label: '正在写' },
-  { key: '正在读', icon: '📖', label: '正在读' },
-  { key: '正在做', icon: '🔧', label: '正在做' },
-  { key: '正在学', icon: '🎨', label: '正在学' }
+  { key: '✍️正在写', icon: '✍️', label: '正在写' },
+  { key: '📖正在读', icon: '📖', label: '正在读' },
+  { key: '🔧正在做', icon: '🔧', label: '正在做' },
+  { key: '🎨正在学', icon: '🎨', label: '正在学' }
 ]
+// 把任意飞书字段值规整成纯文本字符串
+// 兼容：纯字符串 / 富文本数组 [{text}] / 单选 {text} / 多选 [{text}] / 数字等
+function toText(value) {
+  if (value == null) return ''
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (Array.isArray(value)) {
+    return value.map((x) => {
+      if (x == null) return ''
+      if (typeof x === 'string') return x
+      return x.text || x.name || x.value || ''
+    }).join('').trim()
+  }
+  if (typeof value === 'object') {
+    // 单选字段返回 { text: '选项名' }
+    return value.text || value.name || value.value || ''
+  }
+  return ''
+}
+
+// 从 fields 里找匹配字段值：精确 key 命中，或任何键包含 label
+function findFieldValue(fields, defKey, label) {
+  // 精确命中
+  if (fields[defKey] != null) return fields[defKey]
+  const keys = Object.keys(fields)
+  // 宽松：去 emoji/空白后比较（应对 emoji 变体差异）
+  const stripEmoji = (s) => s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\s]/gu, '')
+  const strippedLabel = stripEmoji(label)
+  for (const k of keys) {
+    const sk = stripEmoji(k)
+    if (sk === strippedLabel || sk.endsWith(strippedLabel) || sk.includes(strippedLabel)) {
+      return fields[k]
+    }
+  }
+  // 再退一步：原始 includes
+  for (const k of keys) {
+    if (k.includes(label)) return fields[k]
+  }
+  return null
+}
+
 function parseNowItems(raw, fields) {
-  // 模式 2：优先用独立字段（你的飞书表实际结构）
-  if (fields && NOW_FIELD_DEFS.some((d) => fields[d.key])) {
-    return NOW_FIELD_DEFS
-      .filter((d) => {
-        const v = fields[d.key]
-        return v && (typeof v === 'string' ? v.trim() : Array.isArray(v) ? v.length : true)
+  // 调试日志：帮你在 console 看清飞书实际返回了哪些字段
+  // 开发环境或 URL 带 ?debug=1 时输出
+  const debugOn = isDev || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1')
+  if (debugOn) {
+    console.log('[EchoVerse] settings fields keys =', fields ? Object.keys(fields) : '(无 fields)')
+    console.log('[EchoVerse] settings fields =', fields)
+    if (fields) {
+      NOW_FIELD_DEFS.forEach((d) => {
+        const v = findFieldValue(fields, d.key, d.label)
+        console.log(`[EchoVerse] ${d.key} ->`, v, '| 文本:', toText(v))
       })
+    }
+  }
+
+  // 模式 2：优先用独立字段（你的飞书表实际结构，字段名带 emoji）
+  if (fields && NOW_FIELD_DEFS.some((d) => findFieldValue(fields, d.key, d.label) != null)) {
+    return NOW_FIELD_DEFS
       .map((d) => {
-        const v = fields[d.key]
-        // 飞书文本字段可能是字符串或富文本数组
-        const text = typeof v === 'string'
-          ? v.trim()
-          : (Array.isArray(v) ? v.map((x) => x.text || x.name || '').join('').trim() : String(v || '').trim())
-        return { icon: d.icon, label: d.label, text: text || d.label }
+        const v = findFieldValue(fields, d.key, d.label)
+        return { def: d, value: v }
+      })
+      .filter((item) => {
+        const text = toText(item.value)
+        return text.length > 0
+      })
+      .map((item) => {
+        const text = toText(item.value)
+        return { icon: item.def.icon, label: item.def.label, text }
       })
       .filter((item) => item.text)
   }
