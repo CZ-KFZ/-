@@ -30,17 +30,17 @@
         <p class="evo-pl-hero-tagline evo-reveal" data-reveal-delay="350">
           一个以创造为驱动的人，打磨 striking 且难以忘怀的项目
         </p>
-        <a href="index.html#evo-home-subscribe" class="evo-pl-contact-btn evo-reveal" data-reveal-delay="500">联系我</a>
       </div>
 
-      <!-- 磁吸肖像 -->
+      <!-- 磁吸肖像：用本地 hero-bg.jpg，避免 AI 图片生成 URL 不稳定 -->
       <div class="evo-pl-hero-portrait" id="evo-pl-portrait-wrap">
         <div class="evo-pl-magnet" id="evo-pl-magnet">
           <img
-            src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=A%20cosmic%20creator%20avatar%20portrait%2C%20ethereal%20figure%20with%20glowing%20purple%20and%20cyan%20nebula%20energy%2C%20abstract%20digital%20art%20persona%2C%20dark%20background%2C%20mystical%20atmosphere&image_size=portrait_4_3"
+            src="/hero-bg.jpg"
             alt="创作者肖像"
             class="evo-pl-portrait-img"
             loading="eager"
+            onerror="this.style.display='none';this.parentElement.classList.add('evo-pl-portrait-fallback')"
           />
         </div>
       </div>

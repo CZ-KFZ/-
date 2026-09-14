@@ -807,6 +807,27 @@
   border-radius: 1.5rem;
   filter: drop-shadow(0 20px 60px rgba(124, 58, 237, 0.35));
 }
+/* 图片加载失败时用渐变 + 字符占位 */
+.evo-pl-portrait-fallback {
+  width: 280px;
+  height: 360px;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, var(--evo-purple-700) 0%, var(--evo-cyan) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 20px 60px rgba(124, 58, 237, 0.35));
+}
+@media (min-width: 640px) { .evo-pl-portrait-fallback { width: 360px; height: 460px; } }
+@media (min-width: 768px) { .evo-pl-portrait-fallback { width: 440px; height: 560px; } }
+@media (min-width: 1024px) { .evo-pl-portrait-fallback { width: 520px; height: 660px; } }
+.evo-pl-portrait-fallback::before {
+  content: '阴';
+  font-size: clamp(4rem, 12vw, 8rem);
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
 
 /* 渐变胶囊按钮（联系我） */
 .evo-pl-contact-btn {
