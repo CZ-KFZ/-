@@ -26,17 +26,9 @@
         <h1 class="evo-pl-hero-heading evo-reveal" data-reveal-delay="150">作品集</h1>
       </div>
 
-      <!-- 磁吸肖像：飞书 settings 头像优先，无则显示「阴」字渐变兜底 -->
+      <!-- 3D 头像球体：Three.js 渲染，飞书 settings 头像贴到球体，自动旋转 -->
       <div class="evo-pl-hero-portrait" id="evo-pl-portrait-wrap">
-        <div class="evo-pl-magnet evo-pl-portrait-fallback" id="evo-pl-magnet">
-          <img
-            src=""
-            alt="创作者头像"
-            class="evo-pl-portrait-img"
-            style="display:none"
-            loading="eager"
-          />
-        </div>
+        <div class="evo-pl-sphere" id="evo-pl-sphere"></div>
       </div>
 
       <div class="evo-pl-hero-bottom">

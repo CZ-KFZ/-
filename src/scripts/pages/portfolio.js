@@ -9,10 +9,12 @@ import { fetchProjects, fetchSiteSettings } from '../feishu.js'
 import { PROJECTS as MOCK_PROJECTS, PROJECT_FILTERS } from '../data.js'
 import { TAG_TONE, ACCENT_GRADIENT, ACCENT_GLOW, openProjectModal } from '../project-ui.js'
 import { bindTiltEffect } from '../effects.js'
+import { createAvatarSphere } from '../three-sphere.js'
 
 let currentFilter = 'all'
 let projects = []
 let settings = null
+let sphereDispose = null
 let searchQuery = ''
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches
@@ -29,80 +31,19 @@ function projectCoverStyle(p) {
 }
 
 // ============================================================
-// 01 · HERO 磁吸肖像
-// 鼠标靠近时肖像被"吸引"产生位移，远离时回弹
+// 01 · HERO 3D 头像球体
+// 用 Three.js 把头像贴到球体上，像地球一样自动旋转
 // ============================================================
-function updateHeroPortrait() {
-  const magnet = document.getElementById('evo-pl-magnet')
-  const img = magnet?.querySelector('img')
-  if (!magnet || !img) return
-  // 优先用飞书 settings 的头像；没有则保留默认「阴」字渐变兜底
-  const src = settings?.avatarImage
-  if (src) {
-    img.src = src
-    img.alt = settings?.ownerName ? `${settings.ownerName}的头像` : '创作者头像'
-    img.style.display = 'block'
-    magnet.classList.remove('evo-pl-portrait-fallback')
-    img.onerror = () => {
-      img.style.display = 'none'
-      magnet.classList.add('evo-pl-portrait-fallback')
-    }
-  }
-  // 没有 src：保持兜底（HTML 默认就是 fallback 状态）
+function initHeroSphere() {
+  const container = document.getElementById('evo-pl-sphere')
+  if (!container) return
+  // 销毁旧的（防止重复初始化）
+  if (sphereDispose) sphereDispose()
+  // 拿飞书 settings 的头像；没有也能用兜底贴图
+  const avatarUrl = settings?.avatarImage || null
+  sphereDispose = createAvatarSphere(container, avatarUrl)
 }
 
-
-function setupHeroMagnet() {
-  if (prefersReducedMotion || isCoarsePointer) return
-  const magnet = document.getElementById('evo-pl-magnet')
-  if (!magnet) return
-  const STRENGTH = 3
-  const PADDING = 150
-  let raf = 0
-  let targetX = 0, targetY = 0
-  let curX = 0, curY = 0
-
-  function onMove(e) {
-    const rect = magnet.getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height / 2
-    const dx = e.clientX - cx
-    const dy = e.clientY - cy
-    // 鼠标在 PADDING 范围内才激活
-    if (Math.abs(dx) < rect.width / 2 + PADDING && Math.abs(dy) < rect.height / 2 + PADDING) {
-      targetX = dx / STRENGTH
-      targetY = dy / STRENGTH
-      magnet.style.transition = 'transform 0.3s ease-out'
-    } else {
-      targetX = 0
-      targetY = 0
-      magnet.style.transition = 'transform 0.6s ease-in-out'
-    }
-    if (!raf) raf = requestAnimationFrame(tick)
-  }
-
-  function tick() {
-    // 缓动逼近
-    curX += (targetX - curX) * 0.18
-    curY += (targetY - curY) * 0.18
-    magnet.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`
-    if (Math.abs(targetX - curX) > 0.1 || Math.abs(targetY - curY) > 0.1) {
-      raf = requestAnimationFrame(tick)
-    } else {
-      raf = 0
-    }
-  }
-
-  window.addEventListener('mousemove', onMove, { passive: true })
-  // 离开窗口归位
-  window.addEventListener('mouseout', (e) => {
-    if (!e.relatedTarget) {
-      targetX = 0; targetY = 0
-      magnet.style.transition = 'transform 0.6s ease-in-out'
-      if (!raf) raf = requestAnimationFrame(tick)
-    }
-  })
-}
 
 // ============================================================
 // 02 · MARQUEE 滚动跑马灯
@@ -475,7 +416,7 @@ async function init() {
   await loadData()
 
   // 数据到了刷新所有 landing 区块
-  updateHeroPortrait()
+  initHeroSphere()
   renderMarquee()
   renderServices()
   renderStackCards()
@@ -483,7 +424,6 @@ async function init() {
   renderGrid()
 
   // 启动动画交互（数据渲染完后再绑定，避免空节点）
-  setupHeroMagnet()
   setupMarqueeScroll()
   setupAboutText()
   setupStackScroll()
