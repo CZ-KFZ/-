@@ -251,8 +251,13 @@ function normalizeSettings(record) {
   // 解析失败时返回空数组，让前端走默认数据
   const nowItems = parseNowItems(f['此刻在做'])
 
-  // 「此刻更新时间」：飞书日期字段或文本
-  const nowUpdated = formatDate(f['此刻更新时间']) || ''
+  // 「此刻更新时间」：用户改内容时，飞书记录自动更新该时间戳
+  // 优先读字段里的「此刻更新时间」（如果用户在表里加了这个字段类型为修改时间）
+  // 否则读飞书记录自带的 last_modified_time（毫秒时间戳）
+  // 都没有时返回空，让前端兜底显示当天
+  const explicitTime = f['此刻更新时间']
+  const autoTime = record.last_modified_time
+  const nowUpdated = formatDate(explicitTime || autoTime) || ''
 
   return {
     ownerName: f['姓名'] || '',

@@ -467,10 +467,21 @@ function renderNowSection(settings) {
   // 绑定 3D 倾斜
   host.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
 
-  // 最后更新时间：用飞书配置的日期，否则显示今天
+  // 最后更新时间：飞书记录自动维护的修改时间，否则显示今天
+  // nowUpdated 可能是 ISO 字符串、中文日期或时间戳数字
   const updatedEl = document.getElementById('evo-home-now-updated')
   if (updatedEl) {
-    const dateStr = settings.nowUpdated || new Date().toISOString().slice(0, 10)
+    let dateStr = settings.nowUpdated
+    if (!dateStr) {
+      dateStr = new Date().toISOString().slice(0, 10)
+    } else if (typeof dateStr === 'number') {
+      // 时间戳（毫秒）→ ISO 日期
+      dateStr = new Date(dateStr).toISOString().slice(0, 10)
+    } else if (/^\d{4}年\d+月\d+日$/.test(dateStr)) {
+      // 中文日期 → ISO
+      const m = dateStr.match(/^(\d{4})年(\d+)月(\d+)日$/)
+      if (m) dateStr = `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`
+    }
     updatedEl.textContent = `最后更新于 ${dateStr}`
   }
 
