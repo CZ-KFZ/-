@@ -7,7 +7,7 @@
 
 import { fetchProjects } from '../feishu.js'
 import { PROJECTS as MOCK_PROJECTS, PROJECT_FILTERS } from '../data.js'
-import { TAG_TONE, ACCENT_GRADIENT, openProjectModal } from '../project-ui.js'
+import { TAG_TONE, ACCENT_GRADIENT, ACCENT_GLOW, openProjectModal } from '../project-ui.js'
 import { bindTiltEffect } from '../effects.js'
 
 let currentFilter = 'all'
@@ -218,11 +218,12 @@ function renderStackCards() {
     const cover = projectCoverStyle(p)
     const num = String(i + 1).padStart(2, '0')
     const targetScale = 1 - (total - 1 - i) * 0.03
+    const glow = ACCENT_GLOW[p.accent] || ACCENT_GLOW.purple
     const imgHtml = cover.img
       ? `<img src="${cover.img}" alt="${p.title}" loading="lazy" class="evo-pl-stack-img" />`
       : `<div class="evo-pl-stack-gradient" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}"></div>`
     return `
-      <div class="evo-pl-stack-card" data-stack-index="${i}" data-target-scale="${targetScale}" style="top:${i * 28}px" data-project-id="${p.id}">
+      <div class="evo-pl-stack-card evo-feature-card" data-stack-index="${i}" data-target-scale="${targetScale}" style="top:${i * 28}px; --card-glow: ${glow};" data-project-id="${p.id}">
         <div class="evo-pl-stack-inner">
           <div class="evo-pl-stack-head">
             <span class="evo-pl-stack-num">${num}</span>
@@ -323,6 +324,7 @@ function renderFilters() {
 function projectCard(p, index) {
   const toneCls = TAG_TONE[p.accent] || TAG_TONE.purple
   const gradient = ACCENT_GRADIENT[p.accent] || ACCENT_GRADIENT.purple
+  const glow = ACCENT_GLOW[p.accent] || ACCENT_GLOW.purple
 
   const cover = p.coverImage
     ? `<div class="h-40 sm:h-48 overflow-hidden bg-gradient-to-br ${gradient}"><img src="${p.coverImage}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
@@ -331,8 +333,8 @@ function projectCard(p, index) {
   const videoBadge = p.video ? `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-pink)]/20 text-[var(--evo-pink)] text-xs">▶ 视频</span>` : ''
 
   return `
-    <article class="group evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] transition-all hover:-translate-y-1 cursor-pointer evo-reveal" style="animation-delay:${Math.min(index * 60, 360)}ms" data-reveal-delay="${Math.min(index * 80, 400)}" data-project-id="${p.id}">
-      <div class="evo-tilt-inner">
+    <article class="group evo-glass evo-tilt-card evo-glow-card evo-feature-card evo-filter-item rounded-[var(--evo-radius-lg)] hover:bg-[var(--evo-surface-2)] transition-all hover:-translate-y-1 cursor-pointer evo-reveal" style="animation-delay:${Math.min(index * 60, 360)}ms; --card-glow: ${glow};" data-reveal-delay="${Math.min(index * 80, 400)}" data-project-id="${p.id}">
+      <div class="evo-tilt-inner rounded-[var(--evo-radius-lg)] overflow-hidden">
       ${cover}
       <div class="p-5 sm:p-6">
         <div class="flex items-center gap-2 mb-3 flex-wrap">

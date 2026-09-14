@@ -7,7 +7,7 @@
 
 import { fetchProjects, fetchArticles, fetchNotes, fetchSiteSettings } from '../feishu.js'
 import { PROJECTS as MOCK_PROJECTS, ARTICLES as MOCK_ARTICLES } from '../data.js'
-import { TAG_TONE, ACCENT_GRADIENT, openProjectModal } from '../project-ui.js'
+import { TAG_TONE, ACCENT_GRADIENT, ACCENT_GLOW, openProjectModal } from '../project-ui.js'
 import { bindTiltEffect } from '../effects.js'
 
 // 生成星空：在 #evo-hero-bg 内插入若干闪烁的小点
@@ -148,8 +148,8 @@ function renderFeaturedCarousel(projects) {
   `).join('')
 
   container.innerHTML = `
-    <div class="relative rounded-[var(--evo-radius-lg)] overflow-hidden evo-glass evo-tilt-card evo-glow-card evo-reveal" style="aspect-ratio: 21/9; min-height: 280px;">
-      <div class="evo-tilt-inner relative w-full h-full">
+    <div class="relative rounded-[var(--evo-radius-lg)] overflow-hidden evo-glass evo-tilt-card evo-glow-card evo-feature-card evo-reveal" style="aspect-ratio: 21/9; min-height: 280px; --card-glow: ${ACCENT_GLOW.purple};">
+      <div class="evo-tilt-inner relative w-full h-full rounded-[var(--evo-radius-lg)] overflow-hidden">
       ${slidesHtml}
       <button class="evo-carousel-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all backdrop-blur-sm z-10" aria-label="上一张">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -442,6 +442,13 @@ const NOW_TONES = [
   'text-[var(--evo-pink)]',
   'text-[var(--evo-violet)]'
 ]
+// 每张卡片的发光渐变（与 NOW_TONES 颜色对应）
+const NOW_GLOWS = [
+  ACCENT_GLOW.purple,
+  ACCENT_GLOW.cyan,
+  ACCENT_GLOW.pink,
+  ACCENT_GLOW.violet
+]
 
 function renderNowSection(settings) {
   const host = document.getElementById('evo-home-now-items')
@@ -465,9 +472,10 @@ function renderNowSection(settings) {
 
   host.innerHTML = items.map((item, i) => {
     const tone = NOW_TONES[i % NOW_TONES.length]
+    const glow = NOW_GLOWS[i % NOW_GLOWS.length]
     return `
-      <div class="evo-glass evo-tilt-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" data-reveal-delay="${i * 80}">
-        <div class="evo-tilt-inner">
+      <div class="evo-glass evo-tilt-card evo-feature-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" style="--card-glow: ${glow};" data-reveal-delay="${i * 80}">
+        <div class="evo-tilt-inner rounded-[var(--evo-radius-md)]">
           <div class="text-2xl mb-3">${item.icon}</div>
           <p class="text-xs ${tone} mb-1.5 tracking-wide">${item.label}</p>
           <p class="text-sm text-white/75 leading-relaxed">${item.text}</p>
@@ -537,9 +545,10 @@ function renderToolsSection(settings) {
 
   host.innerHTML = tools.map((tool, i) => {
     const tone = TOOL_TONES[i % TOOL_TONES.length]
+    const glow = NOW_GLOWS[i % NOW_GLOWS.length]
     return `
-      <div class="evo-glass evo-tilt-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" data-reveal-delay="${(i % 4) * 80}">
-        <div class="evo-tilt-inner">
+      <div class="evo-glass evo-tilt-card evo-feature-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" style="--card-glow: ${glow};" data-reveal-delay="${(i % 4) * 80}">
+        <div class="evo-tilt-inner rounded-[var(--evo-radius-md)]">
           <div class="text-2xl mb-2">${tool.icon}</div>
           <p class="text-sm font-medium ${tone} mb-1">${tool.name}</p>
           <p class="text-xs text-white/55 leading-relaxed">${tool.desc}</p>

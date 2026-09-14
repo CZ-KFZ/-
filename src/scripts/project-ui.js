@@ -20,6 +20,15 @@ export const ACCENT_GRADIENT = {
   violet: 'from-[var(--evo-violet)]/50 to-[var(--evo-pink)]/30'
 }
 
+// 发光特效渐变（CSS 渐变字符串，用于 --card-glow 变量）
+// 每种 accent 对应设计稿风格的 3 段渐变
+export const ACCENT_GLOW = {
+  purple: 'linear-gradient(137deg, #8b5cf6 0%, #c4b5fd 45%, #06b6d4 100%)',
+  cyan: 'linear-gradient(137deg, #06b6d4 0%, #67e8f9 45%, #8b5cf6 100%)',
+  pink: 'linear-gradient(137deg, #f472b6 0%, #fda4af 45%, #a78bfa 100%)',
+  violet: 'linear-gradient(137deg, #a78bfa 0%, #c4b5fd 45%, #f472b6 100%)'
+}
+
 // 提取 YouTube 视频 ID
 function extractYouTubeId(url) {
   if (!url) return null

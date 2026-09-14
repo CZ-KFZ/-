@@ -501,6 +501,49 @@
   opacity: 1;
 }
 
+/* ============================================================
+   发光特效卡片 .evo-feature-card
+   适配 3D Creator 风格：背景 blur 光晕 + 渐变边框
+   用 CSS 变量 --card-glow 传入渐变（默认紫青）
+   用 --card-border 控制是否启用 8px 渐变边框（默认否）
+   ============================================================ */
+.evo-feature-card {
+  position: relative;
+  overflow: visible !important; /* 让背景光晕透出卡片边界 */
+  isolation: isolate; /* 创建新堆叠上下文，避免 z-index 污染 */
+}
+/* 背景模糊光晕层 */
+.evo-feature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--card-glow, linear-gradient(137deg, #8b5cf6 0%, #06b6d4 100%));
+  filter: blur(45px);
+  opacity: 0.5;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+.evo-feature-card:hover::before {
+  opacity: 0.75;
+  filter: blur(55px);
+}
+/* 前景内容上提一层，盖住背景光晕的中心部分 */
+.evo-feature-card > * {
+  position: relative;
+  z-index: 1;
+}
+/* 可选：8px 渐变边框（用 data-glow-border="1" 启用） */
+.evo-feature-card[data-glow-border="1"] > *:first-child {
+  border: 8px solid transparent;
+  background:
+    linear-gradient(var(--evo-glass, #1A1A1C), var(--evo-glass, #1A1A1C)) padding-box,
+    var(--card-glow, linear-gradient(137deg, #8b5cf6 0%, #06b6d4 100%)) border-box;
+}
+
 /* 筛选切换动画 */
 .evo-filter-item {
   animation: evo-filter-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
