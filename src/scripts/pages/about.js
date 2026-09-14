@@ -22,7 +22,7 @@ const SKILL_TONE = {
 }
 
 function emptyState(text) {
-  return `<p class="text-[var(--evo-ink-3)] text-sm py-4">${text}</p>`
+  return `<p class="text-[var(--evo-ink-3)] text-sm py-4 italic">${text}</p>`
 }
 
 // ------------------------------------------------------------
@@ -32,7 +32,7 @@ function renderSocials(socials) {
   const box = document.getElementById('evo-social')
   if (!box) return
   if (!socials || !socials.length) {
-    box.innerHTML = emptyState('（在飞书填写社交链接）')
+    box.innerHTML = emptyState('社交链接即将上线')
     return
   }
   box.innerHTML = socials
@@ -51,7 +51,7 @@ function renderStats(stats) {
   const box = document.getElementById('evo-stats')
   if (!box) return
   if (!stats || !stats.length) {
-    box.innerHTML = emptyState('（在飞书填写数据统计）')
+    box.innerHTML = emptyState('数据统计即将上线')
     return
   }
   box.innerHTML = stats
@@ -72,7 +72,7 @@ function renderQuote(quote) {
   const textEl = document.getElementById('evo-quote')
   const authorEl = document.getElementById('evo-quote-author')
   if (!quote || !quote.text) {
-    if (textEl) textEl.textContent = '（在飞书填写个人信条）'
+    if (textEl) textEl.textContent = '信条正在构思中'
     if (authorEl) authorEl.textContent = ''
     return
   }
@@ -87,7 +87,7 @@ function renderTimeline(items) {
   const box = document.getElementById('evo-timeline')
   if (!box) return
   if (!items || !items.length) {
-    box.innerHTML = emptyState('（在飞书填写成长轨迹）')
+    box.innerHTML = emptyState('成长轨迹正在整理中')
     return
   }
   box.innerHTML = `
@@ -120,7 +120,7 @@ function renderSkills(skills) {
   const box = document.getElementById('evo-skills')
   if (!box) return
   if (!skills || !skills.length) {
-    box.innerHTML = emptyState('（在飞书填写技能标签）')
+    box.innerHTML = emptyState('技能标签正在整理中')
     return
   }
   box.innerHTML = skills
@@ -138,7 +138,7 @@ function renderSkills(skills) {
 function renderProfile(settings) {
   if (!settings) {
     const bioEl = document.getElementById('evo-profile-bio')
-    if (bioEl) bioEl.textContent = '（在飞书填写个人简介）'
+    if (bioEl) bioEl.textContent = '个人简介正在撰写中'
     return
   }
   const nameEl = document.getElementById('evo-profile-name')
@@ -148,7 +148,7 @@ function renderProfile(settings) {
 
   if (nameEl && settings.ownerName) nameEl.textContent = settings.ownerName
   if (identityEl && settings.identity) identityEl.textContent = settings.identity
-  if (bioEl) bioEl.textContent = settings.bio || '（在飞书填写个人简介）'
+  if (bioEl) bioEl.textContent = settings.bio || '个人简介正在撰写中'
 
   if (avatarEl) {
     if (settings.avatarImage) {

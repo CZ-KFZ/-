@@ -127,7 +127,7 @@ function getFreePreview(article) {
   const fmt = article.contentFormat
   if (article.freeExcerpt) return textToParagraphs(article.freeExcerpt, fmt)
   const fullText = article.fullContent || article.content || ''
-  if (!fullText) return `<p class="text-[var(--evo-ink-3)] italic">（付费文章的试读部分请在飞书「免费部分/试读」字段填写，或在正文里写前 3 段。）</p>`
+  if (!fullText) return `<p class="text-[var(--evo-ink-3)] italic">（试读内容即将补充）</p>`
   const paras = fullText.split(/\n\n+/).filter((p) => p.trim()).slice(0, 3)
   return textToParagraphs(paras.join('\n\n'), fmt)
 }
@@ -422,9 +422,9 @@ function renderCollections() {
       </div>
       <div class="evo-glass rounded-[var(--evo-radius-lg)] p-8 md:p-12 text-center">
         <div class="text-5xl mb-4">📚</div>
-        <h3 class="evo-title text-xl mb-3">还没有合集</h3>
+        <h3 class="evo-title text-xl mb-3">合集正在筹备中</h3>
         <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed max-w-md mx-auto mb-4">
-          在飞书多维表格的「合集」表里添加合集行，并关联文章，这里就会自动显示。
+          系列文章将在这里打包呈现，敬请期待。
         </p>
       </div>
     `

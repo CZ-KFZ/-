@@ -45,7 +45,7 @@
     .font-serif-instrument {
       font-family: 'Instrument Serif', serif;
     }
-    body { background: #000; overflow-x: hidden; }
+    html, body { background: #000; overflow-x: hidden; }
     /* Marquee 滚动字幕：两组内容无缝循环 */
     .evo-marquee-track {
       animation: evo-marquee 30s linear infinite;
@@ -157,7 +157,7 @@
          2026 趋势元素，零数据依赖
          =================================================== -->
     <div class="relative py-4 border-y border-[var(--evo-border)] bg-black/30 overflow-hidden" aria-hidden="true">
-      <div class="flex w-max evo-marquee-track">
+      <div class="flex w-[200%] evo-marquee-track">
         <!-- 两组内容保证无缝循环 -->
         <ul class="flex items-center gap-8 px-4 shrink-0">
           <li class="text-sm sm:text-base text-white/60 font-serif-instrument italic">设计</li>
