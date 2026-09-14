@@ -5,13 +5,14 @@
 //       → Services(分类列表) → Projects(堆叠缩放卡片) + Archive(筛选网格)
 // ============================================================
 
-import { fetchProjects } from '../feishu.js'
+import { fetchProjects, fetchSiteSettings } from '../feishu.js'
 import { PROJECTS as MOCK_PROJECTS, PROJECT_FILTERS } from '../data.js'
 import { TAG_TONE, ACCENT_GRADIENT, ACCENT_GLOW, openProjectModal } from '../project-ui.js'
 import { bindTiltEffect } from '../effects.js'
 
 let currentFilter = 'all'
 let projects = []
+let settings = null
 let searchQuery = ''
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches
@@ -31,6 +32,26 @@ function projectCoverStyle(p) {
 // 01 · HERO 磁吸肖像
 // 鼠标靠近时肖像被"吸引"产生位移，远离时回弹
 // ============================================================
+function updateHeroPortrait() {
+  const magnet = document.getElementById('evo-pl-magnet')
+  const img = magnet?.querySelector('img')
+  if (!magnet || !img) return
+  // 优先用飞书 settings 的头像；没有则保留默认「阴」字渐变兜底
+  const src = settings?.avatarImage
+  if (src) {
+    img.src = src
+    img.alt = settings?.ownerName ? `${settings.ownerName}的头像` : '创作者头像'
+    img.style.display = 'block'
+    magnet.classList.remove('evo-pl-portrait-fallback')
+    img.onerror = () => {
+      img.style.display = 'none'
+      magnet.classList.add('evo-pl-portrait-fallback')
+    }
+  }
+  // 没有 src：保持兜底（HTML 默认就是 fallback 状态）
+}
+
+
 function setupHeroMagnet() {
   if (prefersReducedMotion || isCoarsePointer) return
   const magnet = document.getElementById('evo-pl-magnet')
@@ -100,9 +121,12 @@ function renderMarquee() {
 
   const buildTile = (p, idx) => {
     const cover = projectCoverStyle(p)
+    const firstChar = (p.title || '·').slice(0, 1)
     const imgHtml = cover.img
       ? `<img src="${cover.img}" alt="${p.title}" loading="lazy" class="evo-pl-marquee-img" />`
-      : `<div class="evo-pl-marquee-gradient" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}"></div>`
+      : `<div class="evo-pl-marquee-gradient relative flex items-center justify-center" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}">
+          <span class="evo-title text-4xl text-white/80 drop-shadow">${firstChar}</span>
+        </div>`
     return `<div class="evo-pl-marquee-tile">${imgHtml}<span class="evo-pl-marquee-label">${p.title || ''}</span></div>`
   }
 
@@ -219,9 +243,13 @@ function renderStackCards() {
     const num = String(i + 1).padStart(2, '0')
     const targetScale = 1 - (total - 1 - i) * 0.03
     const glow = ACCENT_GLOW[p.accent] || ACCENT_GLOW.purple
+    const firstChar = (p.title || '·').slice(0, 1)
     const imgHtml = cover.img
       ? `<img src="${cover.img}" alt="${p.title}" loading="lazy" class="evo-pl-stack-img" />`
-      : `<div class="evo-pl-stack-gradient" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}"></div>`
+      : `<div class="evo-pl-stack-gradient relative flex items-center justify-center" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}">
+          <span class="evo-title text-7xl text-white/85 drop-shadow-lg">${firstChar}</span>
+          <span class="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-white/30"></span>
+        </div>`
     return `
       <div class="evo-pl-stack-card evo-feature-card" data-stack-index="${i}" data-target-scale="${targetScale}" style="top:${i * 28}px; --card-glow: ${glow};" data-project-id="${p.id}">
         <div class="evo-pl-stack-inner">
@@ -326,9 +354,15 @@ function projectCard(p, index) {
   const gradient = ACCENT_GRADIENT[p.accent] || ACCENT_GRADIENT.purple
   const glow = ACCENT_GLOW[p.accent] || ACCENT_GLOW.purple
 
+  // 封面：有图用图，没图用「项目首字 + 渐变 + 装饰圆点」的优雅占位
+  const firstChar = (p.title || '·').slice(0, 1)
   const cover = p.coverImage
     ? `<div class="h-40 sm:h-48 overflow-hidden bg-gradient-to-br ${gradient}"><img src="${p.coverImage}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
-    : `<div class="h-40 sm:h-48 bg-gradient-to-br ${gradient} flex items-center justify-center p-4"><span class="evo-title text-xl sm:text-2xl text-white/90 text-center">${p.title}</span></div>`
+    : `<div class="h-40 sm:h-48 relative bg-gradient-to-br ${gradient} flex items-center justify-center overflow-hidden">
+        <span class="evo-title text-5xl sm:text-6xl text-white/85 drop-shadow-lg">${firstChar}</span>
+        <span class="absolute top-3 right-3 w-2 h-2 rounded-full bg-white/30"></span>
+        <span class="absolute bottom-4 left-4 w-1.5 h-1.5 rounded-full bg-white/20"></span>
+      </div>`
 
   const videoBadge = p.video ? `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-pink)]/20 text-[var(--evo-pink)] text-xs">▶ 视频</span>` : ''
 
@@ -404,7 +438,9 @@ function renderGrid() {
 // 数据加载
 // ============================================================
 async function loadData() {
-  const raw = await fetchProjects()
+  // 并行拉作品 + 站点设置（含头像）
+  const [raw, settingsData] = await Promise.all([fetchProjects(), fetchSiteSettings()])
+  if (settingsData) settings = settingsData
   if (raw && raw.length) {
     projects = raw
     return
@@ -439,6 +475,7 @@ async function init() {
   await loadData()
 
   // 数据到了刷新所有 landing 区块
+  updateHeroPortrait()
   renderMarquee()
   renderServices()
   renderStackCards()

@@ -26,23 +26,23 @@
         <h1 class="evo-pl-hero-heading evo-reveal" data-reveal-delay="150">作品集</h1>
       </div>
 
+      <!-- 磁吸肖像：飞书 settings 头像优先，无则显示「阴」字渐变兜底 -->
+      <div class="evo-pl-hero-portrait" id="evo-pl-portrait-wrap">
+        <div class="evo-pl-magnet evo-pl-portrait-fallback" id="evo-pl-magnet">
+          <img
+            src=""
+            alt="创作者头像"
+            class="evo-pl-portrait-img"
+            style="display:none"
+            loading="eager"
+          />
+        </div>
+      </div>
+
       <div class="evo-pl-hero-bottom">
         <p class="evo-pl-hero-tagline evo-reveal" data-reveal-delay="350">
           一个以创造为驱动的人，打磨 striking 且难以忘怀的项目
         </p>
-      </div>
-
-      <!-- 磁吸肖像：用本地 hero-bg.jpg，避免 AI 图片生成 URL 不稳定 -->
-      <div class="evo-pl-hero-portrait" id="evo-pl-portrait-wrap">
-        <div class="evo-pl-magnet" id="evo-pl-magnet">
-          <img
-            src="/hero-bg.jpg"
-            alt="创作者肖像"
-            class="evo-pl-portrait-img"
-            loading="eager"
-            onerror="this.style.display='none';this.parentElement.classList.add('evo-pl-portrait-fallback')"
-          />
-        </div>
       </div>
     </section>
 

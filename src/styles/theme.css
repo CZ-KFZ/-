@@ -757,12 +757,17 @@
 .evo-pl-hero {
   position: relative;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   overflow-x: clip;
   padding-top: 5rem; /* 给固定 header 留位 */
+  padding-bottom: 1.75rem;
+}
+@media (min-width: 768px) {
+  .evo-pl-hero { padding-bottom: 2.5rem; }
 }
 .evo-pl-hero-nav {
+  grid-row: 1;
   display: flex;
   justify-content: space-between;
   padding: 1rem 1.5rem;
@@ -794,11 +799,10 @@
 }
 
 .evo-pl-hero-bottom {
+  grid-row: 3;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: auto;
-  padding-bottom: 1.75rem;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
   position: relative;
@@ -819,36 +823,32 @@
 @media (min-width: 640px) { .evo-pl-hero-tagline { max-width: 220px; } }
 @media (min-width: 768px) { .evo-pl-hero-tagline { max-width: 260px; } }
 
-/* 磁吸肖像 */
+/* 磁吸肖像：放在 hero grid 中间行，居中 */
 .evo-pl-hero-portrait {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-@media (min-width: 640px) {
-  .evo-pl-hero-portrait {
-    top: auto;
-    transform: translateX(-50%);
-    bottom: 0;
-  }
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  position: relative;
+  z-index: 4;
 }
 .evo-pl-magnet {
-  width: 280px;
+  width: min(70vw, 280px);
   will-change: transform;
   transition: transform 0.6s ease-in-out;
 }
-@media (min-width: 640px) { .evo-pl-magnet { width: 360px; } }
-@media (min-width: 768px) { .evo-pl-magnet { width: 440px; } }
-@media (min-width: 1024px) { .evo-pl-magnet { width: 520px; } }
+@media (min-width: 640px) { .evo-pl-magnet { width: min(60vw, 360px); } }
+@media (min-width: 768px) { .evo-pl-magnet { width: min(50vw, 440px); } }
+@media (min-width: 1024px) { .evo-pl-magnet { width: min(45vw, 520px); } }
 .evo-pl-portrait-img {
   width: 100%;
   height: auto;
   display: block;
   border-radius: 1.5rem;
   filter: drop-shadow(0 20px 60px rgba(124, 58, 237, 0.35));
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
 }
 /* 图片加载失败时用渐变 + 字符占位 */
 .evo-pl-portrait-fallback {
