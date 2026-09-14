@@ -246,10 +246,10 @@ function normalizeSettings(record) {
     }
   })
 
-  // 「此刻在做」：多行文本字段，每行格式「图标 标签：内容」
-  // 例：✍️ 正在写：一篇关于数字分身的长文
-  // 解析失败时返回空数组，让前端走默认数据
-  const nowItems = parseNowItems(f['此刻在做'])
+  // 「此刻在做」：兼容两种字段结构
+  // 1) 多行文本「此刻在做」，每行格式「图标 标签：内容」
+  // 2) 多个独立字段「正在写」「正在读」「正在做」「正在学」
+  const nowItems = parseNowItems(f['此刻在做'], f)
 
   // 「此刻更新时间」：用户改内容时，飞书记录自动更新该时间戳
   // 优先读字段里的「此刻更新时间」（如果用户在表里加了这个字段类型为修改时间）
@@ -274,9 +274,35 @@ function normalizeSettings(record) {
   }
 }
 
-// 解析「此刻在做」多行文本：每行「图标 标签：内容」
+// 解析「此刻在做」：兼容两种字段结构
+// 1) 多行文本「此刻在做」：每行「图标 标签：内容」
+// 2) 多个独立字段「正在写」「正在读」「正在做」「正在学」
 // 宽容格式：可省略图标、可省略标签、用全角冒号也行
-function parseNowItems(raw) {
+const NOW_FIELD_DEFS = [
+  { key: '正在写', icon: '✍️', label: '正在写' },
+  { key: '正在读', icon: '📖', label: '正在读' },
+  { key: '正在做', icon: '🔧', label: '正在做' },
+  { key: '正在学', icon: '🎨', label: '正在学' }
+]
+function parseNowItems(raw, fields) {
+  // 模式 2：优先用独立字段（你的飞书表实际结构）
+  if (fields && NOW_FIELD_DEFS.some((d) => fields[d.key])) {
+    return NOW_FIELD_DEFS
+      .filter((d) => {
+        const v = fields[d.key]
+        return v && (typeof v === 'string' ? v.trim() : Array.isArray(v) ? v.length : true)
+      })
+      .map((d) => {
+        const v = fields[d.key]
+        // 飞书文本字段可能是字符串或富文本数组
+        const text = typeof v === 'string'
+          ? v.trim()
+          : (Array.isArray(v) ? v.map((x) => x.text || x.name || '').join('').trim() : String(v || '').trim())
+        return { icon: d.icon, label: d.label, text: text || d.label }
+      })
+      .filter((item) => item.text)
+  }
+  // 模式 1：多行文本「此刻在做」
   if (!raw) return []
   const text = typeof raw === 'string' ? raw
     : (Array.isArray(raw) ? raw.map((x) => x.text || x.name || '').join('\n') : '')
