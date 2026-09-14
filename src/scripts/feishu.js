@@ -246,6 +246,14 @@ function normalizeSettings(record) {
     }
   })
 
+  // 「此刻在做」：多行文本字段，每行格式「图标 标签：内容」
+  // 例：✍️ 正在写：一篇关于数字分身的长文
+  // 解析失败时返回空数组，让前端走默认数据
+  const nowItems = parseNowItems(f['此刻在做'])
+
+  // 「此刻更新时间」：飞书日期字段或文本
+  const nowUpdated = formatDate(f['此刻更新时间']) || ''
+
   return {
     ownerName: f['姓名'] || '',
     avatarChar: f['头像首字'] || '阴',
@@ -253,8 +261,65 @@ function normalizeSettings(record) {
     identity: f['身份描述'] || '',
     bio: f['简介'] || '',
     skills,
-    socials
+    socials,
+    nowItems,
+    nowUpdated,
+    // 工具栈：多行文本，每行「图标 名称：描述」
+    tools: parseTools(f['工具栈'])
   }
+}
+
+// 解析「此刻在做」多行文本：每行「图标 标签：内容」
+// 宽容格式：可省略图标、可省略标签、用全角冒号也行
+function parseNowItems(raw) {
+  if (!raw) return []
+  const text = typeof raw === 'string' ? raw
+    : (Array.isArray(raw) ? raw.map((x) => x.text || x.name || '').join('\n') : '')
+  if (!text) return []
+  return text.split(/\n+/).map((line) => {
+    const s = line.trim()
+    if (!s) return null
+    // 提取行首 emoji（可能 1-2 个码点，含变体选择符）
+    const emojiMatch = s.match(/^(\S+\s+)?([\s\S]+)/)
+    let icon = '·'
+    let rest = s
+    if (emojiMatch && emojiMatch[1]) {
+      icon = emojiMatch[1].trim()
+      rest = emojiMatch[2].trim()
+    }
+    // 分「标签：内容」
+    const colonIdx = rest.search(/[：:]/)
+    if (colonIdx > 0) {
+      const label = rest.slice(0, colonIdx).trim()
+      const textPart = rest.slice(colonIdx + 1).trim()
+      return { icon, label, text: textPart || label }
+    }
+    return { icon, label: '', text: rest }
+  }).filter(Boolean)
+}
+
+// 解析「工具栈」多行文本：每行「图标 名称：描述」
+function parseTools(raw) {
+  if (!raw) return []
+  const text = typeof raw === 'string' ? raw
+    : (Array.isArray(raw) ? raw.map((x) => x.text || x.name || '').join('\n') : '')
+  if (!text) return []
+  return text.split(/\n+/).map((line) => {
+    const s = line.trim()
+    if (!s) return null
+    const emojiMatch = s.match(/^(\S+\s+)?([\s\S]+)/)
+    let icon = '·'
+    let rest = s
+    if (emojiMatch && emojiMatch[1]) {
+      icon = emojiMatch[1].trim()
+      rest = emojiMatch[2].trim()
+    }
+    const colonIdx = rest.search(/[：:]/)
+    if (colonIdx > 0) {
+      return { icon, name: rest.slice(0, colonIdx).trim(), desc: rest.slice(colonIdx + 1).trim() }
+    }
+    return { icon: '·', name: rest, desc: '' }
+  }).filter(Boolean)
 }
 
 // ------------------------------------------------------------
