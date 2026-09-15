@@ -317,23 +317,25 @@ function openDonationModal() {
     `)
   }
   if (cfg.alipay && cfg.alipay.enabled) {
+    const safeQrUrl = /^(https?:|\/)/i.test(String(cfg.alipay.qrUrl)) ? cfg.alipay.qrUrl : ''
     methods.push(`
       <div class="evo-glass rounded-[var(--evo-radius-lg)] p-5 flex flex-col items-center gap-3 hover:border-[var(--evo-cyan)]/50 transition-all">
         <div class="w-32 h-32 rounded-[var(--evo-radius-md)] bg-white flex items-center justify-center overflow-hidden">
-          <img src="${cfg.alipay.qrUrl}" alt="支付宝收款码" class="w-full h-full object-contain" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'text-[var(--evo-ink-3)] text-xs p-2 text-center\\'>请将二维码图片放到 /public/alipay-qr.png</span>'" />
+          ${safeQrUrl ? `<img src="${safeQrUrl}" alt="支付宝收款码" class="w-full h-full object-contain" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'text-[var(--evo-ink-3)] text-xs p-2 text-center\\'>请将二维码图片放到 /public/alipay-qr.png</span>'" />` : '<span class="text-[var(--evo-ink-3)] text-xs p-2 text-center">请将二维码图片放到 /public/alipay-qr.png</span>'}
         </div>
-        <span class="evo-title text-sm font-semibold text-[var(--evo-ink)]">${cfg.alipay.label}</span>
+        <span class="evo-title text-sm font-semibold text-[var(--evo-ink)]">${String(cfg.alipay.label || '支付宝').replace(/[<>"']/g, '')}</span>
         <span class="text-xs text-[var(--evo-ink-3)]">长按 / 扫码支付</span>
       </div>
     `)
   }
   if (cfg.wechat && cfg.wechat.enabled) {
+    const safeQrUrl = /^(https?:|\/)/i.test(String(cfg.wechat.qrUrl)) ? cfg.wechat.qrUrl : ''
     methods.push(`
       <div class="evo-glass rounded-[var(--evo-radius-lg)] p-5 flex flex-col items-center gap-3 hover:border-[var(--evo-pink)]/50 transition-all">
         <div class="w-32 h-32 rounded-[var(--evo-radius-md)] bg-white flex items-center justify-center overflow-hidden">
-          <img src="${cfg.wechat.qrUrl}" alt="微信收款码" class="w-full h-full object-contain" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'text-[var(--evo-ink-3)] text-xs p-2 text-center\\'>请将二维码图片放到 /public/wechat-qr.png</span>'" />
+          ${safeQrUrl ? `<img src="${safeQrUrl}" alt="微信收款码" class="w-full h-full object-contain" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'text-[var(--evo-ink-3)] text-xs p-2 text-center\\'>请将二维码图片放到 /public/wechat-qr.png</span>'" />` : '<span class="text-[var(--evo-ink-3)] text-xs p-2 text-center">请将二维码图片放到 /public/wechat-qr.png</span>'}
         </div>
-        <span class="evo-title text-sm font-semibold text-[var(--evo-ink)]">${cfg.wechat.label}</span>
+        <span class="evo-title text-sm font-semibold text-[var(--evo-ink)]">${String(cfg.wechat.label || '微信支付').replace(/[<>"']/g, '')}</span>
         <span class="text-xs text-[var(--evo-ink-3)]">长按 / 扫码支付</span>
       </div>
     `)

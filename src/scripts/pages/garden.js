@@ -7,6 +7,24 @@
 import { fetchCollections } from '../feishu.js'
 import { bindTiltEffect } from '../effects.js'
 
+// HTML 转义，防止 XSS
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// 安全 URL：只允许 http/https 和相对路径
+function safeUrl(url) {
+  if (!url) return ''
+  const u = String(url).trim()
+  if (/^(https?:|\/)/i.test(u)) return u
+  return ''
+}
+
 let collections = []
 
 // 合集角标
@@ -20,21 +38,25 @@ function collectionBadgeHtml(c) {
 
 // 渲染单个合集卡片
 function collectionCard(c, index) {
-  const coverHtml = c.coverImage
-    ? `<div class="aspect-[16/9] overflow-hidden rounded-t-[var(--evo-radius-lg)]"><img src="${c.coverImage}" alt="${c.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
+  const safeTitle = escapeHtml(c.title || '未命名合集')
+  const safeDesc = escapeHtml(c.desc || '（暂无简介）')
+  const safeId = escapeHtml(c.id || '')
+  const safeCover = safeUrl(c.coverImage)
+  const coverHtml = safeCover
+    ? `<div class="aspect-[16/9] overflow-hidden rounded-t-[var(--evo-radius-lg)]"><img src="${safeCover}" alt="${safeTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
     : `<div class="aspect-[16/9] rounded-t-[var(--evo-radius-lg)] bg-gradient-to-br from-[var(--evo-purple-700)]/40 to-[var(--evo-cyan)]/20 flex items-center justify-center"><span class="text-3xl opacity-50">📚</span></div>`
   const articleCount = c.articleIds?.length || c.articleCount || 0
   return `
-    <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-collection-id="${c.id || ''}">
+    <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-collection-id="${safeId}">
       <div class="evo-tilt-inner flex flex-col flex-1">
       ${coverHtml}
       <div class="p-4 md:p-5 flex-1 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 mb-3">
           ${collectionBadgeHtml(c)}
-          ${articleCount ? `<span class="text-xs text-[var(--evo-ink-3)]">${articleCount} 篇文章</span>` : ''}
+          ${articleCount ? `<span class="text-xs text-[var(--evo-ink-3)]">${escapeHtml(articleCount)} 篇文章</span>` : ''}
         </div>
-        <h2 class="evo-title text-base sm:text-lg mb-2 line-clamp-2">${c.title || '未命名合集'}</h2>
-        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3 flex-1">${c.desc || '（暂无简介）'}</p>
+        <h2 class="evo-title text-base sm:text-lg mb-2 line-clamp-2">${safeTitle}</h2>
+        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3 flex-1">${safeDesc}</p>
         <div class="mt-3 pt-3 border-t border-[var(--evo-border)] flex items-center justify-between text-xs text-[var(--evo-ink-3)]">
           <span>${c.isPaid && c.price ? '需付费' : '免费'}</span>
           <span class="text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">查看 →</span>

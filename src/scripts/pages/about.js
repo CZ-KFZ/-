@@ -6,6 +6,24 @@
 
 import { fetchSiteSettings, fetchTimeline } from '../feishu.js'
 
+// HTML 转义，防止 XSS
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// 安全 URL：只允许 http/https/mailto 和相对路径
+function safeUrl(url) {
+  if (!url) return ''
+  const u = String(url).trim()
+  if (/^(https?:|mailto:|\/)/i.test(u)) return u
+  return ''
+}
+
 const DOT_COLOR = {
   primary: 'bg-[var(--evo-primary)]',
   cyan: 'bg-[var(--evo-cyan)]',
@@ -36,11 +54,16 @@ function renderSocials(socials) {
     return
   }
   box.innerHTML = socials
-    .map(
-      (s) => `
-      <a href="${s.href || '#'}" title="${s.title || ''}" aria-label="${s.title || ''}" target="_blank" rel="noopener noreferrer"
-         class="w-10 h-10 rounded-full evo-glass flex items-center justify-center text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] hover:scale-110 transition-all">${s.label || '·'}</a>`
-    )
+    .map((s) => {
+      const safeHref = safeUrl(s.href)
+      if (!safeHref) return '' // 不安全的链接不渲染
+      const safeTitle = escapeHtml(s.title || '')
+      const safeLabel = escapeHtml(s.label || '·')
+      return `
+      <a href="${safeHref}" title="${safeTitle}" aria-label="${safeTitle}" target="_blank" rel="noopener noreferrer"
+         class="w-10 h-10 rounded-full evo-glass flex items-center justify-center text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] hover:bg-[var(--evo-surface-2)] hover:scale-110 transition-all">${safeLabel}</a>`
+    })
+    .filter(Boolean)
     .join('')
 }
 
@@ -58,8 +81,8 @@ function renderStats(stats) {
     .map(
       (s) => `
       <div class="text-center">
-        <div class="evo-display text-2xl sm:text-3xl bg-gradient-to-r from-[var(--evo-purple-300)] to-[var(--evo-cyan)] bg-clip-text text-transparent font-bold">${s.value}</div>
-        <div class="text-xs text-[var(--evo-ink-3)] mt-1">${s.label}</div>
+        <div class="evo-display text-2xl sm:text-3xl bg-gradient-to-r from-[var(--evo-purple-300)] to-[var(--evo-cyan)] bg-clip-text text-transparent font-bold">${escapeHtml(s.value)}</div>
+        <div class="text-xs text-[var(--evo-ink-3)] mt-1">${escapeHtml(s.label)}</div>
       </div>`
     )
     .join('')
@@ -100,10 +123,10 @@ function renderTimeline(items) {
           <div class="evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-5 sm:p-6 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all group">
             <div class="evo-tilt-inner">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
-              <h3 class="evo-title text-base sm:text-lg group-hover:text-[var(--evo-purple-300)] transition-colors">${item.title}</h3>
-              <span class="text-xs sm:text-sm text-[var(--evo-ink-3)] font-mono">${item.period}</span>
+              <h3 class="evo-title text-base sm:text-lg group-hover:text-[var(--evo-purple-300)] transition-colors">${escapeHtml(item.title)}</h3>
+              <span class="text-xs sm:text-sm text-[var(--evo-ink-3)] font-mono">${escapeHtml(item.period)}</span>
             </div>
-            <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed">${item.desc}</p>
+            <p class="text-[var(--evo-ink-2)] text-sm leading-relaxed">${escapeHtml(item.desc)}</p>
             </div>
           </div>
         </div>`
@@ -126,7 +149,7 @@ function renderSkills(skills) {
   box.innerHTML = skills
     .map(
       (s) => `
-      <span class="evo-tilt-card evo-glow-card inline-flex items-center px-4 py-2 rounded-full evo-glass text-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 ${SKILL_TONE[s.tone] || SKILL_TONE.default}"><span class="evo-tilt-inner">${s.label}</span></span>`
+      <span class="evo-tilt-card evo-glow-card inline-flex items-center px-4 py-2 rounded-full evo-glass text-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 ${SKILL_TONE[s.tone] || SKILL_TONE.default}"><span class="evo-tilt-inner">${escapeHtml(s.label)}</span></span>`
     )
     .join('')
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
@@ -152,8 +175,13 @@ function renderProfile(settings) {
 
   if (avatarEl) {
     if (settings.avatarImage) {
-      avatarEl.innerHTML = `<img src="${settings.avatarImage}" alt="${settings.ownerName || '头像'}" class="w-full h-full object-cover" />`
-      return
+      // 安全 URL + HTML 转义，防止 XSS
+      const safeAvatarUrl = /^(https?:|\/)/i.test(String(settings.avatarImage)) ? settings.avatarImage : ''
+      const safeOwnerName = String(settings.ownerName || '头像').replace(/[<>"']/g, '')
+      if (safeAvatarUrl) {
+        avatarEl.innerHTML = `<img src="${safeAvatarUrl}" alt="${safeOwnerName}" class="w-full h-full object-cover" />`
+        return
+      }
     }
     avatarEl.textContent = settings.avatarChar || '阴'
   }

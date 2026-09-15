@@ -75,7 +75,11 @@ export default async function handler(req, res) {
     // 附件内容稳定（file_token 不变就指向同一文件），可长缓存
     res.setHeader('Cache-Control', 'public, max-age=86400, immutable')
     if (name) {
-      res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(name)}`)
+      // 安全处理文件名：只保留字母数字、中文、._-，过滤换行符防止 HTTP 头注入
+      const safeName = String(name).replace(/[\r\n<>"'\\]/g, '').slice(0, 100)
+      if (safeName) {
+        res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(safeName)}`)
+      }
     }
 
     const buf = Buffer.from(await fileRes.arrayBuffer())

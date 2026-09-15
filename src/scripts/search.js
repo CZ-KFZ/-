@@ -7,6 +7,16 @@
 
 import { fetchFeishuMulti, fetchProjects } from './feishu.js'
 
+// HTML 转义，防止 XSS
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // 搜索索引
 let searchIndex = {
   articles: [],
@@ -143,16 +153,16 @@ function renderResults(results) {
       <div class="mb-4">
         <div class="text-xs text-[var(--evo-ink-3)] uppercase tracking-wider mb-2 px-1">文章</div>
         ${results.articles.map((a) => `
-          <a href="${resultLink(a)}" class="evo-search-item flex items-center gap-3 px-3 py-2.5 rounded-[var(--evo-radius-md)] hover:bg-[var(--evo-surface-2)] transition-colors group">
+          <a href="${escapeHtml(resultLink(a))}" class="evo-search-item flex items-center gap-3 px-3 py-2.5 rounded-[var(--evo-radius-md)] hover:bg-[var(--evo-surface-2)] transition-colors group">
             <span class="text-base shrink-0">${resultIcon(a.type)}</span>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors truncate">${a.title}</span>
+                <span class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors truncate">${escapeHtml(a.title)}</span>
                 ${paidBadge(a)}
               </div>
-              ${a.desc ? `<div class="text-xs text-[var(--evo-ink-3)] truncate mt-0.5">${a.desc}</div>` : ''}
+              ${a.desc ? `<div class="text-xs text-[var(--evo-ink-3)] truncate mt-0.5">${escapeHtml(a.desc)}</div>` : ''}
             </div>
-            ${a.category ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--evo-surface-2)] text-[var(--evo-ink-3)] shrink-0">${a.category}</span>` : ''}
+            ${a.category ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--evo-surface-2)] text-[var(--evo-ink-3)] shrink-0">${escapeHtml(a.category)}</span>` : ''}
           </a>
         `).join('')}
       </div>
@@ -164,13 +174,13 @@ function renderResults(results) {
       <div class="mb-4">
         <div class="text-xs text-[var(--evo-ink-3)] uppercase tracking-wider mb-2 px-1">作品</div>
         ${results.projects.map((p) => `
-          <a href="${resultLink(p)}" class="evo-search-item flex items-center gap-3 px-3 py-2.5 rounded-[var(--evo-radius-md)] hover:bg-[var(--evo-surface-2)] transition-colors group">
+          <a href="${escapeHtml(resultLink(p))}" class="evo-search-item flex items-center gap-3 px-3 py-2.5 rounded-[var(--evo-radius-md)] hover:bg-[var(--evo-surface-2)] transition-colors group">
             <span class="text-base shrink-0">${resultIcon(p.type)}</span>
             <div class="flex-1 min-w-0">
-              <span class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors truncate block">${p.title}</span>
-              ${p.desc ? `<div class="text-xs text-[var(--evo-ink-3)] truncate mt-0.5">${p.desc}</div>` : ''}
+              <span class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors truncate block">${escapeHtml(p.title)}</span>
+              ${p.desc ? `<div class="text-xs text-[var(--evo-ink-3)] truncate mt-0.5">${escapeHtml(p.desc)}</div>` : ''}
             </div>
-            ${p.category ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--evo-surface-2)] text-[var(--evo-ink-3)] shrink-0">${p.category}</span>` : ''}
+            ${p.category ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--evo-surface-2)] text-[var(--evo-ink-3)] shrink-0">${escapeHtml(p.category)}</span>` : ''}
           </a>
         `).join('')}
       </div>
@@ -182,16 +192,16 @@ function renderResults(results) {
       <div>
         <div class="text-xs text-[var(--evo-ink-3)] uppercase tracking-wider mb-2 px-1">合集</div>
         ${results.collections.map((c) => `
-          <a href="${resultLink(c)}" class="evo-search-item flex items-center gap-3 px-3 py-2.5 rounded-[var(--evo-radius-md)] hover:bg-[var(--evo-surface-2)] transition-colors group">
+          <a href="${escapeHtml(resultLink(c))}" class="evo-search-item flex items-center gap-3 px-3 py-2.5 rounded-[var(--evo-radius-md)] hover:bg-[var(--evo-surface-2)] transition-colors group">
             <span class="text-base shrink-0">${resultIcon(c.type)}</span>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors truncate">${c.title}</span>
+                <span class="text-sm text-[var(--evo-ink)] group-hover:text-[var(--evo-cyan)] transition-colors truncate">${escapeHtml(c.title)}</span>
                 ${paidBadge(c)}
               </div>
-              ${c.desc ? `<div class="text-xs text-[var(--evo-ink-3)] truncate mt-0.5">${c.desc}</div>` : ''}
+              ${c.desc ? `<div class="text-xs text-[var(--evo-ink-3)] truncate mt-0.5">${escapeHtml(c.desc)}</div>` : ''}
             </div>
-            ${c.articleCount ? `<span class="text-[10px] text-[var(--evo-ink-3)] shrink-0">${c.articleCount} 篇</span>` : ''}
+            ${c.articleCount ? `<span class="text-[10px] text-[var(--evo-ink-3)] shrink-0">${escapeHtml(c.articleCount)} 篇</span>` : ''}
           </a>
         `).join('')}
       </div>

@@ -19,7 +19,14 @@ import {
   getFirstRecord
 } from './_feishu-helpers.js'
 
+// 允许查询的数据表白名单
+const VALID_TYPES = ['articles', 'projects', 'notes', 'timeline', 'settings', 'codes', 'collections', 'qa']
+
 async function fetchOneType(type, token, env) {
+  // 白名单校验，防止任意表名注入
+  if (!VALID_TYPES.includes(type)) {
+    return { error: `未知的数据类型: ${type}`, records: [] }
+  }
   const tableId = getTableId(type)
   if (!tableId) return { error: `未配置 ${type} 表 Table ID`, records: [] }
   try {
@@ -71,12 +78,11 @@ export default async function handler(req, res) {
   }
 
   // 单表查询：?type=articles
+  if (!VALID_TYPES.includes(type)) {
+    return res.status(400).json({ error: `未知的数据类型: ${type}` })
+  }
   const tableId = getTableId(type)
   if (!tableId) {
-    const validTypes = ['articles', 'projects', 'notes', 'timeline', 'settings', 'codes', 'collections', 'qa']
-    if (!validTypes.includes(type)) {
-      return res.status(400).json({ error: `未知的数据类型: ${type}` })
-    }
     return res.status(200).json({ error: `未配置 ${type} 表 Table ID`, fallback: true })
   }
 

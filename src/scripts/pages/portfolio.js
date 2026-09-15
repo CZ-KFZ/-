@@ -11,6 +11,24 @@ import { TAG_TONE, ACCENT_GRADIENT, ACCENT_GLOW, openProjectModal } from '../pro
 import { bindTiltEffect } from '../effects.js'
 import { createAvatarSphere } from '../three-sphere.js'
 
+// HTML 转义，防止 XSS
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// 安全 URL：只允许 http/https 和相对路径
+function safeUrl(url) {
+  if (!url) return ''
+  const u = String(url).trim()
+  if (/^(https?:|\/)/i.test(u)) return u
+  return ''
+}
+
 let currentFilter = 'all'
 let projects = []
 let settings = null
@@ -62,13 +80,15 @@ function renderMarquee() {
 
   const buildTile = (p, idx) => {
     const cover = projectCoverStyle(p)
-    const firstChar = (p.title || '·').slice(0, 1)
-    const imgHtml = cover.img
-      ? `<img src="${cover.img}" alt="${p.title}" loading="lazy" class="evo-pl-marquee-img" />`
+    const firstChar = escapeHtml((p.title || '·').slice(0, 1))
+    const safeTitle = escapeHtml(p.title || '')
+    const safeImg = safeUrl(cover.img)
+    const imgHtml = safeImg
+      ? `<img src="${safeImg}" alt="${safeTitle}" loading="lazy" class="evo-pl-marquee-img" />`
       : `<div class="evo-pl-marquee-gradient relative flex items-center justify-center" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}">
           <span class="evo-title text-4xl text-white/80 drop-shadow">${firstChar}</span>
         </div>`
-    return `<div class="evo-pl-marquee-tile">${imgHtml}<span class="evo-pl-marquee-label">${p.title || ''}</span></div>`
+    return `<div class="evo-pl-marquee-tile">${imgHtml}<span class="evo-pl-marquee-label">${safeTitle}</span></div>`
   }
 
   // 三倍化以无缝滚动
@@ -184,21 +204,25 @@ function renderStackCards() {
     const num = String(i + 1).padStart(2, '0')
     const targetScale = 1 - (total - 1 - i) * 0.03
     const glow = ACCENT_GLOW[p.accent] || ACCENT_GLOW.purple
-    const firstChar = (p.title || '·').slice(0, 1)
-    const imgHtml = cover.img
-      ? `<img src="${cover.img}" alt="${p.title}" loading="lazy" class="evo-pl-stack-img" />`
+    const firstChar = escapeHtml((p.title || '·').slice(0, 1))
+    const safeTitle = escapeHtml(p.title || '')
+    const safeCategory = escapeHtml(p.categoryLabel || p.category || '')
+    const safeId = escapeHtml(p.id || '')
+    const safeImg = safeUrl(cover.img)
+    const imgHtml = safeImg
+      ? `<img src="${safeImg}" alt="${safeTitle}" loading="lazy" class="evo-pl-stack-img" />`
       : `<div class="evo-pl-stack-gradient relative flex items-center justify-center" style="background:${cover.bg || 'linear-gradient(135deg, var(--evo-purple-700), var(--evo-cyan))'}">
           <span class="evo-title text-7xl text-white/85 drop-shadow-lg">${firstChar}</span>
           <span class="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-white/30"></span>
         </div>`
     return `
-      <div class="evo-pl-stack-card evo-feature-card" data-stack-index="${i}" data-target-scale="${targetScale}" style="top:${i * 28}px; --card-glow: ${glow};" data-project-id="${p.id}">
+      <div class="evo-pl-stack-card evo-feature-card" data-stack-index="${i}" data-target-scale="${targetScale}" style="top:${i * 28}px; --card-glow: ${glow};" data-project-id="${safeId}">
         <div class="evo-pl-stack-inner">
           <div class="evo-pl-stack-head">
             <span class="evo-pl-stack-num">${num}</span>
             <div class="evo-pl-stack-meta">
-              <span class="evo-pl-stack-cat">${p.categoryLabel || p.category || ''}</span>
-              <h3 class="evo-pl-stack-title">${p.title}</h3>
+              <span class="evo-pl-stack-cat">${safeCategory}</span>
+              <h3 class="evo-pl-stack-title">${safeTitle}</h3>
             </div>
             <button class="evo-pl-ghost-btn evo-pl-stack-btn" type="button">查看作品</button>
           </div>
@@ -295,10 +319,16 @@ function projectCard(p, index) {
   const gradient = ACCENT_GRADIENT[p.accent] || ACCENT_GRADIENT.purple
   const glow = ACCENT_GLOW[p.accent] || ACCENT_GLOW.purple
 
+  const safeTitle = escapeHtml(p.title || '')
+  const safeDesc = escapeHtml(p.desc || '')
+  const safeCategory = escapeHtml(p.categoryLabel || p.category || '')
+  const safeYear = escapeHtml(p.year || '')
+  const safeCover = safeUrl(p.coverImage)
+
   // 封面：有图用图，没图用「项目首字 + 渐变 + 装饰圆点」的优雅占位
-  const firstChar = (p.title || '·').slice(0, 1)
-  const cover = p.coverImage
-    ? `<div class="h-40 sm:h-48 overflow-hidden bg-gradient-to-br ${gradient}"><img src="${p.coverImage}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy" /></div>`
+  const firstChar = escapeHtml((p.title || '·').slice(0, 1))
+  const cover = safeCover
+    ? `<div class="h-40 sm:h-48 overflow-hidden bg-gradient-to-br ${gradient}"><img src="${safeCover}" alt="${safeTitle}" class="w-full h-full object-cover" loading="lazy" /></div>`
     : `<div class="h-40 sm:h-48 relative bg-gradient-to-br ${gradient} flex items-center justify-center overflow-hidden">
         <span class="evo-title text-5xl sm:text-6xl text-white/85 drop-shadow-lg">${firstChar}</span>
         <span class="absolute top-3 right-3 w-2 h-2 rounded-full bg-white/30"></span>
@@ -308,17 +338,17 @@ function projectCard(p, index) {
   const videoBadge = p.video ? `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] bg-[var(--evo-pink)]/20 text-[var(--evo-pink)] text-xs">▶ 视频</span>` : ''
 
   return `
-    <article class="group evo-glass evo-tilt-card evo-glow-card evo-feature-card evo-filter-item rounded-[var(--evo-radius-lg)] hover:bg-[var(--evo-surface-2)] transition-all hover:-translate-y-1 cursor-pointer evo-reveal" style="animation-delay:${Math.min(index * 60, 360)}ms; --card-glow: ${glow};" data-reveal-delay="${Math.min(index * 80, 400)}" data-project-id="${p.id}">
+    <article class="group evo-glass evo-tilt-card evo-glow-card evo-feature-card evo-filter-item rounded-[var(--evo-radius-lg)] hover:bg-[var(--evo-surface-2)] transition-all hover:-translate-y-1 cursor-pointer evo-reveal" style="animation-delay:${Math.min(index * 60, 360)}ms; --card-glow: ${glow};" data-reveal-delay="${Math.min(index * 80, 400)}" data-project-id="${escapeHtml(p.id || '')}">
       <div class="evo-tilt-inner rounded-[var(--evo-radius-lg)] overflow-hidden">
       ${cover}
       <div class="p-5 sm:p-6">
         <div class="flex items-center gap-2 mb-3 flex-wrap">
-          <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${p.categoryLabel || p.category}</span>
+          <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${safeCategory}</span>
           ${videoBadge}
-          <span class="text-xs text-[var(--evo-ink-3)]">${p.year || ''}</span>
+          <span class="text-xs text-[var(--evo-ink-3)]">${safeYear}</span>
         </div>
-        <h3 class="evo-title text-lg sm:text-xl mb-2">${p.title}</h3>
-        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed">${p.desc || ''}</p>
+        <h3 class="evo-title text-lg sm:text-xl mb-2">${safeTitle}</h3>
+        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed">${safeDesc}</p>
         ${p.demoUrl ? `<div class="inline-flex items-center gap-1 mt-3 text-sm text-[var(--evo-purple-300)] hover:text-[var(--evo-purple-200)] transition-colors">访问链接 →</div>` : ''}
       </div>
       </div>

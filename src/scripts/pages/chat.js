@@ -112,38 +112,48 @@ function renderMarkdown(text) {
 }
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML }
 
+// 安全 URL：只允许 http/https/mailto 协议，防止 javascript: XSS
+function safeUrl(url) {
+  if (!url) return ''
+  const u = String(url).trim()
+  if (/^(https?:|mailto:|\/)/i.test(u)) return u
+  return ''
+}
+
 // ============================================================
 // 功能 5：内联卡片（作品/文章）
 // ============================================================
 function projectCard(p) {
-  const cover = p.cover || p.image || ''
+  const cover = safeUrl(p.cover || p.image || '')
   const coverHtml = cover ? `<div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-[var(--evo-surface-2)]"><img src="${cover}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'"/></div>` : ''
-  const link = p.link ? `<a href="${p.link}" target="_blank" class="text-xs text-[var(--evo-cyan)] hover:underline">查看详情 →</a>` : ''
+  const link = safeUrl(p.link)
+  const linkHtml = link ? `<a href="${link}" target="_blank" rel="noopener noreferrer" class="text-xs text-[var(--evo-cyan)] hover:underline">查看详情 →</a>` : ''
   return `<div class="flex gap-3 p-3 rounded-lg bg-[var(--evo-surface-2)]/50 border border-[var(--evo-border)] my-2">
     ${coverHtml}
     <div class="min-w-0 flex-1">
-      <div class="font-medium text-[var(--evo-ink)] text-sm truncate">${p.title}</div>
-      ${p.desc ? `<div class="text-xs text-[var(--evo-ink-2)] mt-1 line-clamp-2">${p.desc}</div>` : ''}
+      <div class="font-medium text-[var(--evo-ink)] text-sm truncate">${escapeHtml(p.title || '')}</div>
+      ${p.desc ? `<div class="text-xs text-[var(--evo-ink-2)] mt-1 line-clamp-2">${escapeHtml(p.desc)}</div>` : ''}
       <div class="mt-1 flex items-center gap-2">
-        ${p.categoryLabel || p.category ? `<span class="text-xs text-[var(--evo-purple-300)]">${p.categoryLabel || p.category}</span>` : ''}
-        ${link}
+        ${p.categoryLabel || p.category ? `<span class="text-xs text-[var(--evo-purple-300)]">${escapeHtml(p.categoryLabel || p.category)}</span>` : ''}
+        ${linkHtml}
       </div>
     </div>
   </div>`
 }
 
 function articleCard(a) {
-  const cover = a.cover || a.image || ''
+  const cover = safeUrl(a.cover || a.image || '')
   const coverHtml = cover ? `<div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-[var(--evo-surface-2)]"><img src="${cover}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'"/></div>` : ''
-  const link = a.link ? `<a href="${a.link}" target="_blank" class="text-xs text-[var(--evo-cyan)] hover:underline">阅读全文 →</a>` : ''
+  const link = safeUrl(a.link)
+  const linkHtml = link ? `<a href="${link}" target="_blank" rel="noopener noreferrer" class="text-xs text-[var(--evo-cyan)] hover:underline">阅读全文 →</a>` : ''
   return `<div class="flex gap-3 p-3 rounded-lg bg-[var(--evo-surface-2)]/50 border border-[var(--evo-border)] my-2">
     ${coverHtml}
     <div class="min-w-0 flex-1">
-      <div class="font-medium text-[var(--evo-ink)] text-sm truncate">${a.title}</div>
-      ${a.excerpt ? `<div class="text-xs text-[var(--evo-ink-2)] mt-1 line-clamp-2">${a.excerpt}</div>` : ''}
+      <div class="font-medium text-[var(--evo-ink)] text-sm truncate">${escapeHtml(a.title || '')}</div>
+      ${a.excerpt ? `<div class="text-xs text-[var(--evo-ink-2)] mt-1 line-clamp-2">${escapeHtml(a.excerpt)}</div>` : ''}
       <div class="mt-1 flex items-center gap-2">
-        ${a.date ? `<span class="text-xs text-[var(--evo-ink-3)]">${a.date}</span>` : ''}
-        ${link}
+        ${a.date ? `<span class="text-xs text-[var(--evo-ink-3)]">${escapeHtml(a.date)}</span>` : ''}
+        ${linkHtml}
       </div>
     </div>
   </div>`
@@ -322,11 +332,11 @@ function generateAboutReply(text) {
   const identity = s && s.identity ? s.identity : `${on} 的数字分身 Echo — 沉淀作品、文章、思考的数字化空间站。`
   const bio = s && s.bio ? s.bio : ''
   const skills = s && Array.isArray(s.skills) && s.skills.length ? s.skills : []
-  const skillsHtml = skills.length ? `<p class="mt-3 mb-2"><strong>擅长方向：</strong></p><div class="flex flex-wrap gap-2">${skills.map((sk) => `<span class="px-2 py-1 rounded bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)] text-xs">${sk}</span>`).join('')}</div>` : ''
+  const skillsHtml = skills.length ? `<p class="mt-3 mb-2"><strong>擅长方向：</strong></p><div class="flex flex-wrap gap-2">${skills.map((sk) => `<span class="px-2 py-1 rounded bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)] text-xs">${escapeHtml(sk)}</span>`).join('')}</div>` : ''
   const socials = s && Array.isArray(s.socials) && s.socials.length ? s.socials : []
-  const socialsHtml = socials.length ? `<p class="mt-3 text-sm"><strong>联系方式：</strong> ${socials.map((x) => typeof x === 'string' ? x : (x.label || '') + (x.url ? `（${x.url}）` : '')).join(' · ')}</p>` : ''
+  const socialsHtml = socials.length ? `<p class="mt-3 text-sm"><strong>联系方式：</strong> ${escapeHtml(socials.map((x) => typeof x === 'string' ? x : (x.label || '') + (x.url ? `（${x.url}）` : '')).join(' · '))}</p>` : ''
   return {
-    html: applyStyle(`<p><strong>${on}</strong> — ${identity}</p>${bio ? `<p class="mt-2 text-[var(--evo-ink-2)]">${bio}</p>` : ''}${skillsHtml}${socialsHtml}`),
+    html: applyStyle(`<p><strong>${escapeHtml(on)}</strong> — ${escapeHtml(identity)}</p>${bio ? `<p class="mt-2 text-[var(--evo-ink-2)]">${escapeHtml(bio)}</p>` : ''}${skillsHtml}${socialsHtml}`),
     sources: [{ label: '站点设置 - 关于我', tone: 'purple' }],
     followUps: ['她最擅长什么？', '她最近在做什么？']
   }
@@ -337,11 +347,11 @@ function generateTimelineReply() {
   const nProjects = LIVE_DATA.projects.length, nArticles = LIVE_DATA.articles.length, nNotes = LIVE_DATA.notes.length
   const lastProj = LIVE_DATA.projects[0], lastArt = LIVE_DATA.articles[0]
   const lines = []
-  if (lastProj) lines.push(`最近完成作品：<strong>${lastProj.title}</strong>${lastProj.year ? `（${lastProj.year}）` : ''}`)
-  if (lastArt) lines.push(`最近发表文章：<strong>${lastArt.title}</strong>${lastArt.date ? ` · ${lastArt.date}` : ''}`)
+  if (lastProj) lines.push(`最近完成作品：<strong>${escapeHtml(lastProj.title)}</strong>${lastProj.year ? `（${escapeHtml(lastProj.year)}）` : ''}`)
+  if (lastArt) lines.push(`最近发表文章：<strong>${escapeHtml(lastArt.title)}</strong>${lastArt.date ? ` · ${escapeHtml(lastArt.date)}` : ''}`)
   lines.push(`整体产出：<strong>${nProjects}</strong> 个作品 · <strong>${nArticles}</strong> 篇文章 · <strong>${nNotes}</strong> 条笔记`)
   return {
-    html: applyStyle(`<p>${on} 最近一直在产出内容，当前状态：</p><ul class="list-disc list-inside space-y-1 text-sm">${lines.map((l) => `<li>${l}</li>`).join('')}</ul>`),
+    html: applyStyle(`<p>${escapeHtml(on)} 最近一直在产出内容，当前状态：</p><ul class="list-disc list-inside space-y-1 text-sm">${lines.map((l) => `<li>${l}</li>`).join('')}</ul>`),
     sources: [{ label: `作品集 · ${nProjects}`, tone: 'purple' }, { label: `文章 · ${nArticles}`, tone: 'cyan' }, nNotes ? { label: `笔记 · ${nNotes}`, tone: 'pink' } : null].filter(Boolean),
     followUps: ['她最满意哪个作品？', '最近有新文章吗？']
   }
@@ -440,7 +450,7 @@ function followUpButtons(followUps) {
   if (!followUps || !followUps.length) return ''
   const items = followUps.slice(0, 3)
   return `<div class="flex flex-wrap gap-2 mt-3">
-    ${items.map((q) => `<button data-followup="${escapeHtml(q)}" class="px-3 py-1 rounded-full text-xs border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:border-[var(--evo-purple-400)] hover:text-[var(--evo-purple-300)] transition-colors">${q}</button>`).join('')}
+    ${items.map((q) => `<button data-followup="${escapeHtml(q)}" class="px-3 py-1 rounded-full text-xs border border-[var(--evo-border)] text-[var(--evo-ink-2)] hover:border-[var(--evo-purple-400)] hover:text-[var(--evo-purple-300)] transition-colors">${escapeHtml(q)}</button>`).join('')}
   </div>`
 }
 
@@ -464,7 +474,7 @@ function messageEl(msg, index) {
 function sourceChip(s) {
   const colorMap = { purple: 'bg-[var(--evo-purple-500)]/20 text-[var(--evo-purple-300)]', cyan: 'bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)]', pink: 'bg-[var(--evo-pink)]/20 text-[var(--evo-pink)]' }
   const cls = colorMap[s.tone] || colorMap.purple
-  return `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${cls} text-xs cursor-pointer hover:opacity-80 transition-opacity">${s.label}</span>`
+  return `<span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${cls} text-xs cursor-pointer hover:opacity-80 transition-opacity">${escapeHtml(s.label)}</span>`
 }
 
 let renderTimer = null

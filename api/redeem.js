@@ -99,6 +99,32 @@ const USED_COUNT_FIELDS = ['已用数', '已用', '已使用数']
 const ARTICLE_TITLE_FIELDS = ['标题', '文章标题', '名称']
 const COLLECTION_LINK_FIELDS = ['包含文章', '关联文章', '文章列表']
 
+// IP 频率限制：防止兑换码被暴力破解
+const ipRateLimit = new Map()
+const RATE_LIMIT_MAX = 10 // 每 IP 每小时最多 10 次核销尝试
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 小时
+
+function checkRateLimit(ip) {
+  const now = Date.now()
+  const record = ipRateLimit.get(ip)
+  if (!record || now > record.resetAt) {
+    ipRateLimit.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
+    return { allowed: true }
+  }
+  if (record.count >= RATE_LIMIT_MAX) {
+    const retryAfter = Math.ceil((record.resetAt - now) / 1000)
+    return { allowed: false, retryAfter }
+  }
+  record.count++
+  return { allowed: true }
+}
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for']
+  if (forwarded) return forwarded.split(',')[0].trim()
+  return req.headers['x-real-ip'] || req.socket?.remoteAddress || 'unknown'
+}
+
 export default async function handler(req, res) {
   res.setHeader('Vary', 'Origin')
   const origin = req.headers.origin || ''
@@ -114,6 +140,13 @@ export default async function handler(req, res) {
   }
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST') return res.status(405).json({ ok: false, message: 'Method not allowed' })
+
+  // IP 频率限制：防止兑换码被暴力破解
+  const ip = getClientIp(req)
+  const rateCheck = checkRateLimit(ip)
+  if (!rateCheck.allowed) {
+    return res.status(429).json({ ok: false, message: `尝试过于频繁，请 ${rateCheck.retryAfter} 秒后重试` })
+  }
 
   const env = requireEnv()
   if (!env) return res.status(200).json({ ok: false, message: '服务器未配置飞书环境变量（缺 FEISHU_APP_ID / FEISHU_APP_SECRET / FEISHU_APP_TOKEN）' })
@@ -289,6 +322,7 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('[redeem v2]', err.message)
-    return res.status(200).json({ ok: false, message: '核销服务异常：' + err.message })
+    // 不向用户暴露内部错误细节
+    return res.status(200).json({ ok: false, message: '核销服务异常，请稍后重试' })
   }
 }

@@ -15,6 +15,14 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;')
 }
 
+// 安全 URL 校验：只允许 http/https/mailto 和相对路径，防止 javascript: XSS
+function safeUrl(url) {
+  if (!url) return ''
+  const u = String(url).trim()
+  if (/^(https?:|mailto:|\/)/i.test(u)) return encodeURI(u)
+  return ''
+}
+
 // 行内格式：加粗 **xxx** / 斜体 *xxx* / 高亮 ==xxx== / 行内代码 `xxx` / 图片 ![](url) / 链接 [](url)
 function parseInline(text) {
   let s = escapeHtml(text)
@@ -22,14 +30,16 @@ function parseInline(text) {
   // 图片：![alt](url)  —— 必须先于普通链接解析
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, url) => {
     const safeAlt = alt.replace(/"/g, '&quot;')
-    const safeUrl = encodeURI(url)
-    return `<img src="${safeUrl}" alt="${safeAlt}" loading="lazy" class="evo-md-img" />`
+    const safeImgUrl = safeUrl(url)
+    if (!safeImgUrl) return '' // 不安全的 URL 直接丢弃
+    return `<img src="${safeImgUrl}" alt="${safeAlt}" loading="lazy" class="evo-md-img" />`
   })
 
   // 链接：[text](url)
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, txt, url) => {
-    const safeUrl = encodeURI(url)
-    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="evo-md-link">${txt}</a>`
+    const safeLinkUrl = safeUrl(url)
+    if (!safeLinkUrl) return txt // 不安全的 URL 只显示文本
+    return `<a href="${safeLinkUrl}" target="_blank" rel="noopener noreferrer" class="evo-md-link">${txt}</a>`
   })
 
   // 行内代码：`xxx`

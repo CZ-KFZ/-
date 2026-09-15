@@ -10,6 +10,24 @@ import { PROJECTS as MOCK_PROJECTS, ARTICLES as MOCK_ARTICLES } from '../data.js
 import { TAG_TONE, ACCENT_GRADIENT, ACCENT_GLOW, openProjectModal } from '../project-ui.js'
 import { bindTiltEffect } from '../effects.js'
 
+// HTML 转义，防止 XSS
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// 安全 URL：只允许 http/https 和相对路径
+function safeUrl(url) {
+  if (!url) return ''
+  const u = String(url).trim()
+  if (/^(https?:|\/)/i.test(u)) return u
+  return ''
+}
+
 // 生成星空：在 #evo-hero-bg 内插入若干闪烁的小点
 function buildStarfield() {
   const bg = document.getElementById('evo-hero-bg')
@@ -81,7 +99,14 @@ function applySettings(settings) {
   const avatarInner = document.getElementById('evo-home-avatar-inner')
   const avatarCharEl = document.getElementById('evo-home-avatar-char')
   if (settings.avatarImage && avatarInner) {
-    avatarInner.innerHTML = `<img src="${settings.avatarImage}" alt="${settings.ownerName || '头像'}" class="w-full h-full object-contain" />`
+    // 安全 URL + HTML 转义，防止 XSS
+    const safeAvatarUrl = /^(https?:|\/)/i.test(String(settings.avatarImage)) ? settings.avatarImage : ''
+    const safeOwnerName = String(settings.ownerName || '头像').replace(/[<>"']/g, '')
+    if (safeAvatarUrl) {
+      avatarInner.innerHTML = `<img src="${safeAvatarUrl}" alt="${safeOwnerName}" class="w-full h-full object-contain" />`
+    } else if (avatarCharEl) {
+      avatarCharEl.textContent = char
+    }
   } else if (avatarCharEl) {
     avatarCharEl.textContent = char
   }
@@ -120,8 +145,15 @@ function renderFeaturedCarousel(projects) {
   const slidesHtml = featured.map((p, i) => {
     const gradient = ACCENT_GRADIENT[p.accent] || ACCENT_GRADIENT.purple
     const toneCls = TAG_TONE[p.accent] || TAG_TONE.purple
-    const bg = p.coverImage
-      ? `<img src="${p.coverImage}" alt="${p.title}" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />`
+    const safeTitle = escapeHtml(p.title || '')
+    const safeDesc = escapeHtml(p.desc || '')
+    const safeCategory = escapeHtml(p.categoryLabel || p.category || '')
+    const safeYear = escapeHtml(p.year || '')
+    const safeOutcome = escapeHtml(p.outcome || '')
+    const safeCover = safeUrl(p.coverImage)
+    const safeId = escapeHtml(p.id || '')
+    const bg = safeCover
+      ? `<img src="${safeCover}" alt="${safeTitle}" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />`
       : `<div class="absolute inset-0 bg-gradient-to-br ${gradient}"></div>`
     return `
       <div class="evo-carousel-slide absolute inset-0 transition-opacity duration-700 ${i === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}" data-slide="${i}">
@@ -129,13 +161,13 @@ function renderFeaturedCarousel(projects) {
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
         <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
           <div class="flex items-center gap-2 mb-3 flex-wrap">
-            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${p.categoryLabel || p.category}</span>
-            <span class="text-xs text-white/70">${p.year || ''}</span>
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${toneCls} text-xs">${safeCategory}</span>
+            <span class="text-xs text-white/70">${safeYear}</span>
           </div>
-          <h3 class="font-serif-instrument text-2xl sm:text-4xl text-white mb-2">${p.title}</h3>
-          ${p.outcome ? `<div class="flex items-center gap-2 mb-2"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs font-medium"><span aria-hidden="true">↗</span>${p.outcome}</span></div>` : ''}
-          <p class="text-white/70 text-sm sm:text-base max-w-xl mb-4 line-clamp-2">${p.desc || ''}</p>
-          <button class="evo-featured-open inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] bg-white/15 backdrop-blur-md hover:bg-white/25 text-white text-sm transition-all border border-white/20" data-project-id="${p.id}">
+          <h3 class="font-serif-instrument text-2xl sm:text-4xl text-white mb-2">${safeTitle}</h3>
+          ${safeOutcome ? `<div class="flex items-center gap-2 mb-2"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--evo-cyan)]/20 text-[var(--evo-cyan)] text-xs font-medium"><span aria-hidden="true">↗</span>${safeOutcome}</span></div>` : ''}
+          <p class="text-white/70 text-sm sm:text-base max-w-xl mb-4 line-clamp-2">${safeDesc}</p>
+          <button class="evo-featured-open inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--evo-radius-md)] bg-white/15 backdrop-blur-md hover:bg-white/25 text-white text-sm transition-all border border-white/20" data-project-id="${safeId}">
             查看详情
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </button>
@@ -238,8 +270,9 @@ function renderRecentArticles(articles) {
 
   // —— 第一篇：大卡（带封面、完整摘要、3D 倾斜）
   const fTone = toneOf(feature)
-  const fCover = feature.coverImage
-    ? `<div class="shrink-0 w-full md:w-64 aspect-[16/10] rounded-[var(--evo-radius-md)] overflow-hidden"><img src="${feature.coverImage}" alt="${feature.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
+  const fSafeCover = safeUrl(feature.coverImage)
+  const fCover = fSafeCover
+    ? `<div class="shrink-0 w-full md:w-64 aspect-[16/10] rounded-[var(--evo-radius-md)] overflow-hidden"><img src="${fSafeCover}" alt="${escapeHtml(feature.title || '')}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
     : ''
   const featureHtml = `
     <a href="articles.html" class="group evo-glass evo-tilt-card evo-glow-card rounded-[var(--evo-radius-lg)] p-6 sm:p-8 flex flex-col md:flex-row gap-6 hover:bg-[var(--evo-surface-2)] transition-all evo-reveal evo-filter-item" data-reveal-delay="0">
@@ -247,13 +280,13 @@ function renderRecentArticles(articles) {
         ${fCover}
         <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-center gap-2 mb-3">
-            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${fTone} text-xs">${feature.categoryLabel || feature.category}</span>
-            <span class="text-xs text-[var(--evo-ink-3)]">${feature.date || ''}</span>
-            ${feature.readTime ? `<span class="text-xs text-[var(--evo-ink-3)]">${feature.readTime}</span>` : ''}
+            <span class="px-2 py-1 rounded-[var(--evo-radius-sm)] ${fTone} text-xs">${escapeHtml(feature.categoryLabel || feature.category || '')}</span>
+            <span class="text-xs text-[var(--evo-ink-3)]">${escapeHtml(feature.date || '')}</span>
+            ${feature.readTime ? `<span class="text-xs text-[var(--evo-ink-3)]">${escapeHtml(feature.readTime)}</span>` : ''}
           </div>
-          <h3 class="evo-title text-xl sm:text-2xl mb-2 group-hover:text-[var(--evo-cyan)] transition-colors leading-snug">${feature.title}</h3>
-          ${feature.outcome ? `<div class="flex items-center gap-2 mb-3"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)] text-xs font-medium"><span aria-hidden="true">↗</span>${feature.outcome}</span></div>` : '<div class="mb-3"></div>'}
-          <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3">${feature.excerpt || ''}</p>
+          <h3 class="evo-title text-xl sm:text-2xl mb-2 group-hover:text-[var(--evo-cyan)] transition-colors leading-snug">${escapeHtml(feature.title || '')}</h3>
+          ${feature.outcome ? `<div class="flex items-center gap-2 mb-3"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)] text-xs font-medium"><span aria-hidden="true">↗</span>${escapeHtml(feature.outcome)}</span></div>` : '<div class="mb-3"></div>'}
+          <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3">${escapeHtml(feature.excerpt || '')}</p>
         </div>
       </div>
     </a>`
@@ -263,9 +296,9 @@ function renderRecentArticles(articles) {
     const tone = toneOf(a)
     return `
       <a href="articles.html" class="group evo-glass rounded-[var(--evo-radius-md)] p-4 flex items-center gap-3 hover:bg-[var(--evo-surface-2)] hover:-translate-y-0.5 transition-all evo-reveal evo-filter-item" data-reveal-delay="${Math.min((i + 1) * 80, 400)}">
-        <span class="px-2 py-0.5 rounded-[var(--evo-radius-sm)] ${tone} text-[11px] shrink-0">${a.categoryLabel || a.category}</span>
-        <span class="evo-title text-sm flex-1 min-w-0 truncate group-hover:text-[var(--evo-cyan)] transition-colors">${a.title}</span>
-        <span class="text-xs text-[var(--evo-ink-3)] shrink-0 hidden sm:inline">${(a.date || '').replace(/\.*/, '')}</span>
+        <span class="px-2 py-0.5 rounded-[var(--evo-radius-sm)] ${tone} text-[11px] shrink-0">${escapeHtml(a.categoryLabel || a.category || '')}</span>
+        <span class="evo-title text-sm flex-1 min-w-0 truncate group-hover:text-[var(--evo-cyan)] transition-colors">${escapeHtml(a.title || '')}</span>
+        <span class="text-xs text-[var(--evo-ink-3)] shrink-0 hidden sm:inline">${escapeHtml((a.date || '').replace(/\.*/, ''))}</span>
       </a>`
   }).join('')
 
@@ -354,11 +387,14 @@ function renderSocialsSection(socials) {
   box.innerHTML = validSocials.map((s) => {
     const iconHtml = getSocialIcon(s.title, s.href)
     const label = s.title || s.href || ''
-    return `<a href="${s.href}" title="${label}" aria-label="${label}" target="_blank" rel="noopener noreferrer"
+    // 安全 URL：只允许 http/https/mailto 和相对路径，防止 javascript: XSS
+    const safeHref = /^(https?:|mailto:|\/)/i.test(String(s.href)) ? s.href : ''
+    if (!safeHref) return '' // 不安全的链接不渲染
+    return `<a href="${safeHref}" title="${label.replace(/[<>"']/g, '')}" aria-label="${label.replace(/[<>"']/g, '')}" target="_blank" rel="noopener noreferrer"
         class="evo-tilt-card group w-12 h-12 sm:w-14 sm:h-14 rounded-full evo-glass flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 hover:scale-110 hover:border-white/30 transition-all border border-white/10">
       <span class="evo-tilt-inner">${iconHtml}</span>
     </a>`
-  }).join('')
+  }).filter(Boolean).join('')
 
   // 绑定 3D 倾斜
   box.querySelectorAll('.evo-tilt-card').forEach((card) => bindTiltEffect(card))
@@ -486,7 +522,7 @@ function renderAboutSection(settings, projects, articles, notes) {
       : ABOUT_DEFAULT_SKILLS
     skillsEl.innerHTML = skills.map((label, i) => {
       const tone = SKILL_TONES[i % SKILL_TONES.length]
-      return `<span class="px-3 py-1 rounded-full text-xs sm:text-sm border ${tone} transition-colors">${label}</span>`
+      return `<span class="px-3 py-1 rounded-full text-xs sm:text-sm border ${tone} transition-colors">${escapeHtml(label)}</span>`
     }).join('')
   }
 
@@ -553,9 +589,9 @@ function renderNowSection(settings) {
     return `
       <div class="evo-glass evo-tilt-card evo-feature-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" style="--card-glow: ${glow};" data-reveal-delay="${i * 80}">
         <div class="evo-tilt-inner rounded-[var(--evo-radius-md)]">
-          <div class="text-2xl mb-3">${item.icon}</div>
-          <p class="text-xs ${tone} mb-1.5 tracking-wide">${item.label}</p>
-          <p class="text-sm text-white/75 leading-relaxed">${item.text}</p>
+          <div class="text-2xl mb-3">${escapeHtml(item.icon)}</div>
+          <p class="text-xs ${tone} mb-1.5 tracking-wide">${escapeHtml(item.label)}</p>
+          <p class="text-sm text-white/75 leading-relaxed">${escapeHtml(item.text)}</p>
         </div>
       </div>`
   }).join('')
@@ -626,9 +662,9 @@ function renderToolsSection(settings) {
     return `
       <div class="evo-glass evo-tilt-card evo-feature-card rounded-[var(--evo-radius-md)] p-4 sm:p-5 hover:bg-[var(--evo-surface-2)] hover:-translate-y-1 transition-all evo-reveal evo-filter-item" style="--card-glow: ${glow};" data-reveal-delay="${(i % 4) * 80}">
         <div class="evo-tilt-inner rounded-[var(--evo-radius-md)]">
-          <div class="text-2xl mb-2">${tool.icon}</div>
-          <p class="text-sm font-medium ${tone} mb-1">${tool.name}</p>
-          <p class="text-xs text-white/55 leading-relaxed">${tool.desc}</p>
+          <div class="text-2xl mb-2">${escapeHtml(tool.icon)}</div>
+          <p class="text-sm font-medium ${tone} mb-1">${escapeHtml(tool.name)}</p>
+          <p class="text-xs text-white/55 leading-relaxed">${escapeHtml(tool.desc)}</p>
         </div>
       </div>`
   }).join('')

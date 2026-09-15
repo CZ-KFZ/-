@@ -77,24 +77,30 @@ function paidBadgeHtml(a) {
 
 function articleCard(a, index) {
   const toneCls = CAT_TONE[a.category] || CAT_TONE['道']
-  const coverHtml = a.coverImage
-    ? `<div class="aspect-[16/9] overflow-hidden rounded-t-[var(--evo-radius-lg)]"><img src="${a.coverImage}" alt="${a.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
+  const safeTitle = escapeHtml(a.title || '')
+  const safeCategory = escapeHtml(a.categoryLabel || a.category || '')
+  const safeExcerpt = escapeHtml(a.excerpt || a.freeExcerpt || '（暂无摘要）')
+  const safeDate = escapeHtml(a.date || '')
+  const safeId = escapeHtml(a.id || '')
+  const safeCover = /^(https?:|\/)/i.test(String(a.coverImage || '')) ? a.coverImage : ''
+  const coverHtml = safeCover
+    ? `<div class="aspect-[16/9] overflow-hidden rounded-t-[var(--evo-radius-lg)]"><img src="${safeCover}" alt="${safeTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>`
     : ''
   const unlocked = isUnlocked(a.id)
   const lockIcon = (a.isPaid && a.price && !unlocked) ? '<span class="ml-1">🔒</span>' : ''
   return `
-    <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-article-id="${a.id}">
+    <article class="evo-glass evo-tilt-card evo-glow-card evo-filter-item rounded-[var(--evo-radius-lg)] overflow-hidden hover:bg-[var(--evo-surface-2)] hover:border-[var(--evo-purple-400)]/40 transition-all cursor-pointer evo-reveal group relative flex flex-col" data-reveal-delay="${Math.min(index * 80, 400)}" style="animation-delay:${Math.min(index * 60, 360)}ms" data-article-id="${safeId}">
       <div class="evo-tilt-inner flex flex-col flex-1">
       ${coverHtml}
       <div class="p-5 md:p-5 flex-1 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 mb-3">
-          <span class="px-1.5 py-0.5 rounded-[var(--evo-radius-sm)] ${toneCls} text-[11px]">${a.categoryLabel || a.category}</span>
+          <span class="px-1.5 py-0.5 rounded-[var(--evo-radius-sm)] ${toneCls} text-[11px]">${safeCategory}</span>
           ${paidBadgeHtml(a)}
         </div>
-        <h2 class="evo-title text-base sm:text-lg mb-2 line-clamp-2 flex items-start">${a.title}${lockIcon}</h2>
-        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3 flex-1">${a.excerpt || a.freeExcerpt || '（暂无摘要）'}</p>
+        <h2 class="evo-title text-base sm:text-lg mb-2 line-clamp-2 flex items-start">${safeTitle}${lockIcon}</h2>
+        <p class="text-sm text-[var(--evo-ink-2)] leading-relaxed line-clamp-3 flex-1">${safeExcerpt}</p>
         <div class="mt-3 pt-3 border-t border-[var(--evo-border)] flex items-center justify-between text-xs text-[var(--evo-ink-3)]">
-          <span>${a.date}</span>
+          <span>${safeDate}</span>
           ${unlocked
             ? '<span class="text-[var(--evo-cyan)]">✓ 已解锁</span>'
             : '<span class="text-[var(--evo-purple-300)] opacity-60 group-hover:opacity-100 transition-opacity">阅读 →</span>'
@@ -108,13 +114,23 @@ function articleCard(a, index) {
 // 把正文转成段落 HTML
 // format=plain（默认）：按空行分段，段内换行 <br>，向后兼容
 // format=markdown：调 parseMarkdown 渲染配图、加粗、引用、列表、代码块等
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function textToParagraphs(text, format) {
   if (!text) return ''
   if (format === 'markdown') {
     return `<div class="prose-content evo-md text-[var(--evo-ink-2)] leading-loose space-y-4">${parseMarkdown(text)}</div>`
   }
+  // 纯文本：必须先转义 HTML，防止 XSS
   return `<div class="prose-content text-[var(--evo-ink-2)] leading-loose space-y-4">${
-    text
+    escapeHtml(text)
       .split(/\n\n+/)
       .filter((p) => p.trim())
       .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
