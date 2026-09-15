@@ -372,11 +372,38 @@ function setupSubscribeForm() {
   const msg = document.getElementById('evo-subscribe-msg')
   if (!form || !msg) return
 
+  // 前端严格邮箱校验（与后端一致）
+  function isValidEmail(email) {
+    if (typeof email !== 'string') return false
+    if (email.length > 254) return false
+    const [local, domain] = email.split('@')
+    if (!local || !domain) return false
+    if (local.length > 64) return false
+    if (!/^[a-zA-Z0-9]([a-zA-Z0-9._+-]*[a-zA-Z0-9])?$/.test(local)) return false
+    if (local.includes('..')) return false
+    const domainParts = domain.split('.')
+    if (domainParts.length < 2) return false
+    for (const part of domainParts) {
+      if (!part || part.length > 63) return false
+      if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(part)) return false
+    }
+    return domainParts[domainParts.length - 1].length >= 2
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
     const input = form.querySelector('input[type="email"]')
+    const honeypot = form.querySelector('input[name="website"]')
     const email = input.value.trim()
     if (!email) return
+
+    // 前端邮箱格式校验
+    if (!isValidEmail(email)) {
+      msg.textContent = '请输入有效的邮箱地址'
+      msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-warning)] transition-colors'
+      input.focus()
+      return
+    }
 
     const submitBtn = form.querySelector('button[type="submit"]')
     const originalText = submitBtn.textContent
@@ -388,7 +415,11 @@ function setupSubscribeForm() {
       const resp = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: '首页订阅' })
+        body: JSON.stringify({
+          email,
+          source: '首页订阅',
+          website: honeypot ? honeypot.value : '' // Honeypot 字段
+        })
       })
       const data = await resp.json()
 

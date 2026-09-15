@@ -444,6 +444,8 @@
             <p class="text-xs text-white/50 tracking-wider">邮件订阅，新内容第一时间送达</p>
           </div>
           <form id="evo-home-subscribe" class="flex flex-col sm:flex-row items-stretch gap-2 max-w-md mx-auto">
+            <!-- Honeypot：隐藏字段，机器人会填，正常人不会看到 -->
+            <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
             <div class="relative flex-1">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none">
                 <rect x="2" y="4" width="20" height="16" rx="2"/>
