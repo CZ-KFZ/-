@@ -171,10 +171,20 @@ function renderHome() {
 
   const freeCount = articles.filter((a) => !a.isPaid && !a.hidden).length
   const paidCount = articles.filter((a) => a.isPaid && !a.hidden).length
-  // 碎碎念：飞书「分类」字段为「散文」或「碎碎念」的文章
+  // 日志：飞书「分类」字段为「散文」「碎碎念」或「日志」的文章
   const proseCount = articles.filter((a) => {
     const cat = String(a.category || a.categoryLabel || '').toLowerCase()
-    return (cat === '散文' || cat.includes('散文') || cat.includes('碎碎念')) && !a.hidden
+    return (cat === '散文' || cat.includes('散文') || cat.includes('碎碎念') || cat.includes('日志')) && !a.hidden
+  }).length
+  // 省身：飞书「分类」字段含「省身」的文章
+  const reflectCount = articles.filter((a) => {
+    const cat = String(a.category || a.categoryLabel || '').toLowerCase()
+    return cat.includes('省身') && !a.hidden
+  }).length
+  // 女权：飞书「分类」字段含「女权」或「聊女权」的文章
+  const feministCount = articles.filter((a) => {
+    const cat = String(a.category || a.categoryLabel || '').toLowerCase()
+    return (cat.includes('女权') || cat.includes('聊女权')) && !a.hidden
   }).length
 
   list.classList.remove('hidden')
@@ -211,11 +221,29 @@ function renderHome() {
     {
       view: 'prose',
       icon: '✒️',
-      title: '碎碎念',
+      title: '日志',
       desc: '随笔、札记、生活感悟与文学性记录',
       count: proseCount,
       tone: 'from-[var(--evo-amber)]/20 to-[var(--evo-orange)]/10 border-[var(--evo-amber)]/30',
       badgeCls: 'bg-[var(--evo-amber)]/15 text-[var(--evo-amber)]'
+    },
+    {
+      view: 'reflect',
+      icon: '🪞',
+      title: '省身',
+      desc: '自省、反思、克己复礼，回望言行与心念',
+      count: reflectCount,
+      tone: 'from-[var(--evo-cyan)]/15 to-[var(--evo-violet)]/10 border-[var(--evo-cyan)]/30',
+      badgeCls: 'bg-[var(--evo-cyan)]/15 text-[var(--evo-cyan)]'
+    },
+    {
+      view: 'feminist',
+      icon: '✊',
+      title: '女权',
+      desc: '性别议题、女性处境、权力结构与平权思辨',
+      count: feministCount,
+      tone: 'from-[var(--evo-pink)]/15 to-[var(--evo-violet)]/10 border-[var(--evo-pink)]/30',
+      badgeCls: 'bg-[var(--evo-pink)]/15 text-[var(--evo-pink)]'
     }
   ]
 
@@ -644,6 +672,20 @@ function navigate(view, collectionId) {
     renderCollectionDetail(collectionId)
   }
   else if (view === 'prose') renderProse()
+  else if (view === 'reflect') renderCategoryList({
+    view: 'reflect',
+    title: '省身',
+    icon: '🪞',
+    keywords: ['省身'],
+    emptyLabel: '省身'
+  })
+  else if (view === 'feminist') renderCategoryList({
+    view: 'feminist',
+    title: '女权',
+    icon: '✊',
+    keywords: ['女权', '聊女权'],
+    emptyLabel: '女权'
+  })
   else if (view === 'search') renderSearchResults()
   // 滚动到列表顶部
   const list = document.getElementById('evo-articles-list')
@@ -694,6 +736,67 @@ function renderProse() {
       </button>
       <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
       <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇散文</p>
+    </div>
+    <div class="grid gap-5 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      ${items.map((a, i) => articleCard(a, i)).join('')}
+    </div>
+  `
+
+  list.querySelectorAll('[data-article-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.articleId
+      const article = articles.find((a) => a.id === id)
+      if (article) openArticleModal(article)
+    })
+  })
+  bindBack(list)
+
+  if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
+}
+
+// ============================================================
+// 二级：通用分类列表（按飞书「分类」字段关键词筛选）
+// 用于「省身」「女权」等基于分类的卡片入口
+// ============================================================
+function renderCategoryList({ title, icon, keywords, emptyLabel }) {
+  const list = document.getElementById('evo-articles-list')
+  const empty = document.getElementById('evo-articles-empty')
+  if (!list) return
+
+  const kws = (keywords || []).map((k) => k.toLowerCase())
+  const items = articles.filter((a) => {
+    const cat = String(a.category || a.categoryLabel || '').toLowerCase()
+    return kws.some((k) => cat.includes(k)) && !a.hidden
+  })
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="mb-6">
+        <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          返回文章
+        </button>
+      </div>
+      <h2 class="evo-title text-2xl mb-6">${icon} ${title}</h2>
+    `
+    list.classList.remove('hidden')
+    empty.classList.remove('hidden')
+    empty.querySelector('p').textContent = `暂无${emptyLabel || title}`
+    bindBack(list)
+    return
+  }
+
+  list.classList.remove('hidden')
+  empty.classList.add('hidden')
+
+  list.innerHTML = `
+    <div class="mb-6">
+      <button class="evo-back-btn flex items-center gap-2 text-sm text-[var(--evo-ink-2)] hover:text-[var(--evo-ink)] transition-colors" data-nav="home">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y1="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        返回文章
+      </button>
+      <h2 class="evo-title text-2xl sm:text-3xl mt-4 mb-2">${icon} ${title}</h2>
+      <p class="text-sm text-[var(--evo-ink-3)]">${items.length} 篇${emptyLabel || title}</p>
     </div>
     <div class="grid gap-5 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       ${items.map((a, i) => articleCard(a, i)).join('')}
