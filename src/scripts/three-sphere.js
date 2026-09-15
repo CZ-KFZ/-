@@ -14,14 +14,18 @@ import * as THREE from 'three'
 export function createAvatarSphere(container, imageUrl) {
   if (!container) return () => {}
 
-  // 检测 WebGL 支持
-  const canvas = document.createElement('canvas')
-  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
-  if (!gl) {
-    console.warn('[EchoVerse] 浏览器不支持 WebGL，3D 球体降级为 2D 兜底')
+  // 检测 WebGL 支持（详细诊断）
+  const diag = diagnoseWebGL()
+  console.log('[EchoVerse] WebGL 诊断：', diag)
+  if (!diag.supported) {
+    console.warn('[EchoVerse] 浏览器不支持 WebGL，3D 球体降级为 2D 兜底。原因：', diag.reason)
+    // 在页面右上角显示诊断信息，方便你截图给我看
+    showDiagnosticBadge(diag)
     render2DFallback(container, imageUrl)
     return () => {}
   }
+  // WebGL 可用也显示一个小标识，确认走了 3D 路径
+  showDiagnosticBadge({ ...diag, mode: '3D' })
 
   // 尺寸：以容器为准
   const width = container.clientWidth || 280
@@ -168,5 +172,50 @@ function render2DFallback(container, imageUrl) {
     wrapper.appendChild(span)
   }
   container.appendChild(wrapper)
+}
+
+// WebGL 详细诊断：返回支持状态 + 失败原因
+function diagnoseWebGL() {
+  try {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    if (!gl) {
+      return { supported: false, reason: 'getContext("webgl") 返回 null' }
+    }
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
+    const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '未知'
+    const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : '未知'
+    const version = gl.getParameter(gl.VERSION)
+    const shadingLang = gl.getParameter(gl.SHADING_LANGUAGE_VERSION)
+    const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+    return {
+      supported: true,
+      renderer, vendor, version, shadingLang, maxTextureSize,
+      reason: 'OK'
+    }
+  } catch (e) {
+    return { supported: false, reason: `异常：${e.message}` }
+  }
+}
+
+// 右上角显示诊断徽章：方便你截图给我看
+function showDiagnosticBadge(diag) {
+  const badge = document.createElement('div')
+  badge.style.cssText = `
+    position: fixed; top: 12px; right: 12px; z-index: 9999;
+    background: ${diag.supported ? 'rgba(34,197,94,0.95)' : 'rgba(239,68,68,0.95)'};
+    color: #fff; padding: 8px 14px; border-radius: 8px;
+    font: 12px/1.5 -apple-system, system-ui, sans-serif;
+    max-width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    pointer-events: none;
+  `
+  if (diag.supported) {
+    badge.innerHTML = `<b>3D 球体已启用</b><br>显卡：${diag.renderer}<br>WebGL：${diag.version}`
+  } else {
+    badge.innerHTML = `<b>3D 球体降级为 2D</b><br>原因：${diag.reason}<br>建议：在 chrome://gpu 查看详情，或更新显卡驱动`
+  }
+  document.body.appendChild(badge)
+  // 8 秒后自动消失
+  setTimeout(() => badge.remove(), 8000)
 }
 

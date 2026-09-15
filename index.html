@@ -426,25 +426,37 @@
           作品、文章、思考持续更新中，欢迎通过以下方式关注我。
         </p>
 
-        <!-- 社交链接（由 home.js 渲染） -->
+        <!-- 社交链接（由 home.js 渲染，无数据时整行隐藏） -->
         <div id="evo-home-socials" class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10 evo-reveal" data-reveal-delay="240">
-          <!-- 骨架占位（数据未到时显示） -->
+          <!-- 骨架占位（数据未到时显示，数据到达后会被替换/隐藏） -->
           <div class="evo-skeleton w-12 h-12 rounded-full"></div>
           <div class="evo-skeleton w-12 h-12 rounded-full"></div>
           <div class="evo-skeleton w-12 h-12 rounded-full"></div>
         </div>
 
-        <!-- 邮箱订阅入口（复制即用，无需后端） -->
+        <!-- 邮箱订阅入口 -->
         <div class="evo-reveal" data-reveal-delay="320">
-          <p class="text-xs text-white/40 mb-3 tracking-wider">或通过邮件订阅，新内容第一时间送达</p>
+          <div class="flex items-center justify-center gap-2 mb-3">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--evo-purple-300)]">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            <p class="text-xs text-white/50 tracking-wider">邮件订阅，新内容第一时间送达</p>
+          </div>
           <form id="evo-home-subscribe" class="flex flex-col sm:flex-row items-stretch gap-2 max-w-md mx-auto">
-            <input
-              type="email"
-              required
-              placeholder="your@email.com"
-              class="flex-1 px-4 py-3 rounded-full bg-white/5 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)]/50 focus:border-transparent transition-all text-sm"
-            />
-            <button type="submit" class="px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-all shadow-[0_8px_24px_rgba(255,255,255,0.15)] whitespace-nowrap">
+            <div class="relative flex-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+              <input
+                type="email"
+                required
+                placeholder="your@email.com"
+                class="w-full pl-11 pr-4 py-3 rounded-full bg-white/5 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--evo-purple-400)]/50 focus:border-transparent transition-all text-sm"
+              />
+            </div>
+            <button type="submit" class="px-6 py-3 rounded-full bg-gradient-to-r from-[var(--evo-purple-500)] to-[var(--evo-cyan)] text-white font-semibold text-sm hover:opacity-90 transition-all shadow-[0_8px_24px_rgba(168,85,247,0.3)] whitespace-nowrap">
               订阅
             </button>
           </form>

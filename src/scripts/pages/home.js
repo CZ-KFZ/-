@@ -291,14 +291,43 @@ const SOCIAL_ICONS = {
   youtube: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.546 15.568V8.432L15.818 12l-6.272 3.568z"/></svg>'
 }
 
-// 根据社交链接标题匹配图标（大小写不敏感，含关键词即匹配）
-function getSocialIcon(title) {
-  if (!title) return ''
-  const t = String(title).toLowerCase()
+// 通用链接图标（兜底用）
+const LINK_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+
+// 根据社交链接标题 + href 域名匹配图标（大小写不敏感）
+function getSocialIcon(title, href) {
+  const t = String(title || '').toLowerCase()
+  const h = String(href || '').toLowerCase()
+
+  // 1. 先按标题匹配
   for (const key of Object.keys(SOCIAL_ICONS)) {
     if (t.includes(key)) return SOCIAL_ICONS[key]
   }
-  return '' // 没匹配到则用配置里的 label 字符
+
+  // 2. 再按 href 域名匹配
+  const domainMap = {
+    'github.com': 'github',
+    'github.io': 'github',
+    'twitter.com': 'twitter',
+    'x.com': 'x',
+    'weibo.com': 'weibo',
+    'bilibili.com': 'bilibili',
+    'b23.tv': 'bilibili',
+    'youtube.com': 'youtube',
+    'youtu.be': 'youtube',
+    'feishu.cn': 'email',
+    'larksuite.com': 'email',
+    'mailto:': 'email'
+  }
+  for (const [domain, key] of Object.entries(domainMap)) {
+    if (h.includes(domain)) return SOCIAL_ICONS[key]
+  }
+
+  // 3. 如果 href 是 mailto，用邮箱图标
+  if (h.startsWith('mailto:')) return SOCIAL_ICONS.email
+
+  // 4. 都没匹配到，返回通用链接图标（而不是空字符串）
+  return LINK_ICON
 }
 
 function renderSocialsSection(socials) {
@@ -308,9 +337,12 @@ function renderSocialsSection(socials) {
   // 调试日志：让你在浏览器 console 看清社交链接数据
   console.log('[EchoVerse] socials from feishu =', socials)
 
-  // 社交链接为空：只隐藏社交图标行，保留区块本身和邮箱订阅表单
-  if (!socials || !socials.length) {
-    console.warn('[EchoVerse] socials 为空，隐藏社交图标行。请检查飞书 settings 表的「社交链接」字段')
+  // 过滤无效链接：没有 href 或 href 是 '#' 的不算数，避免渲染出空圆圈
+  const validSocials = (socials || []).filter((s) => s && s.href && s.href !== '#')
+
+  // 社交链接为空或全部无效：隐藏社交图标行
+  if (!validSocials.length) {
+    console.warn('[EchoVerse] socials 为空或无效，隐藏社交图标行。请检查飞书 settings 表的「社交链接」字段')
     box.style.display = 'none'
     // 同时隐藏"或通过邮件订阅"那行引导文字，因为没有了社交渠道做对比
     const subscribeHint = document.querySelector('#evo-home-subscribe')?.previousElementSibling
@@ -318,10 +350,11 @@ function renderSocialsSection(socials) {
     return
   }
 
-  box.innerHTML = socials.map((s) => {
-    const iconHtml = getSocialIcon(s.title) || (s.label && s.label !== '·' ? s.label : '·')
-    const label = s.title || ''
-    return `<a href="${s.href || '#'}" title="${label}" aria-label="${label}" target="_blank" rel="noopener noreferrer"
+  box.style.display = ''
+  box.innerHTML = validSocials.map((s) => {
+    const iconHtml = getSocialIcon(s.title, s.href)
+    const label = s.title || s.href || ''
+    return `<a href="${s.href}" title="${label}" aria-label="${label}" target="_blank" rel="noopener noreferrer"
         class="evo-tilt-card group w-12 h-12 sm:w-14 sm:h-14 rounded-full evo-glass flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 hover:scale-110 hover:border-white/30 transition-all border border-white/10">
       <span class="evo-tilt-inner">${iconHtml}</span>
     </a>`
@@ -333,7 +366,7 @@ function renderSocialsSection(socials) {
   if (window.EchoVerse && window.EchoVerse.refreshReveal) window.EchoVerse.refreshReveal()
 }
 
-// 邮箱订阅：前端纯展示，复制邮箱到剪贴板 + 提示
+// 邮箱订阅：调用后端 API 写入飞书表格
 function setupSubscribeForm() {
   const form = document.getElementById('evo-home-subscribe')
   const msg = document.getElementById('evo-subscribe-msg')
@@ -351,27 +384,40 @@ function setupSubscribeForm() {
     submitBtn.textContent = '订阅中…'
 
     try {
-      // 没有后端：尝试复制邮箱到剪贴板，引导用户通过邮件联系
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(email)
-        msg.textContent = '✓ 已记录邮箱，请通过上方社交渠道联系我完成订阅'
+      // 调用后端 /api/subscribe，将邮箱写入飞书表格
+      const resp = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: '首页订阅' })
+      })
+      const data = await resp.json()
+
+      if (data.success) {
+        msg.textContent = '✓ ' + (data.message || '订阅成功，感谢关注！')
         msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-success)] transition-colors'
+        input.value = ''
+      } else if (data.fallback) {
+        // 后端未配置飞书：降级为复制邮箱到剪贴板
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(email)
+        }
+        msg.textContent = data.error || '订阅功能暂未配置，已复制邮箱到剪贴板'
+        msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-warning)] transition-colors'
       } else {
-        msg.textContent = '✓ 感谢订阅，请通过上方社交渠道联系我'
-        msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-success)] transition-colors'
+        msg.textContent = data.error || '订阅失败，请稍后重试'
+        msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-warning)] transition-colors'
       }
-      input.value = ''
     } catch {
-      msg.textContent = '订阅功能暂时不可用，请通过上方社交渠道联系'
+      msg.textContent = '网络错误，请稍后重试'
       msg.className = 'mt-3 text-xs h-4 text-[var(--evo-state-warning)] transition-colors'
     } finally {
       submitBtn.disabled = false
       submitBtn.textContent = originalText
-      // 3 秒后清空提示
+      // 4 秒后清空提示
       setTimeout(() => {
         msg.textContent = ''
         msg.className = 'mt-3 text-xs h-4 text-white/50 transition-colors'
-      }, 3500)
+      }, 4000)
     }
   })
 }

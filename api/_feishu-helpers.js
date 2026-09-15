@@ -28,7 +28,8 @@ const TABLE_ENV_MAP = {
   settings: 'FEISHU_TABLE_SETTINGS',
   codes: 'FEISHU_TABLE_CODES',
   collections: 'FEISHU_TABLE_COLLECTIONS',
-  qa: 'FEISHU_TABLE_QA'
+  qa: 'FEISHU_TABLE_QA',
+  subscribers: 'FEISHU_TABLE_SUBSCRIBERS'
 }
 
 export function requireEnv() {
@@ -116,5 +117,23 @@ export async function updateRecord(token, appToken, tableId, recordId, fields) {
   if (!parsed.ok) throw new Error(`更新记录 ${parsed.error}`)
   const data = parsed.data
   if (data.code !== 0) throw new Error(`更新记录失败: ${data.msg}`)
+  return data.data || {}
+}
+
+// 新增一条记录到飞书多维表格
+export async function createRecord(token, appToken, tableId, fields) {
+  const url = `${FEISHU_BASE}/bitable/v1/apps/${appToken}/tables/${tableId}/records`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json; charset=utf-8'
+    },
+    body: JSON.stringify({ fields })
+  })
+  const parsed = await safeJson(res)
+  if (!parsed.ok) throw new Error(`新增记录 ${parsed.error}`)
+  const data = parsed.data
+  if (data.code !== 0) throw new Error(`新增记录失败: ${data.msg}`)
   return data.data || {}
 }
