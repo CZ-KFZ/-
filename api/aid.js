@@ -14,10 +14,10 @@
 //
 // 环境变量：FEISHU_TABLE_AID（互助申请表的 Table ID）
 //
-// 飞书表格字段约定：
-//   申请类型（文本）· 微信号（文本）· 手机号（文本）· 收件地址（文本）
-//   收款码（文本）· 困难简述（文本）· 设备指纹（文本）
-//   状态（文本）· 申请时间（日期）· 审核备注（文本）
+// 飞书表格字段约定（互助申请表）：
+//   申请类型（下拉选项：卫生巾/吃饭）· 微信号（文本）· 手机号（文本）
+//   收件地址（文本）· 收款码（文本）· 困难简述（文本）· 设备指纹（文本）
+//   状态（下拉：待审/通过/拒绝/已发放/黑名单）· 申请时间（日期）· 审核备注（文本）
 //
 // 用法：
 //   POST /api/aid  body: { type, wechat, phone, address, payCode, desc, fingerprint, website? }
@@ -32,6 +32,38 @@ import { requireEnv, getTableId, getToken, createRecord, listRecords } from './_
 const PAD_MONTHLY_MAX = 12      // 卫生巾：12 名 / 月
 const MEAL_WEEKLY_MAX = 2       // 吃饭：2 名 / 周
 const IP_DAILY_MAX = 3          // 单 IP 每天最多 3 次申请
+
+// ============================================================
+// 类型映射（内部 code ↔ 飞书下拉选项）
+//   前端/API 内部用 'pad' | 'meal'，飞书下拉选 '卫生巾' | '吃饭'
+// ============================================================
+const TYPE_TO_FEISHU = { pad: '卫生巾', meal: '吃饭' }
+const FEISHU_TO_TYPE = { '卫生巾': 'pad', '吃饭': 'meal' }
+
+// 从飞书字段值中提取"申请类型"的内部 code
+// select 字段返回可能是 string / array 需兼容
+function extractTypeFromFeishu(val) {
+  if (!val) return ''
+  let name = ''
+  if (typeof val === 'string') name = val
+  else if (Array.isArray(val)) name = String(val[0]?.name || val[0]?.text || val[0] || '')
+  else if (typeof val === 'object') name = String(val.name || val.text || val.value || '')
+  return FEISHU_TO_TYPE[name] || ''
+}
+
+// 从飞书 select 字段提取选项名称（兼容 string / array / 对象）
+function extractSelectName(val) {
+  if (!val) return ''
+  if (typeof val === 'string') return val.trim()
+  if (Array.isArray(val)) {
+    const first = val[0]
+    if (!first) return ''
+    if (typeof first === 'string') return first.trim()
+    if (typeof first === 'object') return String(first.name || first.text || '').trim()
+  }
+  if (typeof val === 'object') return String(val.name || val.text || '').trim()
+  return String(val).trim()
+}
 
 // ============================================================
 // 安全工具函数
@@ -274,7 +306,7 @@ export default async function handler(req, res) {
     }
 
     const isEffective = (r) => {
-      const st = String(r.fields?.['状态'] || '待审').trim()
+      const st = extractSelectName(r.fields?.['状态']) || '待审'
       return st !== '拒绝' && st !== '黑名单'
     }
 
@@ -296,7 +328,7 @@ export default async function handler(req, res) {
 
     // 2) 名额总量校验
     const periodCount = records.filter((r) =>
-      String(r.fields?.['申请类型'] || '') === type
+      extractTypeFromFeishu(r.fields?.['申请类型']) === type
       && isInPeriod(r, periodRange)
       && isEffective(r)
     ).length
@@ -307,7 +339,7 @@ export default async function handler(req, res) {
 
     // 3) 黑名单检查（任何周期内被标记为黑名单的设备/手机/微信号永久拒绝）
     const blacklisted = records.some((r) => {
-      if (String(r.fields?.['状态'] || '') !== '黑名单') return false
+      if (extractSelectName(r.fields?.['状态']) !== '黑名单') return false
       const rFp = simpleHash(String(r.fields?.['设备指纹'] || ''))
       const rPhone = simpleHash(String(r.fields?.['手机号'] || ''))
       const rWx = simpleHash(String(r.fields?.['微信号'] || '').toLowerCase())
@@ -318,15 +350,16 @@ export default async function handler(req, res) {
     }
 
     // 4) 写入飞书
+    // 注意：申请类型和状态是下拉选项字段，飞书 API 要求数组格式
     const fields = {
-      '申请类型': type,
+      '申请类型': [TYPE_TO_FEISHU[type]],
       '微信号': wechat,
       '手机号': phone,
       '收件地址': address,
       '收款码': payCode,
       '困难简述': desc,
       '设备指纹': fingerprint,
-      '状态': '待审',
+      '状态': ['待审'],
       '申请时间': Date.now()
     }
 
@@ -378,17 +411,17 @@ async function getQuota(req, res) {
       return t >= range.start && t < range.end
     }
     const isEffective = (r) => {
-      const st = String(r.fields?.['状态'] || '待审').trim()
+      const st = extractSelectName(r.fields?.['状态']) || '待审'
       return st !== '拒绝' && st !== '黑名单'
     }
 
     const padUsed = records.filter((r) =>
-      String(r.fields?.['申请类型'] || '') === 'pad'
+      extractTypeFromFeishu(r.fields?.['申请类型']) === 'pad'
       && isInPeriod(r, monthRange)
       && isEffective(r)
     ).length
     const mealUsed = records.filter((r) =>
-      String(r.fields?.['申请类型'] || '') === 'meal'
+      extractTypeFromFeishu(r.fields?.['申请类型']) === 'meal'
       && isInPeriod(r, weekRange)
       && isEffective(r)
     ).length
