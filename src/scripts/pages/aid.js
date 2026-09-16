@@ -70,7 +70,49 @@ async function loadQuota() {
   }
 }
 
-// ---- 弹窗 ----
+// ---- 弹窗：类型选择（从底部大按钮进入） ----
+function openTypeSelector() {
+  const root = document.getElementById('evo-aid-modal-root')
+  if (!root) return
+  closeModal()
+
+  root.innerHTML = `
+    <div id="evo-aid-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-aid-close></div>
+      <div class="relative w-full max-w-md evo-glass rounded-[var(--evo-radius-lg)] p-6 sm:p-8 border border-[var(--evo-pink)]/30">
+        <button class="absolute top-4 right-4 text-[var(--evo-ink-3)] hover:text-[var(--evo-ink)]" data-aid-close aria-label="关闭">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h3 class="evo-title text-xl mb-1">选择申请类型</h3>
+        <p class="text-xs text-[var(--evo-ink-3)] mb-5 leading-relaxed">两种补助可同时独立申请，名额实时更新。</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button data-aid-type="pad" class="evo-type-btn rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-pink)]/8 border border-[var(--evo-pink)]/30 text-left hover:bg-[var(--evo-pink)]/15 transition-colors">
+            <span class="text-xl block mb-1">🌸</span>
+            <span class="evo-title text-sm block mb-1">卫生巾补助</span>
+            <span class="text-[10px] text-[var(--evo-ink-3)]">绵绵的羊 30 元款 · 寄到你给的地址</span>
+          </button>
+          <button data-aid-type="meal" class="evo-type-btn rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-amber)]/8 border border-[var(--evo-amber)]/30 text-left hover:bg-[var(--evo-amber)]/15 transition-colors">
+            <span class="text-xl block mb-1">🍚</span>
+            <span class="evo-title text-sm block mb-1">一顿饭补助</span>
+            <span class="text-[10px] text-[var(--evo-ink-3)]">15 元微信转账 · 每周每人 1 次</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `
+
+  root.querySelectorAll('[data-aid-close]').forEach((el) => {
+    el.addEventListener('click', closeModal)
+  })
+  root.querySelectorAll('[data-aid-type]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const t = el.getAttribute('data-aid-type')
+      openModal({ type: t })
+    })
+  })
+}
+
+// ---- 弹窗（通用表单） ----
 function openModal({ type }) {
   const root = document.getElementById('evo-aid-modal-root')
   if (!root) return
@@ -237,10 +279,23 @@ function init() {
   // 拉取剩余名额
   loadQuota()
 
-  // 绑定「申请支持」按钮
+  // 绑定各申请按钮
+  // 1. 底部大按钮 → 类型选择器（让用户选）
   const applyBtn = document.getElementById('evo-aid-apply-btn')
   if (applyBtn) {
-    applyBtn.addEventListener('click', () => openModal({ type: 'pad' }))
+    applyBtn.addEventListener('click', openTypeSelector)
+  }
+
+  // 2. 卫生巾卡片按钮
+  const padBtn = document.getElementById('evo-aid-pad-apply-btn')
+  if (padBtn) {
+    padBtn.addEventListener('click', () => openModal({ type: 'pad' }))
+  }
+
+  // 3. 吃饭卡片按钮
+  const mealBtn = document.getElementById('evo-aid-meal-apply-btn')
+  if (mealBtn) {
+    mealBtn.addEventListener('click', () => openModal({ type: 'meal' }))
   }
 
   // 如果 URL hash 指向申请按钮（首页提示条引流），自动滚动并轻微高亮
