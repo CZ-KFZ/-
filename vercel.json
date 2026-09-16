@@ -18,6 +18,9 @@
     },
     "api/subscribe.js": {
       "maxDuration": 10
+    },
+    "api/aid.js": {
+      "maxDuration": 15
     }
   },
   "routes": [
