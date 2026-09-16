@@ -79,7 +79,7 @@
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              <div class="rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-pink)]/8 border border-[var(--evo-pink)]/25">
+              <button type="button" data-aid-card="pad" class="text-left rounded-[var(--evo-radius-md)] p-4 border border-[var(--evo-border)] bg-transparent transition-all cursor-pointer hover:border-[var(--evo-pink)]/40">
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-xl">🌸</span>
                   <h3 class="evo-title text-base">卫生巾补助</h3>
@@ -89,11 +89,11 @@
                   <span class="evo-title text-2xl text-[var(--evo-pink)]" id="evo-aid-pad-quota">12</span>
                   <span class="text-xs text-[var(--evo-ink-3)]">个名额 / 月 · 每人 1 次 / 月</span>
                 </div>
-                <button id="evo-aid-pad-apply-btn" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[var(--evo-pink)]/20 border border-[var(--evo-pink)]/40 text-[var(--evo-pink)] font-medium text-xs hover:bg-[var(--evo-pink)]/30 transition-colors">
+                <button id="evo-aid-pad-apply-btn" type="button" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[var(--evo-pink)]/20 border border-[var(--evo-pink)]/40 text-[var(--evo-pink)] font-medium text-xs hover:bg-[var(--evo-pink)]/30 transition-colors" data-aid-direct="pad">
                   申请 <span aria-hidden="true">→</span>
                 </button>
-              </div>
-              <div class="rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-amber)]/8 border border-[var(--evo-amber)]/25">
+              </button>
+              <button type="button" data-aid-card="meal" class="text-left rounded-[var(--evo-radius-md)] p-4 border border-[var(--evo-border)] bg-transparent transition-all cursor-pointer hover:border-[var(--evo-pink)]/40">
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-xl">🍚</span>
                   <h3 class="evo-title text-base">一顿饭补助</h3>
@@ -103,15 +103,15 @@
                   <span class="evo-title text-2xl text-[var(--evo-amber)]" id="evo-aid-meal-quota">2</span>
                   <span class="text-xs text-[var(--evo-ink-3)]">个名额 / 周 · 每人 1 次 / 周</span>
                 </div>
-                <button id="evo-aid-meal-apply-btn" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[var(--evo-amber)]/20 border border-[var(--evo-amber)]/40 text-[var(--evo-amber)] font-medium text-xs hover:bg-[var(--evo-amber)]/30 transition-colors">
+                <button id="evo-aid-meal-apply-btn" type="button" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[var(--evo-amber)]/20 border border-[var(--evo-amber)]/40 text-[var(--evo-amber)] font-medium text-xs hover:bg-[var(--evo-amber)]/30 transition-colors" data-aid-direct="meal">
                   申请 <span aria-hidden="true">→</span>
                 </button>
-              </div>
+              </button>
             </div>
 
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <button id="evo-aid-apply-btn" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-amber)] text-white font-medium text-sm hover:opacity-90 transition-opacity">
-                申请支持 <span aria-hidden="true">→</span>
+              <button id="evo-aid-apply-btn" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-amber)] text-white font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                请选择上方补助类型 <span aria-hidden="true">→</span>
               </button>
               <p class="text-xs text-[var(--evo-ink-3)]">两种补助可同时申请 · 名额实时更新</p>
             </div>

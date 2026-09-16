@@ -274,28 +274,76 @@ function showMsg(el, text, type) {
   )
 }
 
+// ---- 选中状态管理 ----
+const SELECTED_CLASS = 'bg-[var(--evo-pink)]/10'
+const SELECTED_BORDER = 'border-[var(--evo-pink)]/50'
+const SELECTED_RING = 'ring-2 ring-[var(--evo-pink)]/30'
+let selectedType = null
+
+function setSelected(type) {
+  selectedType = type
+  const cards = document.querySelectorAll('[data-aid-card]')
+  cards.forEach((card) => {
+    const isSelected = card.dataset.aidCard === type
+    card.classList.toggle(SELECTED_CLASS, isSelected)
+    card.classList.toggle(SELECTED_BORDER, isSelected)
+    card.classList.toggle(SELECTED_RING, isSelected)
+  })
+  const applyBtn = document.getElementById('evo-aid-apply-btn')
+  if (applyBtn) {
+    applyBtn.disabled = !type
+    if (type) {
+      applyBtn.innerHTML = `申请${type === 'pad' ? '卫生巾' : '吃饭'}补助 <span aria-hidden="true">→</span>`
+    } else {
+      applyBtn.innerHTML = `请选择上方补助类型 <span aria-hidden="true">→</span>`
+    }
+  }
+}
+
 // ---- 初始化 ----
 function init() {
   // 拉取剩余名额
   loadQuota()
 
-  // 绑定各申请按钮
-  // 1. 底部大按钮 → 类型选择器（让用户选）
+  // 绑定卡片点击：切换选中状态
+  const cards = document.querySelectorAll('[data-aid-card]')
+  cards.forEach((card) => {
+    card.addEventListener('click', (e) => {
+      // 如果点击的是卡片内的「申请」按钮，不触发选中切换
+      if (e.target.closest('[data-aid-direct]')) return
+      const type = card.dataset.aidCard
+      setSelected(selectedType === type ? null : type)
+    })
+  })
+
+  // 1. 底部大按钮 → 已选类型直接申请，未选则弹出类型选择器
   const applyBtn = document.getElementById('evo-aid-apply-btn')
   if (applyBtn) {
-    applyBtn.addEventListener('click', openTypeSelector)
+    applyBtn.addEventListener('click', () => {
+      if (selectedType) {
+        openModal({ type: selectedType })
+      } else {
+        openTypeSelector()
+      }
+    })
   }
 
-  // 2. 卫生巾卡片按钮
+  // 2. 卫生巾卡片「申请」按钮 → 直接申请（不影响选中状态）
   const padBtn = document.getElementById('evo-aid-pad-apply-btn')
   if (padBtn) {
-    padBtn.addEventListener('click', () => openModal({ type: 'pad' }))
+    padBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openModal({ type: 'pad' })
+    })
   }
 
-  // 3. 吃饭卡片按钮
+  // 3. 吃饭卡片「申请」按钮 → 直接申请（不影响选中状态）
   const mealBtn = document.getElementById('evo-aid-meal-apply-btn')
   if (mealBtn) {
-    mealBtn.addEventListener('click', () => openModal({ type: 'meal' }))
+    mealBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openModal({ type: 'meal' })
+    })
   }
 
   // 如果 URL hash 指向申请按钮（首页提示条引流），自动滚动并轻微高亮
