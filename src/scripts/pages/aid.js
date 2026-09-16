@@ -278,6 +278,10 @@ function showMsg(el, text, type) {
 const SELECTED_CLASS = 'bg-[var(--evo-pink)]/10'
 const SELECTED_BORDER = 'border-[var(--evo-pink)]/50'
 const SELECTED_RING = 'ring-2 ring-[var(--evo-pink)]/30'
+// 卡片内「申请」按钮选中态样式
+const BTN_SELECTED_BG = 'bg-[var(--evo-pink)]/20'
+const BTN_SELECTED_BORDER = 'border-[var(--evo-pink)]/50'
+const BTN_SELECTED_TEXT = 'text-[var(--evo-pink)]'
 let selectedType = null
 
 function setSelected(type) {
@@ -288,6 +292,15 @@ function setSelected(type) {
     card.classList.toggle(SELECTED_CLASS, isSelected)
     card.classList.toggle(SELECTED_BORDER, isSelected)
     card.classList.toggle(SELECTED_RING, isSelected)
+    // 卡片内的「申请」按钮也跟随选中态变色
+    const btn = card.querySelector('[data-aid-direct]')
+    if (btn) {
+      btn.classList.toggle(BTN_SELECTED_BG, isSelected)
+      btn.classList.toggle(BTN_SELECTED_BORDER, isSelected)
+      btn.classList.toggle(BTN_SELECTED_TEXT, isSelected)
+      btn.classList.toggle('border-[var(--evo-border)]', !isSelected)
+      btn.classList.toggle('text-[var(--evo-ink-2)]', !isSelected)
+    }
   })
   const applyBtn = document.getElementById('evo-aid-apply-btn')
   if (applyBtn) {
