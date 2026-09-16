@@ -65,6 +65,57 @@
         <div class="flex flex-wrap gap-3 evo-reveal" data-reveal-delay="100" id="evo-skills"></div>
       </div>
 
+      <!-- 互助计划：给她的一小束光 -->
+      <div class="mb-6 sm:mb-8">
+        <h2 class="evo-title text-xl sm:text-2xl mb-6 flex items-center gap-3 evo-reveal">
+          <span class="w-1.5 h-6 rounded-full bg-gradient-to-b from-[var(--evo-pink)] to-[var(--evo-amber)] evo-glow-purple"></span>给她的一小束光
+        </h2>
+        <div class="evo-glass rounded-[var(--evo-radius-lg)] p-6 sm:p-8 border border-[var(--evo-pink)]/30 relative overflow-hidden evo-reveal" data-reveal-delay="100">
+          <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-[var(--evo-pink)]/15 to-transparent blur-3xl pointer-events-none"></div>
+          <div class="relative">
+            <p class="text-[var(--evo-ink-2)] text-sm sm:text-base leading-relaxed mb-6">
+              我每月拿出 500 元，给正经历难熬时刻的女生一份小小的支持。<br class="hidden sm:block" />
+              不是公益组织，不是承诺，只是想在你最难的时候，递一点点光。
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div class="rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-pink)]/8 border border-[var(--evo-pink)]/25">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xl">🌸</span>
+                  <h3 class="evo-title text-base">卫生巾补助</h3>
+                </div>
+                <p class="text-xs text-[var(--evo-ink-3)] leading-relaxed mb-3">绵绵的羊 30 元款 · 直接寄到你给的地址</p>
+                <div class="flex items-baseline gap-2">
+                  <span class="evo-title text-2xl text-[var(--evo-pink)]" id="evo-aid-pad-quota">12</span>
+                  <span class="text-xs text-[var(--evo-ink-3)]">个名额 / 月 · 每人 1 次 / 月</span>
+                </div>
+              </div>
+              <div class="rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-amber)]/8 border border-[var(--evo-amber)]/25">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xl">🍚</span>
+                  <h3 class="evo-title text-base">一顿饭补助</h3>
+                </div>
+                <p class="text-xs text-[var(--evo-ink-3)] leading-relaxed mb-3">15 元 / 人 · 微信转账</p>
+                <div class="flex items-baseline gap-2">
+                  <span class="evo-title text-2xl text-[var(--evo-amber)]" id="evo-aid-meal-quota">2</span>
+                  <span class="text-xs text-[var(--evo-ink-3)]">个名额 / 周 · 每人 1 次 / 周</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <button id="evo-aid-apply-btn" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-amber)] text-white font-medium text-sm hover:opacity-90 transition-opacity">
+                申请支持 <span aria-hidden="true">→</span>
+              </button>
+              <p class="text-xs text-[var(--evo-ink-3)]">两种补助可同时申请 · 名额实时更新</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 申请表单弹窗容器（由 aid.js 注入） -->
+      <div id="evo-aid-modal-root"></div>
+
     </section>
   </main>
 
@@ -72,5 +123,6 @@
 
   <script type="module" src="/src/scripts/main.js"></script>
   <script type="module" src="/src/scripts/pages/about.js"></script>
+  <script type="module" src="/src/scripts/pages/aid.js"></script>
 </body>
 </html>

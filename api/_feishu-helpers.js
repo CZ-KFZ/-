@@ -29,7 +29,8 @@ const TABLE_ENV_MAP = {
   codes: 'FEISHU_TABLE_CODES',
   collections: 'FEISHU_TABLE_COLLECTIONS',
   qa: 'FEISHU_TABLE_QA',
-  subscribers: 'FEISHU_TABLE_SUBSCRIBERS'
+  subscribers: 'FEISHU_TABLE_SUBSCRIBERS',
+  aid: 'FEISHU_TABLE_AID'
 }
 
 export function requireEnv() {
