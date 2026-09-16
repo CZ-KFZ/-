@@ -190,6 +190,11 @@ function openModal({ type }) {
             <textarea id="evo-aid-desc" rows="3" maxlength="200" placeholder="5-200 字，简单说说你现在的难处" class="w-full bg-[var(--evo-surface-2)]/60 border border-[var(--evo-border)] rounded-[var(--evo-radius-sm)] px-3 py-2 text-sm text-[var(--evo-ink)] focus:outline-none focus:border-[var(--evo-pink)]/60 resize-none"></textarea>
           </label>
 
+          <label class="block">
+            <span class="text-xs text-[var(--evo-ink-3)] mb-1 block">通知邮箱 <span class="text-[var(--evo-ink-3)]/50">（选填）</span></span>
+            <input id="evo-aid-email" type="email" maxlength="60" placeholder="填写后审核结果会发到这个邮箱" class="w-full bg-[var(--evo-surface-2)]/60 border border-[var(--evo-border)] rounded-[var(--evo-radius-sm)] px-3 py-2 text-sm text-[var(--evo-ink)] focus:outline-none focus:border-[var(--evo-pink)]/60" />
+          </label>
+
           <p id="evo-aid-msg" class="text-xs h-4 transition-colors"></p>
 
           <button id="evo-aid-submit" type="submit" class="w-full px-6 py-3 rounded-full bg-gradient-to-r from-[var(--evo-pink)] to-[var(--evo-amber)] text-white font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
@@ -245,6 +250,7 @@ async function handleSubmit(e, type) {
   const phone = document.getElementById('evo-aid-phone')?.value.trim() || ''
   const address = document.getElementById('evo-aid-address')?.value.trim() || ''
   const desc = document.getElementById('evo-aid-desc')?.value.trim() || ''
+  const email = document.getElementById('evo-aid-email')?.value.trim() || ''
 
   // 前端基础校验（后端会再校一遍）
   if (!name || name.length > 20) {
@@ -261,6 +267,10 @@ async function handleSubmit(e, type) {
   }
   if (type === 'pad' && address.length < 5) {
     return showMsg(msg, '请填写收件地址', 'error')
+  }
+  // 邮箱选填，但填了必须格式合法
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return showMsg(msg, '邮箱格式不正确', 'error')
   }
 
   // 吃饭补助：读取收款码图片并转 base64
@@ -293,6 +303,7 @@ async function handleSubmit(e, type) {
         phone,
         address,
         desc,
+        email,
         fingerprint,
         paycodeImage: paycodeBase64,
         website: honeypot

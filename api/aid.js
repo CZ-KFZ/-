@@ -237,6 +237,7 @@ export default async function handler(req, res) {
   const phone = String(body.phone || '').trim()
   const address = String(body.address || '').trim()
   const desc = clampText(body.desc, 5, 200)
+  const email = String(body.email || '').trim().slice(0, 60)
   const fingerprint = String(body.fingerprint || '').trim().slice(0, 64)
   const paycodeImage = String(body.paycodeImage || '').trim()
 
@@ -266,6 +267,10 @@ export default async function handler(req, res) {
   }
   if (!fingerprint) {
     return res.status(400).json({ error: '设备指纹缺失' })
+  }
+  // 邮箱选填，但填了必须格式合法
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: '邮箱格式不正确' })
   }
 
   // IP 全局频控
@@ -377,6 +382,10 @@ export default async function handler(req, res) {
     // 卫生巾有收件地址
     if (type === 'pad') {
       content['收件地址'] = address
+    }
+    // 用户填了邮箱才写入（选填）
+    if (email) {
+      content['通知邮箱'] = email
     }
 
     // 吃饭补助：先上传收款码附件拿到 file_token，再提交
