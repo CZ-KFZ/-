@@ -22,9 +22,17 @@
 // 用法：
 //   POST /api/aid  body: { type, name, wechat, phone, address, desc, fingerprint, paycodeImage?, website? }
 //   GET  /api/aid?quota=1  查询剩余名额
+//
+// 写入方式：混合方案 —— 用飞书表单 submit API（form-submit）写入表格
+//   - 前端自写 UI（条件字段、格式校验、设备指纹去重、IP 频控、周期额度限制）
+//   - 后端安全逻辑保留
+//   - 通过飞书 form-submit API 提交，字段格式由飞书统一处理，默认值（状态=待审）自动填入
+//   - 需要环境变量 FEISHU_FORM_AID（表单 share_token）
+//   - 表单字段（用户可见）：申请人、申请类型、微信号、手机号、收件地址、困难简述、收款码
+//   - 运营字段（飞书自动管理，不传）：状态、申请时间、设备指纹、审核备注
 // ============================================================
 
-import { requireEnv, getTableId, getToken, createRecord, listRecords, uploadAttachment } from './_feishu-helpers.js'
+import { requireEnv, getTableId, getFormShareToken, getToken, submitForm, listRecords, uploadFormAttachment } from './_feishu-helpers.js'
 
 // ============================================================
 // 名额常量
@@ -273,7 +281,8 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: '服务暂不可用' })
   }
   const tableId = getTableId('aid')
-  if (!tableId) {
+  const formShareToken = getFormShareToken('aid')
+  if (!tableId || !formShareToken) {
     return res.status(503).json({ error: '服务暂不可用' })
   }
 
@@ -353,33 +362,36 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: '申请资格受限，如有异议请联系站方' })
     }
 
-    // 4) 写入飞书
-    // 注意：申请类型和状态是下拉选项字段，飞书 API 要求数组格式
-    const fields = {
+    // 4) 写入飞书 —— 通过表单 API 提交（混合方案）
+    // form-submit 字段格式注意：
+    //   - select 用字符串，不是数组
+    //   - 不在表单里的字段（状态、申请时间、设备指纹、审核备注）不要传，飞书用默认值
+    //   - 表单默认「状态=待审」已由飞书自动填
+    const content = {
       '申请人': name,
-      '申请类型': [TYPE_TO_FEISHU[type]],
+      '申请类型': TYPE_TO_FEISHU[type],  // 字符串 "卫生巾" / "吃饭"
       '微信号': wechat,
       '手机号': phone,
-      '收件地址': address,
-      '困难简述': desc,
-      '设备指纹': fingerprint,
-      '状态': ['待审'],
-      '申请时间': Date.now()
+      '困难简述': desc
+    }
+    // 卫生巾有收件地址
+    if (type === 'pad') {
+      content['收件地址'] = address
     }
 
-    // 吃饭补助：上传收款码图片到飞书附件字段
+    // 吃饭补助：先上传收款码附件拿到 file_token，再提交
     if (type === 'meal' && paycodeImage) {
       try {
-        const fileToken = await uploadAttachment(token, env.appToken, paycodeImage, `收款码_${wechat}.png`)
+        const fileToken = await uploadFormAttachment(token, env.appToken, formShareToken, paycodeImage, `收款码_${wechat}.png`)
         if (fileToken) {
-          fields['收款码'] = [{ file_token: fileToken }]
+          content['收款码'] = [{ file_token: fileToken }]
         }
       } catch (uploadErr) {
-        console.warn('[aid api] 收款码图片上传失败，继续写入其他字段：', uploadErr.message)
+        console.warn('[aid api] 收款码附件上传失败，继续提交其他字段：', uploadErr.message)
       }
     }
 
-    await createRecord(token, env.appToken, tableId, fields)
+    await submitForm(token, formShareToken, content)
 
     return res.status(200).json({
       success: true,

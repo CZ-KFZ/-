@@ -33,6 +33,11 @@ const TABLE_ENV_MAP = {
   aid: 'FEISHU_TABLE_AID'
 }
 
+// 表单 share_token 映射（混合方案用 form-submit 写入）
+const FORM_ENV_MAP = {
+  aid: 'FEISHU_FORM_AID'
+}
+
 export function requireEnv() {
   const appId = process.env.FEISHU_APP_ID
   const appSecret = process.env.FEISHU_APP_SECRET
@@ -43,6 +48,12 @@ export function requireEnv() {
 
 export function getTableId(type) {
   const envName = TABLE_ENV_MAP[type]
+  if (!envName) return null
+  return process.env[envName] || null
+}
+
+export function getFormShareToken(type) {
+  const envName = FORM_ENV_MAP[type]
   if (!envName) return null
   return process.env[envName] || null
 }
@@ -176,4 +187,69 @@ export async function uploadAttachment(token, appToken, base64Data, fileName) {
   const data = parsed.data
   if (data.code !== 0) throw new Error(`上传附件失败: ${data.msg}`)
   return data.data?.file_token
+}
+
+// ============================================================
+// 飞书表单提交（混合方案：用 form-submit 写入，字段格式与 records API 略有不同）
+// ============================================================
+
+// 上传附件给 form-submit 用（parent_type 是 bitable_tmp_point，需要带 share_token）
+// 返回 file_token，form-submit 的附件字段格式：[{ file_token }]（跟 records API 一样）
+export async function uploadFormAttachment(token, appToken, shareToken, base64Data, fileName) {
+  const matches = base64Data.match(/^data:(image\/\w+);base64,(.+)$/)
+  if (!matches) throw new Error('图片格式不合法')
+  const mimeType = matches[1]
+  const base64 = matches[2]
+  const buffer = Buffer.from(base64, 'base64')
+
+  const boundary = '----EchoVerseForm' + Date.now()
+  const extra = JSON.stringify({ share_token: shareToken })
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file_name"\r\n\r\n${fileName}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parent_type"\r\n\r\nbitable_tmp_point\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parent_node"\r\n\r\n${appToken}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="size"\r\n\r\n${buffer.length}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="extra"\r\n\r\n${extra}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${fileName}"\r\nContent-Type: ${mimeType}\r\n\r\n`),
+    buffer,
+    Buffer.from(`\r\n--${boundary}--\r\n`)
+  ])
+
+  const url = `${FEISHU_BASE}/drive/v1/medias/upload_all`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': `multipart/form-data; boundary=${boundary}`
+    },
+    body
+  })
+  const parsed = await safeJson(res)
+  if (!parsed.ok) throw new Error(`form 附件上传 ${parsed.error}`)
+  const data = parsed.data
+  if (data.code !== 0) throw new Error(`form 附件上传失败: ${data.msg}`)
+  return data.data?.file_token
+}
+
+// 通过表单 API 提交记录（混合方案）
+// 注意：字段格式与 records API 略有不同：
+//   - select 字段用字符串 "选项名"，不是数组 ["选项名"]
+//   - 不在表单里的字段（如状态、申请时间、设备指纹）不要传，飞书会用表格默认值/留空
+//   - 附件字段仍用 [{ file_token }] 格式
+// 参数：shareToken（表单分享 token），content（字段值对象）
+export async function submitForm(token, shareToken, content) {
+  const url = `${FEISHU_BASE}/base/v3/bases/tables/forms/submit`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json; charset=utf-8'
+    },
+    body: JSON.stringify({ share_token: shareToken, content })
+  })
+  const parsed = await safeJson(res)
+  if (!parsed.ok) throw new Error(`form 提交 ${parsed.error}`)
+  const data = parsed.data
+  if (data.code !== 0) throw new Error(`form 提交失败: ${data.msg}`)
+  return data.data || {}
 }
