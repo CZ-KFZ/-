@@ -15,12 +15,12 @@
 // 环境变量：FEISHU_TABLE_AID（互助申请表的 Table ID）
 //
 // 飞书表格字段约定（互助申请表）：
-//   申请类型（下拉选项：卫生巾/吃饭）· 微信号（文本）· 手机号（文本）
-//   收件地址（文本）· 收款码（文本）· 困难简述（文本）· 设备指纹（文本）
+//   申请人（文本）· 申请类型（下拉选项：卫生巾/吃饭）· 微信号（文本）· 手机号（文本）
+//   收件地址（文本）· 困难简述（文本）· 设备指纹（文本）
 //   状态（下拉：待审/通过/拒绝/已发放/黑名单）· 申请时间（日期）· 审核备注（文本）
 //
 // 用法：
-//   POST /api/aid  body: { type, wechat, phone, address, payCode, desc, fingerprint, website? }
+//   POST /api/aid  body: { type, name, wechat, phone, address, desc, fingerprint, website? }
 //   GET  /api/aid?quota=1  查询剩余名额
 // ============================================================
 
@@ -224,10 +224,10 @@ export default async function handler(req, res) {
 
   // 字段提取
   const type = String(body.type || '').trim()
+  const name = String(body.name || '').trim().slice(0, 20)
   const wechat = String(body.wechat || '').trim()
   const phone = String(body.phone || '').trim()
   const address = String(body.address || '').trim()
-  const payCode = String(body.payCode || '').trim()
   const desc = clampText(body.desc, 5, 200)
   const fingerprint = String(body.fingerprint || '').trim().slice(0, 64)
 
@@ -237,6 +237,9 @@ export default async function handler(req, res) {
   }
 
   // 必填校验
+  if (!name) {
+    return res.status(400).json({ error: '请填写申请人姓名或昵称' })
+  }
   if (!isValidWechat(wechat)) {
     return res.status(400).json({ error: '微信号格式不正确（6-20 位，字母开头）' })
   }
@@ -248,9 +251,6 @@ export default async function handler(req, res) {
   }
   if (type === 'pad' && address.length < 5) {
     return res.status(400).json({ error: '卫生巾补助需填写收件地址' })
-  }
-  if (type === 'meal' && !payCode) {
-    return res.status(400).json({ error: '吃饭补助需填写微信收款码链接' })
   }
   if (!fingerprint) {
     return res.status(400).json({ error: '设备指纹缺失' })
@@ -352,11 +352,11 @@ export default async function handler(req, res) {
     // 4) 写入飞书
     // 注意：申请类型和状态是下拉选项字段，飞书 API 要求数组格式
     const fields = {
+      '申请人': name,
       '申请类型': [TYPE_TO_FEISHU[type]],
       '微信号': wechat,
       '手机号': phone,
       '收件地址': address,
-      '收款码': payCode,
       '困难简述': desc,
       '设备指纹': fingerprint,
       '状态': ['待审'],

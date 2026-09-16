@@ -89,7 +89,7 @@ function openTypeSelector() {
           <button data-aid-type="pad" class="evo-type-btn rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-pink)]/8 border border-[var(--evo-pink)]/30 text-left hover:bg-[var(--evo-pink)]/15 transition-colors">
             <span class="text-xl block mb-1">🌸</span>
             <span class="evo-title text-sm block mb-1">卫生巾补助</span>
-            <span class="text-[10px] text-[var(--evo-ink-3)]">绵绵的羊 30 元款 · 寄到你给的地址</span>
+            <span class="text-[10px] text-[var(--evo-ink-3)]">卫生巾 · 寄到你给的地址</span>
           </button>
           <button data-aid-type="meal" class="evo-type-btn rounded-[var(--evo-radius-md)] p-4 bg-[var(--evo-amber)]/8 border border-[var(--evo-amber)]/30 text-left hover:bg-[var(--evo-amber)]/15 transition-colors">
             <span class="text-xl block mb-1">🍚</span>
@@ -129,11 +129,11 @@ function openModal({ type }) {
         <input id="evo-aid-address" type="text" maxlength="100" placeholder="卫生巾将直接寄到此地址" class="w-full bg-[var(--evo-surface-2)]/60 border border-[var(--evo-border)] rounded-[var(--evo-radius-sm)] px-3 py-2 text-sm text-[var(--evo-ink)] focus:outline-none focus:border-[var(--evo-pink)]/60" />
       </label>`
     : `
-      <label class="block">
-        <span class="text-xs text-[var(--evo-ink-3)] mb-1 block">微信收款码链接 <span class="text-[var(--evo-amber)]">*</span></span>
-        <input id="evo-aid-paycode" type="url" maxlength="200" placeholder="微信收款码图片链接" class="w-full bg-[var(--evo-surface-2)]/60 border border-[var(--evo-border)] rounded-[var(--evo-radius-sm)] px-3 py-2 text-sm text-[var(--evo-ink)] focus:outline-none focus:border-[var(--evo-amber)]/60" />
-        <span class="text-[10px] text-[var(--evo-ink-3)]/70 mt-1 block">15 元将直接转到你的微信</span>
-      </label>`
+      <div class="rounded-[var(--evo-radius-sm)] bg-[var(--evo-surface-2)]/40 border border-[var(--evo-border)] px-3 py-2.5">
+        <p class="text-xs text-[var(--evo-ink-3)] leading-relaxed">
+          💡 我会通过你填写的微信号加你好友，直接微信转账给你。
+        </p>
+      </div>`
 
   root.innerHTML = `
     <div id="evo-aid-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -144,13 +144,18 @@ function openModal({ type }) {
         </button>
         <h3 class="evo-title text-xl mb-2">${isPad ? '🌸' : '🍚'} ${escapeHtml(title)}</h3>
         <p class="text-xs text-[var(--evo-ink-3)] mb-5 leading-relaxed">
-          ${isPad ? '绵绵的羊 30 元款，寄到你给的地址。每月每人限 1 次。' : '15 元微信转账，每周每人限 1 次。'}
+          ${isPad ? '卫生巾寄到你给的地址，每月每人限 1 次。' : '15 元微信转账，每周每人限 1 次。'}
           两种补助可同时申请。
         </p>
 
         <form id="evo-aid-form" class="space-y-4">
           <!-- Honeypot（隐藏字段，机器人会填，正常人不填） -->
           <input type="text" name="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] opacity-0" aria-hidden="true" />
+
+          <label class="block">
+            <span class="text-xs text-[var(--evo-ink-3)] mb-1 block">申请人 <span class="text-[var(--evo-pink)]">*</span></span>
+            <input id="evo-aid-name" type="text" maxlength="20" placeholder="姓名或昵称" class="w-full bg-[var(--evo-surface-2)]/60 border border-[var(--evo-border)] rounded-[var(--evo-radius-sm)] px-3 py-2 text-sm text-[var(--evo-ink)] focus:outline-none focus:border-[var(--evo-pink)]/60" />
+          </label>
 
           <label class="block">
             <span class="text-xs text-[var(--evo-ink-3)] mb-1 block">微信号 <span class="text-[var(--evo-pink)]">*</span></span>
@@ -201,13 +206,16 @@ async function handleSubmit(e, type) {
   const submitBtn = document.getElementById('evo-aid-submit')
   const honeypot = document.querySelector('#evo-aid-form input[name="website"]')?.value || ''
 
+  const name = document.getElementById('evo-aid-name')?.value.trim() || ''
   const wechat = document.getElementById('evo-aid-wechat')?.value.trim() || ''
   const phone = document.getElementById('evo-aid-phone')?.value.trim() || ''
   const address = document.getElementById('evo-aid-address')?.value.trim() || ''
-  const payCode = document.getElementById('evo-aid-paycode')?.value.trim() || ''
   const desc = document.getElementById('evo-aid-desc')?.value.trim() || ''
 
   // 前端基础校验（后端会再校一遍）
+  if (!name || name.length > 20) {
+    return showMsg(msg, '请填写申请人姓名或昵称', 'error')
+  }
   if (!/^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/.test(wechat)) {
     return showMsg(msg, '微信号格式不正确（6-20 位，字母开头）', 'error')
   }
@@ -219,9 +227,6 @@ async function handleSubmit(e, type) {
   }
   if (type === 'pad' && address.length < 5) {
     return showMsg(msg, '请填写收件地址', 'error')
-  }
-  if (type === 'meal' && !payCode) {
-    return showMsg(msg, '请填写微信收款码链接', 'error')
   }
 
   submitBtn.disabled = true
@@ -235,10 +240,10 @@ async function handleSubmit(e, type) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type,
+        name,
         wechat,
         phone,
         address,
-        payCode,
         desc,
         fingerprint,
         website: honeypot
