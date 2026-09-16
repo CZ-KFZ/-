@@ -16,15 +16,15 @@
 //
 // 飞书表格字段约定（互助申请表）：
 //   申请人（文本）· 申请类型（下拉选项：卫生巾/吃饭）· 微信号（文本）· 手机号（文本）
-//   收件地址（文本）· 困难简述（文本）· 设备指纹（文本）
+//   收件地址（文本）· 收款码（附件）· 困难简述（文本）· 设备指纹（文本）
 //   状态（下拉：待审/通过/拒绝/已发放/黑名单）· 申请时间（日期）· 审核备注（文本）
 //
 // 用法：
-//   POST /api/aid  body: { type, name, wechat, phone, address, desc, fingerprint, website? }
+//   POST /api/aid  body: { type, name, wechat, phone, address, desc, fingerprint, paycodeImage?, website? }
 //   GET  /api/aid?quota=1  查询剩余名额
 // ============================================================
 
-import { requireEnv, getTableId, getToken, createRecord, listRecords } from './_feishu-helpers.js'
+import { requireEnv, getTableId, getToken, createRecord, listRecords, uploadAttachment } from './_feishu-helpers.js'
 
 // ============================================================
 // 名额常量
@@ -202,10 +202,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // 请求体大小限制：最多 4KB（含收款码文本）
+  // 请求体大小限制：最多 6MB（含 base64 图片，5MB 图片 base64 后约 6.7MB，这里放宽到 8MB）
   const contentLength = parseInt(req.headers['content-length'] || '0', 10)
-  if (contentLength > 4096) {
-    return res.status(413).json({ error: '请求体过大' })
+  if (contentLength > 8 * 1024 * 1024) {
+    return res.status(413).json({ error: '请求体过大，图片不能超过 5MB' })
   }
 
   // 解析请求体
@@ -230,6 +230,7 @@ export default async function handler(req, res) {
   const address = String(body.address || '').trim()
   const desc = clampText(body.desc, 5, 200)
   const fingerprint = String(body.fingerprint || '').trim().slice(0, 64)
+  const paycodeImage = String(body.paycodeImage || '').trim()
 
   // 类型白名单
   if (!['pad', 'meal'].includes(type)) {
@@ -251,6 +252,9 @@ export default async function handler(req, res) {
   }
   if (type === 'pad' && address.length < 5) {
     return res.status(400).json({ error: '卫生巾补助需填写收件地址' })
+  }
+  if (type === 'meal' && !paycodeImage) {
+    return res.status(400).json({ error: '吃饭补助需上传微信收款码截图' })
   }
   if (!fingerprint) {
     return res.status(400).json({ error: '设备指纹缺失' })
@@ -361,6 +365,18 @@ export default async function handler(req, res) {
       '设备指纹': fingerprint,
       '状态': ['待审'],
       '申请时间': Date.now()
+    }
+
+    // 吃饭补助：上传收款码图片到飞书附件字段
+    if (type === 'meal' && paycodeImage) {
+      try {
+        const fileToken = await uploadAttachment(token, env.appToken, paycodeImage, `收款码_${wechat}.png`)
+        if (fileToken) {
+          fields['收款码'] = [{ file_token: fileToken }]
+        }
+      } catch (uploadErr) {
+        console.warn('[aid api] 收款码图片上传失败，继续写入其他字段：', uploadErr.message)
+      }
     }
 
     await createRecord(token, env.appToken, tableId, fields)

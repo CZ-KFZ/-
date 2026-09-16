@@ -138,3 +138,42 @@ export async function createRecord(token, appToken, tableId, fields) {
   if (data.code !== 0) throw new Error(`新增记录失败: ${data.msg}`)
   return data.data || {}
 }
+
+// 上传附件到飞书（用于多维表格附件字段）
+// 返回 file_token，写入附件字段时格式：[{ file_token }]
+// 参数：base64Data (data:image/...;base64,xxx)，fileName
+export async function uploadAttachment(token, appToken, base64Data, fileName) {
+  // 解析 base64
+  const matches = base64Data.match(/^data:(image\/\w+);base64,(.+)$/)
+  if (!matches) throw new Error('图片格式不合法')
+  const mimeType = matches[1]
+  const base64 = matches[2]
+  const buffer = Buffer.from(base64, 'base64')
+
+  // 构造 multipart/form-data
+  const boundary = '----EchoVerseBoundary' + Date.now()
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file_name"\r\n\r\n${fileName}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parent_type"\r\n\r\nbitable_file\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parent_node"\r\n\r\n${appToken}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="size"\r\n\r\n${buffer.length}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${fileName}"\r\nContent-Type: ${mimeType}\r\n\r\n`),
+    buffer,
+    Buffer.from(`\r\n--${boundary}--\r\n`)
+  ])
+
+  const url = `${FEISHU_BASE}/drive/v1/medias/upload_all`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': `multipart/form-data; boundary=${boundary}`
+    },
+    body
+  })
+  const parsed = await safeJson(res)
+  if (!parsed.ok) throw new Error(`上传附件 ${parsed.error}`)
+  const data = parsed.data
+  if (data.code !== 0) throw new Error(`上传附件失败: ${data.msg}`)
+  return data.data?.file_token
+}

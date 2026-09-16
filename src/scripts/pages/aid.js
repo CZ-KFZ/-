@@ -7,6 +7,16 @@
 //   4) 生成轻量设备指纹（Canvas + UA + 时区组合）用于去重
 // ============================================================
 
+// ---- 文件转 base64 ----
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 // ---- HTML 转义，防 XSS ----
 function escapeHtml(str) {
   return String(str == null ? '' : str)
@@ -129,11 +139,17 @@ function openModal({ type }) {
         <input id="evo-aid-address" type="text" maxlength="100" placeholder="卫生巾将直接寄到此地址" class="w-full bg-[var(--evo-surface-2)]/60 border border-[var(--evo-border)] rounded-[var(--evo-radius-sm)] px-3 py-2 text-sm text-[var(--evo-ink)] focus:outline-none focus:border-[var(--evo-pink)]/60" />
       </label>`
     : `
-      <div class="rounded-[var(--evo-radius-sm)] bg-[var(--evo-surface-2)]/40 border border-[var(--evo-border)] px-3 py-2.5">
-        <p class="text-xs text-[var(--evo-ink-3)] leading-relaxed">
-          💡 我会通过你填写的微信号加你好友，直接微信转账给你。
-        </p>
-      </div>`
+      <label class="block">
+        <span class="text-xs text-[var(--evo-ink-3)] mb-1 block">微信收款码 <span class="text-[var(--evo-amber)]">*</span></span>
+        <div class="relative">
+          <input id="evo-aid-paycode" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
+          <div class="rounded-[var(--evo-radius-sm)] border border-dashed border-[var(--evo-border)] px-3 py-4 text-center hover:border-[var(--evo-amber)]/50 transition-colors">
+            <div class="text-2xl mb-1">📷</div>
+            <p class="text-xs text-[var(--evo-ink-3)]" id="evo-aid-paycode-text">点击上传微信收款码截图</p>
+          </div>
+        </div>
+        <span class="text-[10px] text-[var(--evo-ink-3)]/70 mt-1 block">我会扫码转账给你，不会加你好友</span>
+      </label>`
 
   root.innerHTML = `
     <div id="evo-aid-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -189,6 +205,24 @@ function openModal({ type }) {
     el.addEventListener('click', closeModal)
   })
 
+  // 绑定收款码图片上传（仅吃饭补助）
+  const paycodeInput = document.getElementById('evo-aid-paycode')
+  if (paycodeInput) {
+    paycodeInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0]
+      const text = document.getElementById('evo-aid-paycode-text')
+      if (!file) return
+      // 限制大小 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        const msg = document.getElementById('evo-aid-msg')
+        showMsg(msg, '图片不能超过 5MB', 'error')
+        paycodeInput.value = ''
+        return
+      }
+      if (text) text.textContent = `已选择：${file.name}`
+    })
+  }
+
   // 绑定表单提交
   const form = document.getElementById('evo-aid-form')
   form.addEventListener('submit', (e) => handleSubmit(e, type))
@@ -229,6 +263,20 @@ async function handleSubmit(e, type) {
     return showMsg(msg, '请填写收件地址', 'error')
   }
 
+  // 吃饭补助：读取收款码图片并转 base64
+  let paycodeBase64 = ''
+  if (type === 'meal') {
+    const paycodeFile = document.getElementById('evo-aid-paycode')?.files?.[0]
+    if (!paycodeFile) {
+      return showMsg(msg, '请上传微信收款码截图', 'error')
+    }
+    if (paycodeFile.size > 5 * 1024 * 1024) {
+      return showMsg(msg, '图片不能超过 5MB', 'error')
+    }
+    submitBtn.textContent = '处理图片…'
+    paycodeBase64 = await fileToBase64(paycodeFile)
+  }
+
   submitBtn.disabled = true
   submitBtn.textContent = '提交中…'
   showMsg(msg, '', '')
@@ -246,6 +294,7 @@ async function handleSubmit(e, type) {
         address,
         desc,
         fingerprint,
+        paycodeImage: paycodeBase64,
         website: honeypot
       })
     })
